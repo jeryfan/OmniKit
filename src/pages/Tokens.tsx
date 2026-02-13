@@ -573,11 +573,11 @@ export default function Tokens() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t.tokens.title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t.tokens.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t.tokens.subtitle}
           </p>
@@ -590,8 +590,8 @@ export default function Tokens() {
 
       {/* Table or Empty State */}
       {tokens.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
-          <KeyRound className="size-10 text-muted-foreground/50" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-20">
+          <KeyRound className="size-10 text-muted-foreground/30" />
           <p className="mt-4 text-sm font-medium text-muted-foreground">
             {t.tokens.noTokens}
           </p>
@@ -608,6 +608,7 @@ export default function Tokens() {
           </Button>
         </div>
       ) : (
+        <div className="table-wrapper">
         <Table>
           <TableHeader>
             <TableRow>
@@ -686,6 +687,7 @@ export default function Tokens() {
             })}
           </TableBody>
         </Table>
+        </div>
       )}
 
       {/* Dialogs */}

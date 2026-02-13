@@ -47,15 +47,16 @@ interface DashboardData {
 
 function StatCardSkeleton() {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="card-elevated">
+      <CardContent className="p-6">
         <div className="flex items-center justify-between">
-          <div className="h-4 w-24 animate-pulse rounded bg-muted" />
-          <div className="h-5 w-5 animate-pulse rounded bg-muted" />
+          <div className="space-y-3">
+            <div className="h-3.5 w-20 animate-pulse rounded-md bg-muted" />
+            <div className="h-8 w-14 animate-pulse rounded-md bg-muted" />
+            <div className="h-3 w-28 animate-pulse rounded-md bg-muted" />
+          </div>
+          <div className="h-11 w-11 animate-pulse rounded-xl bg-muted" />
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="h-8 w-16 animate-pulse rounded bg-muted" />
       </CardContent>
     </Card>
   );
@@ -63,17 +64,24 @@ function StatCardSkeleton() {
 
 function ChartSkeleton() {
   return (
-    <Card>
+    <Card className="card-elevated">
       <CardHeader>
-        <div className="h-5 w-40 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-56 animate-pulse rounded bg-muted" />
+        <div className="h-5 w-40 animate-pulse rounded-md bg-muted" />
+        <div className="h-3.5 w-56 animate-pulse rounded-md bg-muted" />
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full animate-pulse rounded bg-muted" />
+        <div className="h-[300px] w-full animate-pulse rounded-lg bg-muted" />
       </CardContent>
     </Card>
   );
 }
+
+const STAT_ICON_COLORS = [
+  { bg: "bg-blue-50 dark:bg-blue-500/10", text: "text-blue-600 dark:text-blue-400" },
+  { bg: "bg-emerald-50 dark:bg-emerald-500/10", text: "text-emerald-600 dark:text-emerald-400" },
+  { bg: "bg-amber-50 dark:bg-amber-500/10", text: "text-amber-600 dark:text-amber-400" },
+  { bg: "bg-violet-50 dark:bg-violet-500/10", text: "text-violet-600 dark:text-violet-400" },
+];
 
 export default function Dashboard() {
   const { t } = useLanguage();
@@ -136,26 +144,26 @@ export default function Dashboard() {
 
   const chartData = data
     ? data.usageStats.daily.map((d) => ({
-        date: d.date.slice(5), // "MM-DD" format
+        date: d.date.slice(5),
         requests: d.count,
         tokens: d.prompt_tokens + d.completion_tokens,
       }))
     : [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">{t.dashboard.title}</h1>
-        <p className="mt-1 text-muted-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight">{t.dashboard.title}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           {t.dashboard.subtitle}
         </p>
       </div>
 
       {/* Error state */}
       {error && (
-        <Card className="border-destructive">
-          <CardContent className="pt-0">
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="py-3">
             <p className="text-sm text-destructive">
               {t.dashboard.failedToLoad} {error}
             </p>
@@ -164,22 +172,25 @@ export default function Dashboard() {
       )}
 
       {/* Stat cards */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {!data
           ? Array.from({ length: 4 }).map((_, i) => <StatCardSkeleton key={i} />)
-          : statCards.map((stat) => {
+          : statCards.map((stat, idx) => {
               const Icon = stat.icon;
+              const color = STAT_ICON_COLORS[idx];
               return (
-                <Card key={stat.title}>
-                  <CardHeader>
+                <Card key={stat.title} className="card-elevated">
+                  <CardContent className="p-6">
                     <div className="flex items-center justify-between">
-                      <CardDescription>{stat.title}</CardDescription>
-                      <Icon className="h-5 w-5 text-muted-foreground" />
+                      <div className="space-y-1">
+                        <p className="text-[13px] font-medium text-muted-foreground">{stat.title}</p>
+                        <p className="text-3xl font-semibold tracking-tight">{stat.value.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground/70">{stat.description}</p>
+                      </div>
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${color.bg}`}>
+                        <Icon className={`h-5 w-5 ${color.text}`} />
+                      </div>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold">{stat.value.toLocaleString()}</div>
-                    <p className="mt-1 text-xs text-muted-foreground">{stat.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -190,14 +201,14 @@ export default function Dashboard() {
       {!data ? (
         <ChartSkeleton />
       ) : (
-        <Card>
+        <Card className="card-elevated">
           <CardHeader>
-            <CardTitle>{t.dashboard.requestTrend}</CardTitle>
+            <CardTitle className="text-base font-semibold">{t.dashboard.requestTrend}</CardTitle>
             <CardDescription>{t.dashboard.requestTrendDesc}</CardDescription>
           </CardHeader>
           <CardContent>
             {chartData.length === 0 ? (
-              <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+              <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
                 {t.dashboard.noRequestData}
               </div>
             ) : (
@@ -205,17 +216,18 @@ export default function Dashboard() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="gradientRequests" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(221 83% 53%)" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="hsl(221 83% 53%)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="hsl(230 70% 55%)" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="hsl(230 70% 55%)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" strokeOpacity={0.6} />
                   <XAxis
                     dataKey="date"
                     tickLine={false}
                     axisLine={false}
                     fontSize={12}
                     stroke="hsl(var(--muted-foreground))"
+                    dy={8}
                   />
                   <YAxis
                     tickLine={false}
@@ -223,25 +235,27 @@ export default function Dashboard() {
                     fontSize={12}
                     allowDecimals={false}
                     stroke="hsl(var(--muted-foreground))"
+                    dx={-4}
                   />
                   <RechartsTooltip
                     contentStyle={{
-                      borderRadius: "8px",
+                      borderRadius: "10px",
                       border: "1px solid hsl(var(--border))",
                       backgroundColor: "hsl(var(--popover))",
                       color: "hsl(var(--popover-foreground))",
                       fontSize: "13px",
+                      boxShadow: "0 4px 12px hsl(var(--foreground) / 0.08)",
                     }}
                   />
                   <Area
                     type="monotone"
                     dataKey="requests"
                     name="Requests"
-                    stroke="hsl(221 83% 53%)"
+                    stroke="hsl(230 70% 55%)"
                     strokeWidth={2}
                     fill="url(#gradientRequests)"
-                    dot={{ r: 3, fill: "hsl(221 83% 53%)", strokeWidth: 0 }}
-                    activeDot={{ r: 5, fill: "hsl(221 83% 53%)", strokeWidth: 2, stroke: "#fff" }}
+                    dot={false}
+                    activeDot={{ r: 4, fill: "hsl(230 70% 55%)", strokeWidth: 2, stroke: "hsl(var(--card))" }}
                   />
                 </AreaChart>
               </ResponsiveContainer>

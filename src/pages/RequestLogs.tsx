@@ -238,11 +238,11 @@ export default function RequestLogs() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t.requestLogs.title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t.requestLogs.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t.requestLogs.subtitle}
           </p>
@@ -318,6 +318,7 @@ export default function RequestLogs() {
         </div>
       ) : (
         <>
+          <div className="table-wrapper">
           <Table>
             <TableHeader>
               <TableRow>
@@ -385,8 +386,7 @@ export default function RequestLogs() {
               ))}
             </TableBody>
           </Table>
-
-          {/* Pagination */}
+          </div>
           <Pagination
             current={page}
             total={total}

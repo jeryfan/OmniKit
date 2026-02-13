@@ -420,7 +420,7 @@ export default function Proxy() {
     <div className="flex h-[calc(100vh-3rem)] flex-col">
       {/* Header — fixed */}
       <div className="shrink-0 pb-4">
-        <h1 className="text-2xl font-bold">{t.proxy.title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">{t.proxy.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {t.proxy.subtitle}
         </p>
@@ -453,7 +453,7 @@ export default function Proxy() {
                 <span className="ml-2 text-muted-foreground">{t.common.loading}</span>
               </div>
             ) : rules.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16">
                 <p className="text-muted-foreground">{t.proxy.noRules}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {t.proxy.noRulesHint}
@@ -494,7 +494,7 @@ export default function Proxy() {
                       </TableCell>
                       <TableCell className="text-center">
                         {rule.enabled ? (
-                          <Badge className="bg-green-600 text-white">{t.common.enabled}</Badge>
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">{t.common.enabled}</Badge>
                         ) : (
                           <Badge variant="secondary">{t.common.disabled}</Badge>
                         )}

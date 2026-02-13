@@ -3,65 +3,92 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-background: hsl(0 0% 100%);
-  --color-foreground: hsl(240 10% 3.9%);
+  /* Brand accent — refined indigo */
+  --color-brand: hsl(230 70% 55%);
+  --color-brand-foreground: hsl(0 0% 100%);
+  --color-brand-muted: hsl(230 70% 96%);
+
+  /* Warm neutrals — shifted from cold 240 to warmer 220 */
+  --color-background: hsl(220 20% 99%);
+  --color-foreground: hsl(220 14% 10%);
   --color-card: hsl(0 0% 100%);
-  --color-card-foreground: hsl(240 10% 3.9%);
+  --color-card-foreground: hsl(220 14% 10%);
   --color-popover: hsl(0 0% 100%);
-  --color-popover-foreground: hsl(240 10% 3.9%);
-  --color-primary: hsl(240 5.9% 10%);
-  --color-primary-foreground: hsl(0 0% 98%);
-  --color-secondary: hsl(240 4.8% 95.9%);
-  --color-secondary-foreground: hsl(240 5.9% 10%);
-  --color-muted: hsl(240 4.8% 95.9%);
-  --color-muted-foreground: hsl(240 3.8% 46.1%);
-  --color-accent: hsl(240 4.8% 95.9%);
-  --color-accent-foreground: hsl(240 5.9% 10%);
-  --color-destructive: hsl(0 84.2% 60.2%);
-  --color-destructive-foreground: hsl(0 0% 98%);
-  --color-border: hsl(240 5.9% 90%);
-  --color-input: hsl(240 5.9% 90%);
-  --color-ring: hsl(240 5.9% 10%);
-  --color-sidebar-background: hsl(0 0% 98%);
-  --color-sidebar-foreground: hsl(240 5.3% 26.1%);
-  --color-sidebar-primary: hsl(240 5.9% 10%);
-  --color-sidebar-primary-foreground: hsl(0 0% 98%);
-  --color-sidebar-accent: hsl(240 4.8% 95.9%);
-  --color-sidebar-accent-foreground: hsl(240 5.9% 10%);
-  --color-sidebar-border: hsl(220 13% 91%);
-  --color-sidebar-ring: hsl(217.2 91.2% 59.8%);
+  --color-popover-foreground: hsl(220 14% 10%);
+  --color-primary: hsl(230 70% 55%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(220 14% 96%);
+  --color-secondary-foreground: hsl(220 14% 10%);
+  --color-muted: hsl(220 14% 96%);
+  --color-muted-foreground: hsl(220 10% 46%);
+  --color-accent: hsl(220 14% 96%);
+  --color-accent-foreground: hsl(220 14% 10%);
+  --color-destructive: hsl(0 72% 51%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(220 13% 91%);
+  --color-input: hsl(220 13% 91%);
+  --color-ring: hsl(230 70% 55%);
+
+  /* Sidebar — subtle distinction */
+  --color-sidebar-background: hsl(0 0% 100%);
+  --color-sidebar-foreground: hsl(220 10% 36%);
+  --color-sidebar-primary: hsl(230 70% 55%);
+  --color-sidebar-primary-foreground: hsl(0 0% 100%);
+  --color-sidebar-accent: hsl(230 70% 97%);
+  --color-sidebar-accent-foreground: hsl(230 70% 45%);
+  --color-sidebar-border: hsl(220 13% 93%);
+  --color-sidebar-ring: hsl(230 70% 55%);
+
+  /* Chart palette — harmonious 5-color system */
+  --color-chart-1: hsl(230 70% 55%);
+  --color-chart-2: hsl(280 60% 55%);
+  --color-chart-3: hsl(170 60% 42%);
+  --color-chart-4: hsl(35 85% 55%);
+  --color-chart-5: hsl(350 65% 55%);
+
   --radius: 0.625rem;
 }
 
 @layer base {
   .dark {
-    --color-background: hsl(240 10% 3.9%);
-    --color-foreground: hsl(0 0% 98%);
-    --color-card: hsl(240 10% 3.9%);
-    --color-card-foreground: hsl(0 0% 98%);
-    --color-popover: hsl(240 10% 3.9%);
-    --color-popover-foreground: hsl(0 0% 98%);
-    --color-primary: hsl(0 0% 98%);
-    --color-primary-foreground: hsl(240 5.9% 10%);
-    --color-secondary: hsl(240 3.7% 15.9%);
-    --color-secondary-foreground: hsl(0 0% 98%);
-    --color-muted: hsl(240 3.7% 15.9%);
-    --color-muted-foreground: hsl(240 5% 64.9%);
-    --color-accent: hsl(240 3.7% 15.9%);
-    --color-accent-foreground: hsl(0 0% 98%);
-    --color-destructive: hsl(0 62.8% 30.6%);
-    --color-destructive-foreground: hsl(0 0% 98%);
-    --color-border: hsl(240 3.7% 15.9%);
-    --color-input: hsl(240 3.7% 15.9%);
-    --color-ring: hsl(240 4.9% 83.9%);
-    --color-sidebar-background: hsl(240 5.9% 10%);
-    --color-sidebar-foreground: hsl(240 4.8% 95.9%);
-    --color-sidebar-primary: hsl(224.3 76.3% 48%);
+    --color-brand: hsl(230 70% 65%);
+    --color-brand-foreground: hsl(0 0% 100%);
+    --color-brand-muted: hsl(230 30% 15%);
+
+    --color-background: hsl(220 14% 6%);
+    --color-foreground: hsl(220 10% 95%);
+    --color-card: hsl(220 14% 8%);
+    --color-card-foreground: hsl(220 10% 95%);
+    --color-popover: hsl(220 14% 8%);
+    --color-popover-foreground: hsl(220 10% 95%);
+    --color-primary: hsl(230 70% 65%);
+    --color-primary-foreground: hsl(0 0% 100%);
+    --color-secondary: hsl(220 10% 14%);
+    --color-secondary-foreground: hsl(220 10% 95%);
+    --color-muted: hsl(220 10% 14%);
+    --color-muted-foreground: hsl(220 8% 56%);
+    --color-accent: hsl(220 10% 14%);
+    --color-accent-foreground: hsl(220 10% 95%);
+    --color-destructive: hsl(0 62% 40%);
+    --color-destructive-foreground: hsl(0 0% 100%);
+    --color-border: hsl(220 10% 16%);
+    --color-input: hsl(220 10% 16%);
+    --color-ring: hsl(230 70% 65%);
+
+    --color-sidebar-background: hsl(220 14% 7%);
+    --color-sidebar-foreground: hsl(220 10% 70%);
+    --color-sidebar-primary: hsl(230 70% 65%);
     --color-sidebar-primary-foreground: hsl(0 0% 100%);
-    --color-sidebar-accent: hsl(240 3.7% 15.9%);
-    --color-sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --color-sidebar-border: hsl(240 3.7% 15.9%);
-    --color-sidebar-ring: hsl(217.2 91.2% 59.8%);
+    --color-sidebar-accent: hsl(230 30% 14%);
+    --color-sidebar-accent-foreground: hsl(230 70% 75%);
+    --color-sidebar-border: hsl(220 10% 14%);
+    --color-sidebar-ring: hsl(230 70% 65%);
+
+    --color-chart-1: hsl(230 70% 65%);
+    --color-chart-2: hsl(280 60% 65%);
+    --color-chart-3: hsl(170 55% 50%);
+    --color-chart-4: hsl(35 80% 55%);
+    --color-chart-5: hsl(350 60% 60%);
   }
 }
 
@@ -73,6 +100,8 @@
   body {
     @apply h-full;
     overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   #root {
     @apply h-full overflow-hidden;
@@ -80,5 +109,33 @@
   body {
     @apply bg-background text-foreground;
     overflow: hidden;
+  }
+}
+
+/* Refined card shadows */
+@layer components {
+  .card-elevated {
+    box-shadow:
+      0 0 0 1px hsl(220 13% 91% / 0.7),
+      0 1px 3px hsl(220 14% 10% / 0.04),
+      0 4px 12px hsl(220 14% 10% / 0.03);
+  }
+  .dark .card-elevated {
+    box-shadow:
+      0 0 0 1px hsl(220 10% 16% / 0.8),
+      0 1px 3px hsl(0 0% 0% / 0.2),
+      0 4px 12px hsl(0 0% 0% / 0.15);
+  }
+
+  .table-wrapper {
+    @apply rounded-xl border bg-card overflow-hidden;
+    box-shadow:
+      0 1px 2px hsl(220 14% 10% / 0.03),
+      0 2px 8px hsl(220 14% 10% / 0.02);
+  }
+  .dark .table-wrapper {
+    box-shadow:
+      0 1px 2px hsl(0 0% 0% / 0.15),
+      0 2px 8px hsl(0 0% 0% / 0.1);
   }
 }

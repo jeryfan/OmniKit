@@ -202,11 +202,11 @@ export default function ModelMappings() {
   // --- Render ---
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t.modelMappings.title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t.modelMappings.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t.modelMappings.subtitle}
           </p>
@@ -223,8 +223,8 @@ export default function ModelMappings() {
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : mappings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-20">
-          <Route className="size-10 text-muted-foreground/50" />
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-20">
+          <Route className="size-10 text-muted-foreground/30" />
           <p className="mt-4 text-sm font-medium text-muted-foreground">
             {t.modelMappings.noMappings}
           </p>
@@ -237,7 +237,7 @@ export default function ModelMappings() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border">
+        <div className="table-wrapper">
           <Table>
             <TableHeader>
               <TableRow>

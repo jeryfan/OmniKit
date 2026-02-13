@@ -59,32 +59,32 @@ export function Sidebar() {
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      "flex flex-row items-center whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors",
+      "group relative flex flex-row items-center whitespace-nowrap rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150",
       collapsed ? "justify-center" : "gap-3",
       isActive
-        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
     );
 
   const settingsLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      "flex flex-row items-center whitespace-nowrap rounded-md px-2 py-2 text-sm transition-colors",
+      "group relative flex flex-row items-center whitespace-nowrap rounded-lg px-2 py-2 text-[13px] font-medium transition-all duration-150",
       collapsed ? "justify-center" : "gap-3",
       isActive
-        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
     );
 
   return (
     <TooltipProvider delayDuration={0}>
       <div
         className={cn(
-          "flex h-screen shrink-0 flex-col overflow-hidden border-r bg-sidebar-background text-sidebar-foreground transition-[width] duration-200",
+          "flex h-screen shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar-background text-sidebar-foreground transition-[width] duration-200",
           collapsed ? "w-14" : "w-56",
         )}
       >
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1 px-2 py-2">
+        <nav className="flex flex-1 flex-col gap-0.5 px-2 py-3">
           {navItems.map((item) =>
             collapsed ? (
               <Tooltip key={item.to}>
@@ -103,7 +103,7 @@ export function Sidebar() {
             ),
           )}
         </nav>
-        <Separator />
+        <Separator className="mx-2" />
 
         {/* Bottom section */}
         <div className={cn(
@@ -128,7 +128,7 @@ export function Sidebar() {
           <div className={cn("flex items-center", collapsed ? "flex-col gap-1" : "gap-0.5")}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
                   <Languages className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -138,7 +138,7 @@ export function Sidebar() {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
+                <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
@@ -150,7 +150,7 @@ export function Sidebar() {
                   variant="ghost"
                   size="icon"
                   onClick={toggleCollapsed}
-                  className="h-8 w-8"
+                  className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground"
                 >
                   {collapsed ? (
                     <PanelLeftOpen className="h-4 w-4" />

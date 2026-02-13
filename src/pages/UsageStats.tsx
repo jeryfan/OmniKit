@@ -161,10 +161,12 @@ export default function UsageStats() {
     : [];
 
   const tooltipStyle = {
-    borderRadius: "8px",
+    borderRadius: "10px",
     border: "1px solid hsl(var(--border))",
     backgroundColor: "hsl(var(--popover))",
     color: "hsl(var(--popover-foreground))",
+    fontSize: "13px",
+    boxShadow: "0 4px 12px hsl(var(--foreground) / 0.08)",
   };
 
   // =========================================================================
@@ -172,22 +174,23 @@ export default function UsageStats() {
   // =========================================================================
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{t.usageStats.title}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">{t.usageStats.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {t.usageStats.subtitle}
           </p>
         </div>
-        <div className="flex items-center gap-1 rounded-lg border p-1">
+        <div className="flex items-center gap-1 rounded-lg border bg-card p-1">
           {TIME_RANGES.map((range) => (
             <Button
               key={range.value}
               variant={days === range.value ? "default" : "ghost"}
               size="sm"
               onClick={() => setDays(range.value)}
+              className="text-xs"
             >
               {t.usageStats.nDays(range.value)}
             </Button>
@@ -197,8 +200,8 @@ export default function UsageStats() {
 
       {/* Error state */}
       {error && (
-        <Card className="border-destructive">
-          <CardContent className="pt-0">
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="py-3">
             <p className="text-sm text-destructive">
               {t.usageStats.failedToLoad}: {error}
             </p>
@@ -212,54 +215,60 @@ export default function UsageStats() {
           Array.from({ length: 3 }).map((_, i) => <StatCardSkeleton key={i} />)
         ) : (
           <>
-            <Card>
-              <CardHeader>
+            <Card className="card-elevated">
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <CardDescription>{t.usageStats.totalRequests}</CardDescription>
-                  <Activity className="h-5 w-5 text-muted-foreground" />
+                  <div className="space-y-1">
+                    <p className="text-[13px] font-medium text-muted-foreground">{t.usageStats.totalRequests}</p>
+                    <p className="text-3xl font-semibold tracking-tight">
+                      {totalRequests.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      {t.usageStats.lastNDays(days)}
+                    </p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10">
+                    <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {totalRequests.toLocaleString()}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t.usageStats.lastNDays(days)}
-                </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="card-elevated">
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <CardDescription>{t.usageStats.totalPromptTokens}</CardDescription>
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                  <div className="space-y-1">
+                    <p className="text-[13px] font-medium text-muted-foreground">{t.usageStats.totalPromptTokens}</p>
+                    <p className="text-3xl font-semibold tracking-tight">
+                      {formatNumber(totalPromptTokens)}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      {t.usageStats.tokensTotal(totalPromptTokens.toLocaleString())}
+                    </p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10">
+                    <MessageSquare className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {formatNumber(totalPromptTokens)}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t.usageStats.tokensTotal(totalPromptTokens.toLocaleString())}
-                </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
+            <Card className="card-elevated">
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <CardDescription>{t.usageStats.totalCompletionTokens}</CardDescription>
-                  <BrainCircuit className="h-5 w-5 text-muted-foreground" />
+                  <div className="space-y-1">
+                    <p className="text-[13px] font-medium text-muted-foreground">{t.usageStats.totalCompletionTokens}</p>
+                    <p className="text-3xl font-semibold tracking-tight">
+                      {formatNumber(totalCompletionTokens)}
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">
+                      {t.usageStats.tokensTotal(totalCompletionTokens.toLocaleString())}
+                    </p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-500/10">
+                    <BrainCircuit className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold">
-                  {formatNumber(totalCompletionTokens)}
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t.usageStats.tokensTotal(totalCompletionTokens.toLocaleString())}
-                </p>
               </CardContent>
             </Card>
           </>
@@ -270,9 +279,9 @@ export default function UsageStats() {
       {loading ? (
         <ChartSkeleton />
       ) : (
-        <Card>
+        <Card className="card-elevated">
           <CardHeader>
-            <CardTitle>{t.usageStats.requestTrend}</CardTitle>
+            <CardTitle className="text-base font-semibold">{t.usageStats.requestTrend}</CardTitle>
             <CardDescription>
               {t.usageStats.requestTrendDesc(days)}
             </CardDescription>
@@ -316,9 +325,9 @@ export default function UsageStats() {
       {loading ? (
         <ChartSkeleton />
       ) : (
-        <Card>
+        <Card className="card-elevated">
           <CardHeader>
-            <CardTitle>{t.usageStats.tokenUsage}</CardTitle>
+            <CardTitle className="text-base font-semibold">{t.usageStats.tokenUsage}</CardTitle>
             <CardDescription>
               {t.usageStats.tokenUsageDesc(days)}
             </CardDescription>
@@ -405,9 +414,9 @@ export default function UsageStats() {
       {loading ? (
         <TableSkeleton />
       ) : (
-        <Card>
+        <Card className="card-elevated">
           <CardHeader>
-            <CardTitle>{t.usageStats.modelBreakdown}</CardTitle>
+            <CardTitle className="text-base font-semibold">{t.usageStats.modelBreakdown}</CardTitle>
             <CardDescription>
               {t.usageStats.modelBreakdownDesc(days)}
             </CardDescription>

@@ -97,17 +97,17 @@ export default function Settings() {
   const isServerOk = serverStatus?.status === "ok";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">{t.settings.title}</h1>
-        <p className="mt-1 text-muted-foreground">
+        <h1 className="text-2xl font-semibold tracking-tight">{t.settings.title}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           {t.settings.subtitle}
         </p>
       </div>
 
       {/* Server Configuration */}
-      <Card>
+      <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Server className="h-5 w-5" />
@@ -218,7 +218,7 @@ export default function Settings() {
       </Card>
 
       {/* Appearance */}
-      <Card>
+      <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
@@ -252,7 +252,7 @@ export default function Settings() {
       </Card>
 
       {/* Language */}
-      <Card>
+      <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Languages className="h-5 w-5" />
@@ -288,7 +288,7 @@ export default function Settings() {
       </Card>
 
       {/* About */}
-      <Card>
+      <Card className="card-elevated">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Info className="h-5 w-5" />
