@@ -50,6 +50,13 @@ pub fn run() {
             commands::request_logs::clear_request_logs,
             commands::request_logs::get_usage_stats,
             commands::request_logs::retry_request_log,
+            commands::proxy::list_proxy_rules,
+            commands::proxy::create_proxy_rule,
+            commands::proxy::update_proxy_rule,
+            commands::proxy::delete_proxy_rule,
+            commands::proxy::list_proxy_logs,
+            commands::proxy::get_proxy_log,
+            commands::proxy::clear_proxy_logs,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();

@@ -1,3 +1,4 @@
+use super::generic_proxy::{self, GenericProxyState};
 use super::proxy::{self, ProxyState};
 use crate::error::AppError;
 use crate::modality::chat::ChatFormat;
@@ -17,6 +18,11 @@ pub fn create_router(pool: SqlitePool) -> Router {
     let http_client = reqwest::Client::new();
     let circuit = Arc::new(CircuitBreaker::new(5, 60));
 
+    let generic_state = GenericProxyState {
+        db: pool.clone(),
+        http_client: http_client.clone(),
+    };
+
     let proxy_state = ProxyState {
         db: pool,
         http_client,
@@ -35,6 +41,10 @@ pub fn create_router(pool: SqlitePool) -> Router {
         .route("/v1/messages", post(handle_anthropic))
         .layer(CorsLayer::permissive())
         .with_state(proxy_state)
+        .fallback(
+            axum::routing::any(generic_proxy::handle_generic_proxy)
+                .with_state(generic_state),
+        )
 }
 
 async fn health_check() -> Json<Value> {

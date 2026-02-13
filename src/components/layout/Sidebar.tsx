@@ -7,6 +7,7 @@ import {
   KeyRound,
   ScrollText,
   BarChart3,
+  Waypoints,
   Settings,
   Sun,
   Moon,
@@ -55,6 +56,7 @@ export function Sidebar() {
     { to: "/tokens", icon: KeyRound, label: t.sidebar.tokens },
     { to: "/request-logs", icon: ScrollText, label: t.sidebar.requestLogs },
     { to: "/usage-stats", icon: BarChart3, label: t.sidebar.usageStats },
+    { to: "/proxy", icon: Waypoints, label: t.sidebar.proxy },
   ];
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>

@@ -65,3 +65,29 @@ pub struct RequestLog {
     pub response_body: Option<String>,
     pub created_at: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ProxyRule {
+    pub id: String,
+    pub name: String,
+    pub path_prefix: String,
+    pub target_base_url: String,
+    pub enabled: bool,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ProxyLog {
+    pub id: String,
+    pub rule_id: String,
+    pub method: String,
+    pub url: String,
+    pub request_headers: Option<String>,
+    pub request_body: Option<String>,
+    pub status: Option<i32>,
+    pub response_headers: Option<String>,
+    pub response_body: Option<String>,
+    pub latency_ms: Option<i64>,
+    pub created_at: String,
+}

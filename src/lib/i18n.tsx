@@ -44,6 +44,7 @@ export interface Translations {
     collapse: string;
     expand: string;
     language: string;
+    proxy: string;
   };
   dashboard: {
     title: string;
@@ -280,6 +281,49 @@ export interface Translations {
     restartHint: string;
     aboutText: string;
   };
+  proxy: {
+    title: string;
+    subtitle: string;
+    rules: string;
+    logs: string;
+    addRule: string;
+    editRule: string;
+    noRules: string;
+    noRulesHint: string;
+    pathPrefix: string;
+    targetBaseUrl: string;
+    pathPrefixPlaceholder: string;
+    targetBaseUrlPlaceholder: string;
+    namePlaceholder: string;
+    deleteRule: string;
+    deleteRuleConfirm: (name: string) => string;
+    createRule: string;
+    updateRule: string;
+    saveChanges: string;
+    usage: string;
+    logsTitle: string;
+    logsSubtitle: string;
+    clearLogs: string;
+    clearLogsTitle: string;
+    clearLogsDesc: string;
+    clearAll: string;
+    noLogs: string;
+    noLogsHint: string;
+    time: string;
+    method: string;
+    url: string;
+    latency: string;
+    requestHeaders: string;
+    requestBody: string;
+    responseHeaders: string;
+    responseBody: string;
+    viewDetails: string;
+    detailTitle: string;
+    allRules: string;
+    filterByRule: string;
+    streaming: string;
+    autoRefresh: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -326,6 +370,7 @@ const en: Translations = {
     collapse: "Collapse sidebar",
     expand: "Expand sidebar",
     language: "Language",
+    proxy: "Proxy",
   },
   dashboard: {
     title: "Dashboard",
@@ -559,6 +604,49 @@ const en: Translations = {
     saveSuccess: "Settings saved",
     restartHint: "Restart the app to apply port changes.",
   },
+  proxy: {
+    title: "Proxy",
+    subtitle: "Generic HTTP proxy for debugging and request inspection.",
+    rules: "Rules",
+    logs: "Logs",
+    addRule: "Add Rule",
+    editRule: "Edit Rule",
+    noRules: "No proxy rules configured",
+    noRulesHint: "Create a proxy rule to start forwarding requests.",
+    pathPrefix: "Path Prefix",
+    targetBaseUrl: "Target Base URL",
+    pathPrefixPlaceholder: "e.g. /proxy",
+    targetBaseUrlPlaceholder: "e.g. https://api.example.com",
+    namePlaceholder: "e.g. My API Proxy",
+    deleteRule: "Delete Rule",
+    deleteRuleConfirm: (name: string) => `Are you sure you want to delete "${name}"? All associated logs will also be removed.`,
+    createRule: "Create Rule",
+    updateRule: "Update Rule",
+    saveChanges: "Save Changes",
+    usage: "Usage",
+    logsTitle: "Proxy Logs",
+    logsSubtitle: "Inspect proxied request and response details.",
+    clearLogs: "Clear Logs",
+    clearLogsTitle: "Clear proxy logs?",
+    clearLogsDesc: "This action cannot be undone. All proxy log entries will be permanently deleted.",
+    clearAll: "Clear All",
+    noLogs: "No proxy logs found",
+    noLogsHint: "Logs will appear here once proxy rules handle requests.",
+    time: "Time",
+    method: "Method",
+    url: "URL",
+    latency: "Latency",
+    requestHeaders: "Request Headers",
+    requestBody: "Request Body",
+    responseHeaders: "Response Headers",
+    responseBody: "Response Body",
+    viewDetails: "View Details",
+    detailTitle: "Proxy Log Details",
+    allRules: "All Rules",
+    filterByRule: "Filter by rule",
+    streaming: "Streaming",
+    autoRefresh: "Auto Refresh",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -605,6 +693,7 @@ const zh: Translations = {
     collapse: "收起侧边栏",
     expand: "展开侧边栏",
     language: "语言",
+    proxy: "代理",
   },
   dashboard: {
     title: "仪表盘",
@@ -837,6 +926,49 @@ const zh: Translations = {
     aboutText: "AnyLLM 实现各 LLM 供应商 API 格式互转（OpenAI、Anthropic、Gemini、Moonshot），让您可以用任意客户端对接任意后端。",
     saveSuccess: "设置已保存",
     restartHint: "重启应用以使端口更改生效。",
+  },
+  proxy: {
+    title: "代理",
+    subtitle: "通用 HTTP 代理，用于调试和请求检查。",
+    rules: "规则",
+    logs: "日志",
+    addRule: "添加规则",
+    editRule: "编辑规则",
+    noRules: "尚未配置代理规则",
+    noRulesHint: "创建代理规则以开始转发请求。",
+    pathPrefix: "路径前缀",
+    targetBaseUrl: "目标地址",
+    pathPrefixPlaceholder: "例如 /proxy",
+    targetBaseUrlPlaceholder: "例如 https://api.example.com",
+    namePlaceholder: "例如 我的API代理",
+    deleteRule: "删除规则",
+    deleteRuleConfirm: (name: string) => `确定要删除 "${name}" 吗？所有关联的日志也将被移除。`,
+    createRule: "创建规则",
+    updateRule: "更新规则",
+    saveChanges: "保存更改",
+    usage: "使用方法",
+    logsTitle: "代理日志",
+    logsSubtitle: "检查代理的请求和响应详情。",
+    clearLogs: "清空日志",
+    clearLogsTitle: "清空代理日志？",
+    clearLogsDesc: "此操作无法撤销。所有代理日志将被永久删除。",
+    clearAll: "全部清空",
+    noLogs: "未找到代理日志",
+    noLogsHint: "代理规则处理请求后，日志将显示在此处。",
+    time: "时间",
+    method: "方法",
+    url: "URL",
+    latency: "延迟",
+    requestHeaders: "请求头",
+    requestBody: "请求体",
+    responseHeaders: "响应头",
+    responseBody: "响应体",
+    viewDetails: "查看详情",
+    detailTitle: "代理日志详情",
+    allRules: "全部规则",
+    filterByRule: "按规则筛选",
+    streaming: "流式传输",
+    autoRefresh: "自动刷新",
   },
 };
 

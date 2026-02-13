@@ -349,3 +349,89 @@ export async function getUsageStats(days?: number): Promise<UsageStats> {
 export async function retryRequestLog(id: string): Promise<RetryResult> {
   return invoke<RetryResult>("retry_request_log", { id });
 }
+
+// === Proxy Rule types ===
+
+export interface ProxyRule {
+  id: string;
+  name: string;
+  path_prefix: string;
+  target_base_url: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProxyLog {
+  id: string;
+  rule_id: string;
+  method: string;
+  url: string;
+  request_headers: string | null;
+  request_body: string | null;
+  status: number | null;
+  response_headers: string | null;
+  response_body: string | null;
+  latency_ms: number | null;
+  created_at: string;
+}
+
+// === Proxy Rule commands ===
+
+export async function listProxyRules(): Promise<ProxyRule[]> {
+  return invoke<ProxyRule[]>("list_proxy_rules");
+}
+
+export async function createProxyRule(data: {
+  name: string;
+  path_prefix: string;
+  target_base_url: string;
+}): Promise<ProxyRule> {
+  return invoke<ProxyRule>("create_proxy_rule", {
+    name: data.name,
+    pathPrefix: data.path_prefix,
+    targetBaseUrl: data.target_base_url,
+  });
+}
+
+export async function updateProxyRule(data: {
+  id: string;
+  name: string;
+  path_prefix: string;
+  target_base_url: string;
+  enabled: boolean;
+}): Promise<void> {
+  return invoke<void>("update_proxy_rule", {
+    id: data.id,
+    name: data.name,
+    pathPrefix: data.path_prefix,
+    targetBaseUrl: data.target_base_url,
+    enabled: data.enabled,
+  });
+}
+
+export async function deleteProxyRule(id: string): Promise<void> {
+  return invoke<void>("delete_proxy_rule", { id });
+}
+
+// === Proxy Log commands ===
+
+export async function listProxyLogs(params?: {
+  rule_id?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<ProxyLog[]> {
+  return invoke<ProxyLog[]>("list_proxy_logs", {
+    ruleId: params?.rule_id,
+    limit: params?.limit,
+    offset: params?.offset,
+  });
+}
+
+export async function getProxyLog(id: string): Promise<ProxyLog | null> {
+  return invoke<ProxyLog | null>("get_proxy_log", { id });
+}
+
+export async function clearProxyLogs(ruleId?: string): Promise<void> {
+  return invoke<void>("clear_proxy_logs", { ruleId });
+}

@@ -7,6 +7,7 @@ import Tokens from "@/pages/Tokens";
 import RequestLogs from "@/pages/RequestLogs";
 import UsageStats from "@/pages/UsageStats";
 import Settings from "@/pages/Settings";
+import Proxy from "@/pages/Proxy";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
           <Route path="request-logs" element={<RequestLogs />} />
           <Route path="usage-stats" element={<UsageStats />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="proxy" element={<Proxy />} />
         </Route>
       </Routes>
     </BrowserRouter>
