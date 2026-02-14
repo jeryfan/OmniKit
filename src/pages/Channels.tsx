@@ -14,6 +14,7 @@ import {
   EyeOff,
   Send,
   Save,
+  Network,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,6 +83,8 @@ import {
   testChannelCustom,
   saveChannelTestConfig,
 } from "@/lib/tauri";
+import { toast } from "sonner";
+import { parseIpcError } from "@/lib/tauri";
 import { useLanguage } from "@/lib/i18n";
 
 // ---------------------------------------------------------------------------
@@ -198,7 +201,7 @@ export default function Channels() {
       const data = await listChannels();
       setChannels(data);
     } catch (err) {
-      console.error("Failed to load channels:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setLoading(false);
     }
@@ -215,7 +218,7 @@ export default function Channels() {
       const data = await listChannelApiKeys(channelId);
       setKeys(data);
     } catch (err) {
-      console.error("Failed to load API keys:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setKeysLoading(false);
     }
@@ -270,7 +273,7 @@ export default function Channels() {
       setFormOpen(false);
       await fetchChannels();
     } catch (err) {
-      console.error("Failed to save channel:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setFormSubmitting(false);
     }
@@ -285,7 +288,7 @@ export default function Channels() {
       setDeleteTarget(null);
       await fetchChannels();
     } catch (err) {
-      console.error("Failed to delete channel:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setDeleteSubmitting(false);
     }
@@ -400,7 +403,7 @@ export default function Channels() {
         ),
       );
     } catch (err) {
-      console.error("Failed to save test config:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setTestConfigSaving(false);
     }
@@ -423,7 +426,7 @@ export default function Channels() {
       setNewKeyValue("");
       await fetchKeys(keysChannel.id);
     } catch (err) {
-      console.error("Failed to add API key:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setAddingKey(false);
     }
@@ -436,7 +439,7 @@ export default function Channels() {
       await deleteChannelApiKey(keyId);
       await fetchKeys(keysChannel.id);
     } catch (err) {
-      console.error("Failed to delete API key:", err);
+      toast.error(parseIpcError(err).message);
     }
   }
 
@@ -447,7 +450,7 @@ export default function Channels() {
       await toggleChannelApiKey(keyId, enabled);
       await fetchKeys(keysChannel.id);
     } catch (err) {
-      console.error("Failed to toggle API key:", err);
+      toast.error(parseIpcError(err).message);
     }
   }
 

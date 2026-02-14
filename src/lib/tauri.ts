@@ -1,5 +1,19 @@
 import { invoke } from "@tauri-apps/api/core";
 
+// === IPC Error ===
+
+export interface IpcError {
+  code: string;
+  message: string;
+}
+
+export function parseIpcError(err: unknown): IpcError {
+  if (typeof err === "object" && err !== null && "code" in err) {
+    return err as IpcError;
+  }
+  return { code: "UNKNOWN", message: String(err) };
+}
+
 // === Shared types ===
 
 export interface PaginatedResult<T> {

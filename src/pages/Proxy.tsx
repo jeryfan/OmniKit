@@ -59,6 +59,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Pagination } from "@/components/ui/pagination";
 import {
   type ProxyLog,
+  type ProxyRule,
   listProxyRules,
   createProxyRule,
   updateProxyRule,
@@ -69,6 +70,8 @@ import {
   getConfig,
 } from "@/lib/tauri";
 import { useLanguage } from "@/lib/i18n";
+import { toast } from "sonner";
+import { parseIpcError } from "@/lib/tauri";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -268,7 +271,7 @@ export default function Proxy() {
       const data = await listProxyRules();
       setRules(data);
     } catch (err) {
-      console.error("Failed to load proxy rules:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setRulesLoading(false);
     }
@@ -296,7 +299,7 @@ export default function Proxy() {
       setLogs(result.items);
       setLogsTotal(result.total);
     } catch (err) {
-      console.error("Failed to load proxy logs:", err);
+      toast.error(parseIpcError(err).message);
       if (!silent) setLogs([]);
     } finally {
       if (!silent) setLogsLoading(false);
@@ -360,7 +363,7 @@ export default function Proxy() {
       setFormOpen(false);
       await fetchRules();
     } catch (err) {
-      console.error("Failed to save proxy rule:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setFormSubmitting(false);
     }
@@ -374,7 +377,7 @@ export default function Proxy() {
       setDeleteTarget(null);
       await fetchRules();
     } catch (err) {
-      console.error("Failed to delete proxy rule:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setDeleteSubmitting(false);
     }
@@ -391,7 +394,7 @@ export default function Proxy() {
       setLogsPage(1);
       await fetchLogs();
     } catch (err) {
-      console.error("Failed to clear proxy logs:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setClearing(false);
       setClearDialogOpen(false);
@@ -405,7 +408,7 @@ export default function Proxy() {
       const log = await getProxyLog(id);
       setSelectedLog(log);
     } catch (err) {
-      console.error("Failed to fetch proxy log detail:", err);
+      toast.error(parseIpcError(err).message);
       setSelectedLog(null);
     } finally {
       setDetailLoading(false);

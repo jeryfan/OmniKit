@@ -1,15 +1,15 @@
 use crate::db::models::{ProxyLog, ProxyRule};
+use crate::error::IpcError;
 use crate::AppState;
 use tauri::State;
 
 use super::PaginatedResult;
 
 #[tauri::command]
-pub async fn list_proxy_rules(state: State<'_, AppState>) -> Result<Vec<ProxyRule>, String> {
-    sqlx::query_as::<_, ProxyRule>("SELECT * FROM proxy_rules ORDER BY created_at DESC")
+pub async fn list_proxy_rules(state: State<'_, AppState>) -> Result<Vec<ProxyRule>, IpcError> {
+    Ok(sqlx::query_as::<_, ProxyRule>("SELECT * FROM proxy_rules ORDER BY created_at DESC")
         .fetch_all(&state.db)
-        .await
-        .map_err(|e| e.to_string())
+        .await?)
 }
 
 #[tauri::command]
@@ -18,7 +18,7 @@ pub async fn create_proxy_rule(
     name: String,
     path_prefix: String,
     target_base_url: String,
-) -> Result<ProxyRule, String> {
+) -> Result<ProxyRule, IpcError> {
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
 
@@ -34,14 +34,12 @@ pub async fn create_proxy_rule(
     .bind(&id).bind(&name).bind(&path_prefix).bind(&target_base_url)
     .bind(&now).bind(&now)
     .execute(&state.db)
-    .await
-    .map_err(|e| e.to_string())?;
+    .await?;
 
-    sqlx::query_as::<_, ProxyRule>("SELECT * FROM proxy_rules WHERE id = ?")
+    Ok(sqlx::query_as::<_, ProxyRule>("SELECT * FROM proxy_rules WHERE id = ?")
         .bind(&id)
         .fetch_one(&state.db)
-        .await
-        .map_err(|e| e.to_string())
+        .await?)
 }
 
 #[tauri::command]
@@ -52,7 +50,7 @@ pub async fn update_proxy_rule(
     path_prefix: String,
     target_base_url: String,
     enabled: bool,
-) -> Result<(), String> {
+) -> Result<(), IpcError> {
     let now = chrono::Utc::now().to_rfc3339();
 
     let path_prefix = if path_prefix.starts_with('/') {
@@ -67,18 +65,16 @@ pub async fn update_proxy_rule(
     .bind(&name).bind(&path_prefix).bind(&target_base_url)
     .bind(enabled).bind(&now).bind(&id)
     .execute(&state.db)
-    .await
-    .map_err(|e| e.to_string())?;
+    .await?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn delete_proxy_rule(state: State<'_, AppState>, id: String) -> Result<(), String> {
+pub async fn delete_proxy_rule(state: State<'_, AppState>, id: String) -> Result<(), IpcError> {
     sqlx::query("DELETE FROM proxy_rules WHERE id = ?")
         .bind(&id)
         .execute(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
     Ok(())
 }
 
@@ -88,7 +84,7 @@ pub async fn list_proxy_logs(
     rule_id: Option<String>,
     limit: Option<i64>,
     offset: Option<i64>,
-) -> Result<PaginatedResult<ProxyLog>, String> {
+) -> Result<PaginatedResult<ProxyLog>, IpcError> {
     let limit = limit.unwrap_or(50);
     let offset = offset.unwrap_or(0);
 
@@ -98,16 +94,14 @@ pub async fn list_proxy_logs(
         )
         .bind(&rule_id).bind(limit).bind(offset)
         .fetch_all(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
 
         let (total,): (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM proxy_logs WHERE rule_id = ?"
         )
         .bind(&rule_id)
         .fetch_one(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
 
         (items, total)
     } else {
@@ -116,15 +110,13 @@ pub async fn list_proxy_logs(
         )
         .bind(limit).bind(offset)
         .fetch_all(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
 
         let (total,): (i64,) = sqlx::query_as(
             "SELECT COUNT(*) FROM proxy_logs"
         )
         .fetch_one(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
 
         (items, total)
     };
@@ -136,30 +128,27 @@ pub async fn list_proxy_logs(
 pub async fn get_proxy_log(
     state: State<'_, AppState>,
     id: String,
-) -> Result<Option<ProxyLog>, String> {
-    sqlx::query_as::<_, ProxyLog>("SELECT * FROM proxy_logs WHERE id = ?")
+) -> Result<Option<ProxyLog>, IpcError> {
+    Ok(sqlx::query_as::<_, ProxyLog>("SELECT * FROM proxy_logs WHERE id = ?")
         .bind(&id)
         .fetch_optional(&state.db)
-        .await
-        .map_err(|e| e.to_string())
+        .await?)
 }
 
 #[tauri::command]
 pub async fn clear_proxy_logs(
     state: State<'_, AppState>,
     rule_id: Option<String>,
-) -> Result<(), String> {
+) -> Result<(), IpcError> {
     if let Some(rule_id) = rule_id {
         sqlx::query("DELETE FROM proxy_logs WHERE rule_id = ?")
             .bind(&rule_id)
             .execute(&state.db)
-            .await
-            .map_err(|e| e.to_string())?;
+            .await?;
     } else {
         sqlx::query("DELETE FROM proxy_logs")
             .execute(&state.db)
-            .await
-            .map_err(|e| e.to_string())?;
+            .await?;
     }
     Ok(())
 }

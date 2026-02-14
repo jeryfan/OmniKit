@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   getConfig,
   listChannels,
   listTokens,
   listModelMappings,
   getUsageStats,
+  parseIpcError,
 } from "@/lib/tauri";
 import type {
   AppConfig,
@@ -100,7 +102,9 @@ export default function Dashboard() {
         setData({ config, channels, tokens, modelMappings, usageStats });
       })
       .catch((err) => {
-        setError(String(err));
+        const e = parseIpcError(err);
+        setError(e.message);
+        toast.error(e.message);
       });
   }, []);
 

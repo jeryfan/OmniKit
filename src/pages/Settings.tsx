@@ -15,6 +15,8 @@ import { useTheme } from "@/components/layout/ThemeProvider";
 import { getConfig, getServerStatus, updateConfig } from "@/lib/tauri";
 import type { AppConfig, ServerStatus } from "@/lib/tauri";
 import { useLanguage } from "@/lib/i18n";
+import { toast } from "sonner";
+import { parseIpcError } from "@/lib/tauri";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -42,7 +44,7 @@ export default function Settings() {
         setEditRetention(String(cfg.log_retention_days));
         setServerStatus(status);
       } catch (err) {
-        console.error("Failed to load settings:", err);
+        toast.error(parseIpcError(err).message);
       } finally {
         setLoading(false);
       }
@@ -69,7 +71,7 @@ export default function Settings() {
       setPortChanged(portWillChange);
       setTimeout(() => { setSaveSuccess(false); setPortChanged(false); }, 5000);
     } catch (err) {
-      console.error("Failed to save config:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setSaving(false);
     }

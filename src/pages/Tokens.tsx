@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import {
   Plus,
   Copy,
@@ -17,6 +18,7 @@ import {
   updateToken,
   deleteToken,
   resetTokenQuota,
+  parseIpcError,
 } from "@/lib/tauri";
 import { useLanguage } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -191,6 +193,8 @@ function GenerateTokenDialog({
       onCreated(token);
       resetForm();
       onOpenChange(false);
+    } catch (err) {
+      toast.error(parseIpcError(err).message);
     } finally {
       setSaving(false);
     }
@@ -361,6 +365,8 @@ function EditTokenDialog({ open, onOpenChange, token, onSaved }: EditDialogProps
       });
       onSaved();
       onOpenChange(false);
+    } catch (err) {
+      toast.error(parseIpcError(err).message);
     } finally {
       setSaving(false);
     }
@@ -535,6 +541,8 @@ export default function Tokens() {
     try {
       const list = await listTokens();
       setTokens(list);
+    } catch (err) {
+      toast.error(parseIpcError(err).message);
     } finally {
       setLoading(false);
     }
@@ -551,16 +559,24 @@ export default function Tokens() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteToken(deleteTarget.id);
-    setDeleteTarget(null);
-    refresh();
+    try {
+      await deleteToken(deleteTarget.id);
+      setDeleteTarget(null);
+      refresh();
+    } catch (err) {
+      toast.error(parseIpcError(err).message);
+    }
   };
 
   const handleResetQuota = async () => {
     if (!resetTarget) return;
-    await resetTokenQuota(resetTarget.id);
-    setResetTarget(null);
-    refresh();
+    try {
+      await resetTokenQuota(resetTarget.id);
+      setResetTarget(null);
+      refresh();
+    } catch (err) {
+      toast.error(parseIpcError(err).message);
+    }
   };
 
   // --- Loading state ---

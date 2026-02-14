@@ -28,9 +28,10 @@ import {
   CartesianGrid,
   Legend,
 } from "recharts";
-import { getUsageStats } from "@/lib/tauri";
+import { getUsageStats, parseIpcError } from "@/lib/tauri";
 import type { UsageStats as UsageStatsType } from "@/lib/tauri";
 import { useLanguage } from "@/lib/i18n";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Time range options
@@ -126,7 +127,9 @@ export default function UsageStats() {
       const data = await getUsageStats(rangeDays);
       setStats(data);
     } catch (err) {
-      setError(String(err));
+      const e = parseIpcError(err);
+      setError(e.message);
+      toast.error(e.message);
     } finally {
       setLoading(false);
     }

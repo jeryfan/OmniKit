@@ -39,6 +39,8 @@ import {
 } from "@/lib/tauri";
 import { Pagination } from "@/components/ui/pagination";
 import { useLanguage } from "@/lib/i18n";
+import { toast } from "sonner";
+import { parseIpcError } from "@/lib/tauri";
 
 const PAGE_SIZE = 20;
 
@@ -152,7 +154,7 @@ export default function RequestLogs() {
       setLogs(result.items);
       setTotal(result.total);
     } catch (err) {
-      console.error("Failed to fetch request logs:", err);
+      toast.error(parseIpcError(err).message);
       setLogs([]);
     } finally {
       setLoading(false);
@@ -194,7 +196,7 @@ export default function RequestLogs() {
       setModelFilter("");
       await fetchLogs();
     } catch (err) {
-      console.error("Failed to clear logs:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setClearing(false);
     }
@@ -208,7 +210,7 @@ export default function RequestLogs() {
       const log = await getRequestLog(id);
       setSelectedLog(log);
     } catch (err) {
-      console.error("Failed to fetch log detail:", err);
+      toast.error(parseIpcError(err).message);
       setSelectedLog(null);
     } finally {
       setDetailLoading(false);
@@ -221,7 +223,7 @@ export default function RequestLogs() {
       await retryRequestLog(id);
       await fetchLogs();
     } catch (err) {
-      console.error(t.requestLogs.retryFailed, err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setRetrying(null);
     }
@@ -233,7 +235,7 @@ export default function RequestLogs() {
       setCopiedTab(tab);
       setTimeout(() => setCopiedTab(null), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      toast.error("Failed to copy");
     }
   }
 

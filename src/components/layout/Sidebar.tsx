@@ -126,43 +126,48 @@ export function Sidebar() {
             </NavLink>
           )}
           <div className={cn("flex items-center", collapsed ? "flex-col gap-1" : "gap-0.5")}>
-            <Tooltip>
-              <TooltipTrigger asChild>
+            {collapsed ? (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
+                      <Languages className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    {language === "zh" ? "English" : "中文"}
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
+                      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t.sidebar.toggleTheme}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" onClick={toggleCollapsed} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
+                      <PanelLeftOpen className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{t.sidebar.expand}</TooltipContent>
+                </Tooltip>
+              </>
+            ) : (
+              <>
                 <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
                   <Languages className="h-4 w-4" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {language === "zh" ? "English" : "中文"}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">{t.sidebar.toggleTheme}</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleCollapsed}
-                  className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground"
-                >
-                  {collapsed ? (
-                    <PanelLeftOpen className="h-4 w-4" />
-                  ) : (
-                    <PanelLeftClose className="h-4 w-4" />
-                  )}
+                <Button variant="ghost" size="icon" onClick={toggleCollapsed} className="h-8 w-8 text-sidebar-foreground hover:text-sidebar-accent-foreground">
+                  <PanelLeftClose className="h-4 w-4" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {collapsed ? t.sidebar.expand : t.sidebar.collapse}
-              </TooltipContent>
-            </Tooltip>
+              </>
+            )}
           </div>
         </div>
       </div>

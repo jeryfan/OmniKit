@@ -1,7 +1,55 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Json, Response};
+use serde::Serialize;
 use serde_json::json;
 use thiserror::Error;
+
+// === IPC Error type for Tauri commands ===
+
+#[derive(Debug, Clone, Serialize)]
+pub struct IpcError {
+    pub code: String,
+    pub message: String,
+}
+
+impl IpcError {
+    pub fn not_found(msg: impl Into<String>) -> Self {
+        Self { code: "NOT_FOUND".into(), message: msg.into() }
+    }
+
+    pub fn validation(msg: impl Into<String>) -> Self {
+        Self { code: "VALIDATION".into(), message: msg.into() }
+    }
+
+    pub fn internal(msg: impl Into<String>) -> Self {
+        Self { code: "INTERNAL".into(), message: msg.into() }
+    }
+}
+
+impl From<sqlx::Error> for IpcError {
+    fn from(e: sqlx::Error) -> Self {
+        if let sqlx::Error::Database(ref db_err) = e {
+            if db_err.code().as_deref() == Some("2067") {
+                return Self { code: "CONFLICT".into(), message: db_err.message().to_string() };
+            }
+        }
+        Self { code: "DB_ERROR".into(), message: e.to_string() }
+    }
+}
+
+impl From<reqwest::Error> for IpcError {
+    fn from(e: reqwest::Error) -> Self {
+        Self { code: "INTERNAL".into(), message: e.to_string() }
+    }
+}
+
+impl From<serde_json::Error> for IpcError {
+    fn from(e: serde_json::Error) -> Self {
+        Self { code: "VALIDATION".into(), message: e.to_string() }
+    }
+}
+
+// === HTTP AppError for Axum handlers ===
 
 #[derive(Error, Debug)]
 pub enum AppError {

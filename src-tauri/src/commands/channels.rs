@@ -1,13 +1,13 @@
 use crate::db::models::{Channel, ChannelApiKey};
+use crate::error::IpcError;
 use crate::AppState;
 use tauri::State;
 
 #[tauri::command]
-pub async fn list_channels(state: State<'_, AppState>) -> Result<Vec<Channel>, String> {
-    sqlx::query_as::<_, Channel>("SELECT * FROM channels ORDER BY priority ASC, name ASC")
+pub async fn list_channels(state: State<'_, AppState>) -> Result<Vec<Channel>, IpcError> {
+    Ok(sqlx::query_as::<_, Channel>("SELECT * FROM channels ORDER BY priority ASC, name ASC")
         .fetch_all(&state.db)
-        .await
-        .map_err(|e| e.to_string())
+        .await?)
 }
 
 #[tauri::command]
@@ -18,7 +18,7 @@ pub async fn create_channel(
     base_url: String,
     priority: i32,
     weight: i32,
-) -> Result<Channel, String> {
+) -> Result<Channel, IpcError> {
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query(
@@ -27,14 +27,12 @@ pub async fn create_channel(
     .bind(&id).bind(&name).bind(&provider).bind(&base_url)
     .bind(priority).bind(weight).bind(&now).bind(&now)
     .execute(&state.db)
-    .await
-    .map_err(|e| e.to_string())?;
+    .await?;
 
-    sqlx::query_as::<_, Channel>("SELECT * FROM channels WHERE id = ?")
+    Ok(sqlx::query_as::<_, Channel>("SELECT * FROM channels WHERE id = ?")
         .bind(&id)
         .fetch_one(&state.db)
-        .await
-        .map_err(|e| e.to_string())
+        .await?)
 }
 
 #[tauri::command]
@@ -48,7 +46,7 @@ pub async fn update_channel(
     weight: i32,
     enabled: bool,
     key_rotation: bool,
-) -> Result<(), String> {
+) -> Result<(), IpcError> {
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query(
         "UPDATE channels SET name = ?, provider = ?, base_url = ?, priority = ?, weight = ?, enabled = ?, key_rotation = ?, updated_at = ? WHERE id = ?"
@@ -57,18 +55,16 @@ pub async fn update_channel(
     .bind(priority).bind(weight).bind(enabled).bind(key_rotation)
     .bind(&now).bind(&id)
     .execute(&state.db)
-    .await
-    .map_err(|e| e.to_string())?;
+    .await?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn delete_channel(state: State<'_, AppState>, id: String) -> Result<(), String> {
+pub async fn delete_channel(state: State<'_, AppState>, id: String) -> Result<(), IpcError> {
     sqlx::query("DELETE FROM channels WHERE id = ?")
         .bind(&id)
         .execute(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
     Ok(())
 }
 
@@ -76,12 +72,11 @@ pub async fn delete_channel(state: State<'_, AppState>, id: String) -> Result<()
 pub async fn list_channel_api_keys(
     state: State<'_, AppState>,
     channel_id: String,
-) -> Result<Vec<ChannelApiKey>, String> {
-    sqlx::query_as::<_, ChannelApiKey>("SELECT * FROM channel_api_keys WHERE channel_id = ?")
+) -> Result<Vec<ChannelApiKey>, IpcError> {
+    Ok(sqlx::query_as::<_, ChannelApiKey>("SELECT * FROM channel_api_keys WHERE channel_id = ?")
         .bind(&channel_id)
         .fetch_all(&state.db)
-        .await
-        .map_err(|e| e.to_string())
+        .await?)
 }
 
 #[tauri::command]
@@ -89,30 +84,27 @@ pub async fn add_channel_api_key(
     state: State<'_, AppState>,
     channel_id: String,
     key_value: String,
-) -> Result<ChannelApiKey, String> {
+) -> Result<ChannelApiKey, IpcError> {
     let id = uuid::Uuid::new_v4().to_string();
     sqlx::query(
         "INSERT INTO channel_api_keys (id, channel_id, key_value, enabled) VALUES (?, ?, ?, 1)"
     )
     .bind(&id).bind(&channel_id).bind(&key_value)
     .execute(&state.db)
-    .await
-    .map_err(|e| e.to_string())?;
+    .await?;
 
-    sqlx::query_as::<_, ChannelApiKey>("SELECT * FROM channel_api_keys WHERE id = ?")
+    Ok(sqlx::query_as::<_, ChannelApiKey>("SELECT * FROM channel_api_keys WHERE id = ?")
         .bind(&id)
         .fetch_one(&state.db)
-        .await
-        .map_err(|e| e.to_string())
+        .await?)
 }
 
 #[tauri::command]
-pub async fn delete_channel_api_key(state: State<'_, AppState>, id: String) -> Result<(), String> {
+pub async fn delete_channel_api_key(state: State<'_, AppState>, id: String) -> Result<(), IpcError> {
     sqlx::query("DELETE FROM channel_api_keys WHERE id = ?")
         .bind(&id)
         .execute(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
     Ok(())
 }
 
@@ -121,12 +113,11 @@ pub async fn toggle_channel_api_key(
     state: State<'_, AppState>,
     id: String,
     enabled: bool,
-) -> Result<(), String> {
+) -> Result<(), IpcError> {
     sqlx::query("UPDATE channel_api_keys SET enabled = ? WHERE id = ?")
         .bind(enabled).bind(&id)
         .execute(&state.db)
-        .await
-        .map_err(|e| e.to_string())?;
+        .await?;
     Ok(())
 }
 
@@ -234,27 +225,25 @@ async fn send_test_request(
 async fn fetch_api_key(
     db: &sqlx::SqlitePool,
     channel_id: &str,
-) -> Result<Option<String>, String> {
-    sqlx::query_scalar::<_, String>(
+) -> Result<Option<String>, IpcError> {
+    Ok(sqlx::query_scalar::<_, String>(
         "SELECT key_value FROM channel_api_keys WHERE channel_id = ? AND enabled = 1 LIMIT 1",
     )
     .bind(channel_id)
     .fetch_optional(db)
-    .await
-    .map_err(|e| e.to_string())
+    .await?)
 }
 
 #[tauri::command]
 pub async fn test_channel(
     state: State<'_, AppState>,
     id: String,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, IpcError> {
     let channel = sqlx::query_as::<_, Channel>("SELECT * FROM channels WHERE id = ?")
         .bind(&id)
         .fetch_optional(&state.db)
-        .await
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| "Channel not found".to_string())?;
+        .await?
+        .ok_or_else(|| IpcError::not_found("Channel not found"))?;
 
     let api_key = fetch_api_key(&state.db, &id).await?;
     let base_url = channel.base_url.trim_end_matches('/');
@@ -292,7 +281,7 @@ pub async fn test_channel_custom(
     method: String,
     url: String,
     headers: std::collections::HashMap<String, String>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, IpcError> {
     let api_key = if let Some(cid) = &channel_id {
         fetch_api_key(&state.db, cid).await?
     } else {
@@ -314,7 +303,7 @@ pub async fn save_channel_test_config(
     id: String,
     test_url: Option<String>,
     test_headers: Option<String>,
-) -> Result<(), String> {
+) -> Result<(), IpcError> {
     let now = chrono::Utc::now().to_rfc3339();
     sqlx::query(
         "UPDATE channels SET test_url = ?, test_headers = ?, updated_at = ? WHERE id = ?",
@@ -324,7 +313,6 @@ pub async fn save_channel_test_config(
     .bind(&now)
     .bind(&id)
     .execute(&state.db)
-    .await
-    .map_err(|e| e.to_string())?;
+    .await?;
     Ok(())
 }

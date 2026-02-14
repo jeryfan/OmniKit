@@ -47,6 +47,8 @@ import {
   type Channel,
 } from "@/lib/tauri";
 import { useLanguage } from "@/lib/i18n";
+import { toast } from "sonner";
+import { parseIpcError } from "@/lib/tauri";
 
 const MODALITIES = [
   { value: "chat", label: "Chat" },
@@ -115,7 +117,7 @@ export default function ModelMappings() {
       setMappings(m);
       setChannels(c);
     } catch (err) {
-      console.error("Failed to fetch model mappings:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setLoading(false);
     }
@@ -130,7 +132,7 @@ export default function ModelMappings() {
       const m = await listModelMappings();
       setMappings(m);
     } catch (err) {
-      console.error("Failed to refresh model mappings:", err);
+      toast.error(parseIpcError(err).message);
     }
   }, []);
 
@@ -171,7 +173,7 @@ export default function ModelMappings() {
       setDialogOpen(false);
       await refreshMappings();
     } catch (err) {
-      console.error("Failed to save model mapping:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setSaving(false);
     }
@@ -187,7 +189,7 @@ export default function ModelMappings() {
       setDeleteTarget(null);
       await refreshMappings();
     } catch (err) {
-      console.error("Failed to delete model mapping:", err);
+      toast.error(parseIpcError(err).message);
     } finally {
       setDeleting(false);
     }
