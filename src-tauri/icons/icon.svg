@@ -1,22 +1,51 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#4f46e5"/>
-      <stop offset="100%" stop-color="#a855f7"/>
+      <stop offset="0%" stop-color="#1a3a6e"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
 
-  <!-- Left input lines converging to hub -->
-  <line x1="190" y1="330" x2="410" y2="462" stroke="white" stroke-width="52" stroke-linecap="round"/>
-  <line x1="190" y1="512" x2="388" y2="512" stroke="white" stroke-width="52" stroke-linecap="round"/>
-  <line x1="190" y1="694" x2="410" y2="562" stroke="white" stroke-width="52" stroke-linecap="round"/>
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
 
-  <!-- Right output lines diverging from hub -->
-  <line x1="614" y1="462" x2="834" y2="330" stroke="white" stroke-width="52" stroke-linecap="round"/>
-  <line x1="636" y1="512" x2="834" y2="512" stroke="white" stroke-width="52" stroke-linecap="round"/>
-  <line x1="614" y1="562" x2="834" y2="694" stroke="white" stroke-width="52" stroke-linecap="round"/>
+  <g transform="translate(512, 520)">
+    <!-- Face - main rounded shape -->
+    <ellipse cx="0" cy="20" rx="210" ry="190" fill="#e0f2fe"/>
 
-  <!-- Central hub diamond -->
-  <rect x="427" y="427" width="170" height="170" rx="24" transform="rotate(45 512 512)" fill="white"/>
+    <!-- Casque/crest - tall, dramatic -->
+    <path d="M -70,-170 C -50,-220 -30,-290 0,-320 C 30,-290 50,-220 70,-170" fill="#e0f2fe"/>
+
+    <!-- Left turret eye - protruding circle -->
+    <circle cx="-155" cy="-40" r="85" fill="#e0f2fe"/>
+    <circle cx="-155" cy="-40" r="85" fill="none" stroke="#bae6fd" stroke-width="4"/>
+    <!-- Left eyeball -->
+    <circle cx="-155" cy="-40" r="60" fill="#1a3a6e"/>
+    <!-- Left pupil - looking left -->
+    <circle cx="-178" cy="-44" r="24" fill="white"/>
+
+    <!-- Right turret eye - protruding circle -->
+    <circle cx="155" cy="-40" r="85" fill="#e0f2fe"/>
+    <circle cx="155" cy="-40" r="85" fill="none" stroke="#bae6fd" stroke-width="4"/>
+    <!-- Right eyeball -->
+    <circle cx="155" cy="-40" r="60" fill="#1a3a6e"/>
+    <!-- Right pupil - looking right -->
+    <circle cx="178" cy="-44" r="24" fill="white"/>
+
+    <!-- Cute wide smile -->
+    <path d="M -60,90 Q 0,145 60,90" fill="none" stroke="#1a3a6e" stroke-width="14" stroke-linecap="round"/>
+
+    <!-- Nostrils -->
+    <circle cx="-18" cy="48" r="7" fill="#1a3a6e" opacity="0.35"/>
+    <circle cx="18" cy="48" r="7" fill="#1a3a6e" opacity="0.35"/>
+
+    <!-- Cheek blush -->
+    <ellipse cx="-120" cy="85" rx="30" ry="16" fill="#7dd3fc" opacity="0.5"/>
+    <ellipse cx="120" cy="85" rx="30" ry="16" fill="#7dd3fc" opacity="0.5"/>
+
+    <!-- Scale pattern on forehead (subtle) -->
+    <circle cx="0" cy="-60" r="6" fill="#bae6fd" opacity="0.6"/>
+    <circle cx="-20" cy="-80" r="5" fill="#bae6fd" opacity="0.4"/>
+    <circle cx="20" cy="-80" r="5" fill="#bae6fd" opacity="0.4"/>
+  </g>
 </svg>
