@@ -75,3 +75,76 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+  publish-and-update-homebrew:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Get version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases --jq '.[] | select(.draft==true and .tag_name=="${{ github.ref_name }}") | .id')
+          if [ -n "$RELEASE_ID" ]; then
+            gh api -X PATCH repos/${{ github.repository }}/releases/$RELEASE_ID -f draft=false
+          fi
+
+      - name: Download DMGs and compute SHA-256
+        id: sha
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          curl -sL "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/AnyLLM_${VERSION}_aarch64.dmg" -o arm.dmg
+          curl -sL "https://github.com/${{ github.repository }}/releases/download/v${VERSION}/AnyLLM_${VERSION}_x64.dmg" -o intel.dmg
+          echo "arm=$(sha256sum arm.dmg | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "intel=$(sha256sum intel.dmg | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Update Homebrew Cask
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          ARM_SHA=${{ steps.sha.outputs.arm }}
+          INTEL_SHA=${{ steps.sha.outputs.intel }}
+
+          CASK_CONTENT=$(cat <<'CASK_EOF'
+          cask "anyllm" do
+            version "VERSION_PLACEHOLDER"
+            sha256 arm:   "ARM_SHA_PLACEHOLDER",
+                   intel: "INTEL_SHA_PLACEHOLDER"
+
+            on_arm do
+              url "https://github.com/jeryfan/anyllm/releases/download/v#{version}/AnyLLM_#{version}_aarch64.dmg"
+            end
+            on_intel do
+              url "https://github.com/jeryfan/anyllm/releases/download/v#{version}/AnyLLM_#{version}_x64.dmg"
+            end
+
+            name "AnyLLM"
+            desc "LLM API gateway desktop app"
+            homepage "https://github.com/jeryfan/anyllm"
+
+            app "AnyLLM.app"
+          end
+          CASK_EOF
+          )
+
+          CASK_CONTENT="${CASK_CONTENT//VERSION_PLACEHOLDER/$VERSION}"
+          CASK_CONTENT="${CASK_CONTENT//ARM_SHA_PLACEHOLDER/$ARM_SHA}"
+          CASK_CONTENT="${CASK_CONTENT//INTEL_SHA_PLACEHOLDER/$INTEL_SHA}"
+
+          # Get current file SHA for update API
+          FILE_SHA=$(gh api repos/jeryfan/homebrew-anyllm/contents/Casks/anyllm.rb --jq '.sha')
+
+          # Update file via GitHub API
+          echo "$CASK_CONTENT" | base64 | tr -d '\n' > /tmp/content.b64
+          gh api -X PUT repos/jeryfan/homebrew-anyllm/contents/Casks/anyllm.rb \
+            -f message="chore: bump to v${VERSION}" \
+            -f content="$(cat /tmp/content.b64)" \
+            -f sha="$FILE_SHA"
