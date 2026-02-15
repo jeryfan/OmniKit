@@ -47,6 +47,68 @@ export interface Translations {
     expand: string;
     language: string;
     proxy: string;
+    rules: string;
+  };
+  rules: {
+    title: string;
+    subtitle: string;
+    myRules: string;
+    ruleStore: string;
+    createRule: string;
+    editRule: string;
+    duplicateRule: string;
+    deleteRule: string;
+    importRule: string;
+    exportRule: string;
+    exportAll: string;
+    slug: string;
+    ruleType: string;
+    system: string;
+    user: string;
+    modality: string;
+    version: string;
+    author: string;
+    tags: string;
+    basicInfo: string;
+    templates: string;
+    decodeRequest: string;
+    encodeRequest: string;
+    decodeResponse: string;
+    encodeResponse: string;
+    decodeStreamChunk: string;
+    encodeStreamChunk: string;
+    httpConfig: string;
+    testPanel: string;
+    testInput: string;
+    testOutput: string;
+    runTest: string;
+    validate: string;
+    validationSuccess: string;
+    optional: string;
+    required: string;
+    systemRuleReadonly: string;
+    confirmDelete: string;
+    importSuccess: string;
+    exportSuccess: string;
+    slugConflict: string;
+    overwrite: string;
+    skip: string;
+    importAsNew: string;
+    install: string;
+    update: string;
+    installed: string;
+    storeTab: string;
+    storeEmpty: string;
+    storeLoading: string;
+    storeFetchError: string;
+    installing: string;
+    aiGenerate: string;
+    aiGenerateDesc: string;
+    aiPromptPlaceholder: string;
+    generating: string;
+    modelName: string;
+    selectChannel: string;
+    aiGenerateSuccess: string;
   };
   dashboard: {
     title: string;
@@ -375,6 +437,68 @@ const en: Translations = {
     expand: "Expand sidebar",
     language: "Language",
     proxy: "Proxy",
+    rules: "Rules",
+  },
+  rules: {
+    title: "Conversion Rules",
+    subtitle: "Manage API format conversion rules. Create custom rules or use built-in ones.",
+    myRules: "My Rules",
+    ruleStore: "Rule Store",
+    createRule: "Create Rule",
+    editRule: "Edit Rule",
+    duplicateRule: "Duplicate",
+    deleteRule: "Delete Rule",
+    importRule: "Import",
+    exportRule: "Export",
+    exportAll: "Export All",
+    slug: "Slug",
+    ruleType: "Type",
+    system: "System",
+    user: "User",
+    modality: "Modality",
+    version: "Version",
+    author: "Author",
+    tags: "Tags",
+    basicInfo: "Basic Info",
+    templates: "Templates",
+    decodeRequest: "Decode Request",
+    encodeRequest: "Encode Request",
+    decodeResponse: "Decode Response",
+    encodeResponse: "Encode Response",
+    decodeStreamChunk: "Decode Stream Chunk",
+    encodeStreamChunk: "Encode Stream Chunk",
+    httpConfig: "HTTP Config",
+    testPanel: "Test Panel",
+    testInput: "Input JSON",
+    testOutput: "Output",
+    runTest: "Run Test",
+    validate: "Validate",
+    validationSuccess: "All templates are valid",
+    optional: "Optional",
+    required: "Required",
+    systemRuleReadonly: "System rules are read-only",
+    confirmDelete: "Are you sure you want to delete this rule?",
+    importSuccess: "Rule imported successfully",
+    exportSuccess: "Rule exported successfully",
+    slugConflict: "A rule with this slug already exists",
+    overwrite: "Overwrite",
+    skip: "Skip",
+    importAsNew: "Import as New",
+    install: "Install",
+    update: "Update",
+    installed: "Installed",
+    storeTab: "Rule Store",
+    storeEmpty: "No rules available in the store yet.",
+    storeLoading: "Loading rule store...",
+    storeFetchError: "Failed to load rule store. Check your network connection.",
+    installing: "Installing...",
+    aiGenerate: "AI Generate",
+    aiGenerateDesc: "Describe the conversion rule you want, and AI will generate JSONata templates for you.",
+    aiPromptPlaceholder: "e.g. Convert OpenAI Chat Completions format to Anthropic Messages format",
+    generating: "Generating...",
+    modelName: "Model",
+    selectChannel: "Select a channel",
+    aiGenerateSuccess: "AI generated rule filled into form",
   },
   dashboard: {
     title: "Dashboard",
@@ -700,6 +824,68 @@ const zh: Translations = {
     expand: "展开侧边栏",
     language: "语言",
     proxy: "代理",
+    rules: "转换规则",
+  },
+  rules: {
+    title: "转换规则",
+    subtitle: "管理 API 格式转换规则。创建自定义规则或使用内置规则。",
+    myRules: "我的规则",
+    ruleStore: "规则仓库",
+    createRule: "创建规则",
+    editRule: "编辑规则",
+    duplicateRule: "复制",
+    deleteRule: "删除规则",
+    importRule: "导入",
+    exportRule: "导出",
+    exportAll: "导出全部",
+    slug: "标识符",
+    ruleType: "类型",
+    system: "系统",
+    user: "用户",
+    modality: "模态",
+    version: "版本",
+    author: "作者",
+    tags: "标签",
+    basicInfo: "基本信息",
+    templates: "模板",
+    decodeRequest: "解码请求",
+    encodeRequest: "编码请求",
+    decodeResponse: "解码响应",
+    encodeResponse: "编码响应",
+    decodeStreamChunk: "解码流式块",
+    encodeStreamChunk: "编码流式块",
+    httpConfig: "HTTP 配置",
+    testPanel: "测试面板",
+    testInput: "输入 JSON",
+    testOutput: "输出",
+    runTest: "运行测试",
+    validate: "验证",
+    validationSuccess: "所有模板均有效",
+    optional: "可选",
+    required: "必填",
+    systemRuleReadonly: "系统规则不可编辑",
+    confirmDelete: "确定要删除此规则吗？",
+    importSuccess: "规则导入成功",
+    exportSuccess: "规则导出成功",
+    slugConflict: "此标识符的规则已存在",
+    overwrite: "覆盖",
+    skip: "跳过",
+    importAsNew: "作为新规则导入",
+    install: "安装",
+    update: "更新",
+    installed: "已安装",
+    storeTab: "规则商店",
+    storeEmpty: "规则商店暂无可用规则。",
+    storeLoading: "加载规则商店中...",
+    storeFetchError: "加载规则商店失败，请检查网络连接。",
+    installing: "安装中...",
+    aiGenerate: "AI 生成",
+    aiGenerateDesc: "描述你想要的转换规则，AI 将自动生成 JSONata 模板。",
+    aiPromptPlaceholder: "例如：将 OpenAI Chat Completions 格式转换为 Anthropic Messages 格式",
+    generating: "生成中...",
+    modelName: "模型",
+    selectChannel: "选择渠道",
+    aiGenerateSuccess: "AI 生成的规则已填充到表单",
   },
   dashboard: {
     title: "仪表盘",

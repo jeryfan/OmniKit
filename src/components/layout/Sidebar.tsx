@@ -7,6 +7,7 @@ import {
   KeyRound,
   ScrollText,
   Waypoints,
+  FileCode2,
   Settings,
   Sun,
   Moon,
@@ -51,6 +52,7 @@ export function Sidebar() {
   const navItems = [
     { to: "/", icon: LayoutDashboard, label: t.sidebar.dashboard },
     { to: "/channels", icon: Network, label: t.sidebar.channels },
+    { to: "/rules", icon: FileCode2, label: t.sidebar.rules },
     { to: "/model-mappings", icon: ArrowRightLeft, label: t.sidebar.modelMappings },
     { to: "/tokens", icon: KeyRound, label: t.sidebar.tokens },
     { to: "/request-logs", icon: ScrollText, label: t.sidebar.requestLogs },

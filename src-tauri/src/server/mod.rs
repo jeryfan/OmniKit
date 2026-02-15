@@ -10,7 +10,7 @@ pub async fn start(
     pool: SqlitePool,
     port: u16,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let app = router::create_router(pool);
+    let app = router::create_router(pool).await;
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

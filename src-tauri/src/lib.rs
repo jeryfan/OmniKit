@@ -4,6 +4,7 @@ mod db;
 mod error;
 mod modality;
 mod routing;
+mod rules;
 mod server;
 
 use sqlx::SqlitePool;
@@ -57,6 +58,17 @@ pub fn run() {
             commands::proxy::list_proxy_logs,
             commands::proxy::get_proxy_log,
             commands::proxy::clear_proxy_logs,
+            commands::rules::list_conversion_rules,
+            commands::rules::get_conversion_rule,
+            commands::rules::create_conversion_rule,
+            commands::rules::update_conversion_rule,
+            commands::rules::delete_conversion_rule,
+            commands::rules::duplicate_conversion_rule,
+            commands::rules::validate_rule_templates,
+            commands::rules::test_rule_template,
+            commands::rules::fetch_rule_store_index,
+            commands::rules::install_rule_from_store,
+            commands::rules::generate_rule_with_ai,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
@@ -70,6 +82,11 @@ pub fn run() {
                 let pool = db::init_pool(&db_path)
                     .await
                     .expect("failed to initialize database");
+
+                // Seed built-in system rules on first startup
+                if let Err(e) = rules::seed_system_rules(&pool).await {
+                    log::error!("Failed to seed system rules: {}", e);
+                }
 
                 let config = config::AppConfig::load_from_db(&pool)
                     .await

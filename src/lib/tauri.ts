@@ -456,3 +456,192 @@ export async function getProxyLog(id: string): Promise<ProxyLog | null> {
 export async function clearProxyLogs(ruleId?: string): Promise<void> {
   return invoke<void>("clear_proxy_logs", { ruleId });
 }
+
+// === Conversion Rule types ===
+
+export interface ConversionRule {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  author: string | null;
+  version: string;
+  tags: string | null;
+  rule_type: string;
+  modality: string;
+  decode_request: string;
+  encode_request: string;
+  decode_response: string;
+  encode_response: string;
+  decode_stream_chunk: string | null;
+  encode_stream_chunk: string | null;
+  http_config: string | null;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// === Conversion Rule commands ===
+
+export async function listConversionRules(): Promise<ConversionRule[]> {
+  return invoke<ConversionRule[]>("list_conversion_rules");
+}
+
+export async function getConversionRule(id: string): Promise<ConversionRule> {
+  return invoke<ConversionRule>("get_conversion_rule", { id });
+}
+
+export async function createConversionRule(data: {
+  slug: string;
+  name: string;
+  description?: string;
+  author?: string;
+  version?: string;
+  tags?: string;
+  modality?: string;
+  decode_request: string;
+  encode_request: string;
+  decode_response: string;
+  encode_response: string;
+  decode_stream_chunk?: string;
+  encode_stream_chunk?: string;
+  http_config?: string;
+}): Promise<ConversionRule> {
+  return invoke<ConversionRule>("create_conversion_rule", {
+    slug: data.slug,
+    name: data.name,
+    description: data.description,
+    author: data.author,
+    version: data.version,
+    tags: data.tags,
+    modality: data.modality,
+    decodeRequest: data.decode_request,
+    encodeRequest: data.encode_request,
+    decodeResponse: data.decode_response,
+    encodeResponse: data.encode_response,
+    decodeStreamChunk: data.decode_stream_chunk,
+    encodeStreamChunk: data.encode_stream_chunk,
+    httpConfig: data.http_config,
+  });
+}
+
+export async function updateConversionRule(data: {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  author?: string;
+  version?: string;
+  tags?: string;
+  modality?: string;
+  decode_request: string;
+  encode_request: string;
+  decode_response: string;
+  encode_response: string;
+  decode_stream_chunk?: string;
+  encode_stream_chunk?: string;
+  http_config?: string;
+  enabled: boolean;
+}): Promise<void> {
+  return invoke<void>("update_conversion_rule", {
+    id: data.id,
+    slug: data.slug,
+    name: data.name,
+    description: data.description,
+    author: data.author,
+    version: data.version,
+    tags: data.tags,
+    modality: data.modality,
+    decodeRequest: data.decode_request,
+    encodeRequest: data.encode_request,
+    decodeResponse: data.decode_response,
+    encodeResponse: data.encode_response,
+    decodeStreamChunk: data.decode_stream_chunk,
+    encodeStreamChunk: data.encode_stream_chunk,
+    httpConfig: data.http_config,
+    enabled: data.enabled,
+  });
+}
+
+export async function deleteConversionRule(id: string): Promise<void> {
+  return invoke<void>("delete_conversion_rule", { id });
+}
+
+export async function duplicateConversionRule(id: string): Promise<ConversionRule> {
+  return invoke<ConversionRule>("duplicate_conversion_rule", { id });
+}
+
+export async function validateRuleTemplates(data: {
+  decode_request: string;
+  encode_request: string;
+  decode_response: string;
+  encode_response: string;
+  decode_stream_chunk?: string;
+  encode_stream_chunk?: string;
+}): Promise<void> {
+  return invoke<void>("validate_rule_templates", {
+    decodeRequest: data.decode_request,
+    encodeRequest: data.encode_request,
+    decodeResponse: data.decode_response,
+    encodeResponse: data.encode_response,
+    decodeStreamChunk: data.decode_stream_chunk,
+    encodeStreamChunk: data.encode_stream_chunk,
+  });
+}
+
+export async function testRuleTemplate(
+  expression: string,
+  inputJson: string,
+): Promise<string> {
+  return invoke<string>("test_rule_template", {
+    expression,
+    inputJson,
+  });
+}
+
+// === Rule Store commands ===
+
+export interface RuleIndexEntry {
+  slug: string;
+  name: string;
+  description: string;
+  author: string;
+  version: string;
+  tags: string[];
+  modality: string;
+}
+
+export interface RuleIndex {
+  rules: RuleIndexEntry[];
+}
+
+export async function fetchRuleStoreIndex(): Promise<RuleIndex> {
+  return invoke<RuleIndex>("fetch_rule_store_index");
+}
+
+export async function installRuleFromStore(slug: string): Promise<ConversionRule> {
+  return invoke<ConversionRule>("install_rule_from_store", { slug });
+}
+
+// === AI Rule Generation ===
+
+export interface GeneratedRule {
+  name: string;
+  slug: string;
+  description: string;
+  decode_request: string;
+  encode_request: string;
+  decode_response: string;
+  encode_response: string;
+  decode_stream_chunk: string;
+  encode_stream_chunk: string;
+  http_config: string;
+}
+
+export async function generateRuleWithAi(
+  channelId: string,
+  model: string,
+  prompt: string,
+): Promise<GeneratedRule> {
+  return invoke<GeneratedRule>("generate_rule_with_ai", { channelId, model, prompt });
+}

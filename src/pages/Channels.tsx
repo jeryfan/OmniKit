@@ -82,6 +82,8 @@ import {
   testChannel,
   testChannelCustom,
   saveChannelTestConfig,
+  listConversionRules,
+  type ConversionRule,
 } from "@/lib/tauri";
 import { toast } from "sonner";
 import { parseIpcError } from "@/lib/tauri";
@@ -91,24 +93,16 @@ import { EmptyState } from "@/components/empty-state";
 import { EnabledBadge } from "@/components/status-badge";
 
 // ---------------------------------------------------------------------------
-// Constants
+// Constants (fallback for when rules haven't loaded)
 // ---------------------------------------------------------------------------
 
-const PROVIDERS = ["openai", "anthropic", "gemini", "moonshot"] as const;
-type Provider = (typeof PROVIDERS)[number];
-
-const PROVIDER_DEFAULT_URLS: Record<Provider, string> = {
+const PROVIDER_DEFAULT_URLS: Record<string, string> = {
+  "openai-chat": "https://api.openai.com",
   openai: "https://api.openai.com",
   anthropic: "https://api.anthropic.com",
   gemini: "https://generativelanguage.googleapis.com",
   moonshot: "https://api.moonshot.cn",
-};
-
-const PROVIDER_LABELS: Record<Provider, string> = {
-  openai: "OpenAI",
-  anthropic: "Anthropic",
-  gemini: "Gemini",
-  moonshot: "Moonshot",
+  "openai-responses": "https://api.openai.com",
 };
 
 // ---------------------------------------------------------------------------
@@ -126,7 +120,7 @@ function maskKey(key: string): string {
 
 interface ChannelFormData {
   name: string;
-  provider: Provider;
+  provider: string;
   base_url: string;
   priority: number;
   weight: number;
@@ -136,7 +130,7 @@ interface ChannelFormData {
 
 const defaultFormData: ChannelFormData = {
   name: "",
-  provider: "openai",
+  provider: "openai-chat",
   base_url: "",
   priority: 0,
   weight: 1,
@@ -163,6 +157,9 @@ export default function Channels() {
   // --- Channel list state ---
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // --- Conversion rules for provider selector ---
+  const [conversionRules, setConversionRules] = useState<ConversionRule[]>([]);
 
   // --- Add/Edit dialog state ---
   const [formOpen, setFormOpen] = useState(false);
@@ -212,6 +209,7 @@ export default function Channels() {
 
   useEffect(() => {
     fetchChannels();
+    listConversionRules().then(setConversionRules).catch(() => {});
   }, [fetchChannels]);
 
   // --- Fetch API keys for a channel ---
@@ -239,7 +237,7 @@ export default function Channels() {
     setEditingChannel(channel);
     setFormData({
       name: channel.name,
-      provider: channel.provider as Provider,
+      provider: channel.provider,
       base_url: channel.base_url,
       priority: channel.priority,
       weight: channel.weight,
@@ -577,7 +575,7 @@ export default function Channels() {
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline">
-                    {PROVIDER_LABELS[channel.provider as Provider] ?? channel.provider}
+                    {conversionRules.find(r => r.slug === channel.provider)?.name ?? channel.provider}
                   </Badge>
                 </TableCell>
                 <TableCell className="max-w-[260px] truncate text-muted-foreground">
@@ -668,7 +666,7 @@ export default function Channels() {
                 onValueChange={(value) =>
                   setFormData((prev) => ({
                     ...prev,
-                    provider: value as Provider,
+                    provider: value,
                     base_url: "",
                   }))
                 }
@@ -677,9 +675,12 @@ export default function Channels() {
                   <SelectValue placeholder={t.channels.selectProvider} />
                 </SelectTrigger>
                 <SelectContent>
-                  {PROVIDERS.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {PROVIDER_LABELS[p]}
+                  {conversionRules.filter(r => r.enabled).map((rule) => (
+                    <SelectItem key={rule.slug} value={rule.slug}>
+                      {rule.name}
+                      {rule.rule_type === "system" && (
+                        <span className="ml-2 text-xs text-muted-foreground">(Built-in)</span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>

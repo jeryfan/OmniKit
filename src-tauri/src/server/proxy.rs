@@ -2,6 +2,8 @@ use crate::error::AppError;
 use crate::modality::chat::{self, ChatFormat};
 use crate::routing::balancer;
 use crate::routing::circuit::CircuitBreaker;
+use crate::rules::registry::{CodecProvider, RuleRegistry, JsonataDecoder, JsonataEncoder};
+use crate::rules::HttpConfig;
 use crate::server::middleware;
 use axum::body::Body;
 use axum::extract::State;
@@ -17,14 +19,87 @@ pub struct ProxyState {
     pub db: SqlitePool,
     pub http_client: reqwest::Client,
     pub circuit: Arc<CircuitBreaker>,
+    pub registry: Arc<RuleRegistry>,
+}
+
+/// Resolve a codec slug to a Decoder via the registry.
+async fn resolve_decoder(registry: &RuleRegistry, slug: &str) -> Result<Box<dyn chat::Decoder>, AppError> {
+    match registry.get(slug).await {
+        Some(CodecProvider::Builtin(format)) => Ok(chat::get_decoder(format)),
+        Some(CodecProvider::Jsonata(rule)) => Ok(Box::new(JsonataDecoder { rule })),
+        None => {
+            // Fallback: try ChatFormat::from_str_loose for backward compat
+            ChatFormat::from_str_loose(slug)
+                .map(chat::get_decoder)
+                .ok_or_else(|| AppError::Codec(format!("Unknown format: {}", slug)))
+        }
+    }
+}
+
+async fn resolve_encoder(registry: &RuleRegistry, slug: &str) -> Result<Box<dyn chat::Encoder>, AppError> {
+    match registry.get(slug).await {
+        Some(CodecProvider::Builtin(format)) => Ok(chat::get_encoder(format)),
+        Some(CodecProvider::Jsonata(rule)) => Ok(Box::new(JsonataEncoder { rule })),
+        None => {
+            ChatFormat::from_str_loose(slug)
+                .map(chat::get_encoder)
+                .ok_or_else(|| AppError::Codec(format!("Unknown format: {}", slug)))
+        }
+    }
+}
+
+async fn build_upstream_request(
+    state: &ProxyState,
+    upstream_slug: &str,
+    base_url: &str,
+    model: &str,
+    stream: bool,
+    api_key: &str,
+    body: Vec<u8>,
+) -> Result<(String, reqwest::RequestBuilder), AppError> {
+    // Check if this is a JSONata rule with http_config
+    if let Some(CodecProvider::Jsonata(rule)) = state.registry.get(upstream_slug).await {
+        if let Some(http_config) = HttpConfig::parse(rule.http_config.as_deref()) {
+            let url = http_config.url_template
+                .replace("{{base_url}}", base_url.trim_end_matches('/'))
+                .replace("{{model}}", model);
+            let url = if stream && url.contains("{{stream_suffix}}") {
+                url.replace("{{stream_suffix}}", "?alt=sse")
+            } else {
+                url.replace("{{stream_suffix}}", "")
+            };
+
+            let auth_value = http_config.auth_header_template.replace("{{key}}", api_key);
+            let builder = state.http_client
+                .post(&url)
+                .header("Content-Type", &http_config.content_type)
+                .header("Authorization", &auth_value)
+                .body(body);
+
+            return Ok((url, builder));
+        }
+    }
+
+    // Fallback to built-in URL/auth logic
+    if let Some(format) = ChatFormat::from_str_loose(upstream_slug) {
+        let url = build_upstream_url(base_url, format, model, stream);
+        let mut builder = state.http_client
+            .post(&url)
+            .header("Content-Type", "application/json")
+            .body(body);
+        builder = apply_auth(builder, format, api_key);
+        Ok((url, builder))
+    } else {
+        Err(AppError::Codec(format!("Cannot determine upstream URL for format: {}", upstream_slug)))
+    }
 }
 
 /// Main proxy handler for chat completion requests.
-/// The `input_format` is determined from the route path.
+/// The `input_format_slug` is determined from the route path.
 pub async fn proxy_chat(
     State(state): State<ProxyState>,
     headers: HeaderMap,
-    input_format: ChatFormat,
+    input_format_slug: &str,
     body: Bytes,
 ) -> Result<Response, AppError> {
     let start = std::time::Instant::now();
@@ -48,15 +123,15 @@ pub async fn proxy_chat(
     }
 
     // 2. Decode request
-    let decoder = chat::get_decoder(input_format);
+    let decoder = resolve_decoder(&state.registry, input_format_slug).await?;
     let ir = decoder.decode_request(&body)?;
 
     // 3. Determine output format
     let output_format_str = middleware::extract_output_format(&headers, None);
-    let output_format = output_format_str
-        .as_ref()
-        .and_then(|s| ChatFormat::from_str_loose(s))
-        .unwrap_or(input_format);
+    let output_slug = output_format_str
+        .as_deref()
+        .unwrap_or(input_format_slug)
+        .to_string();
 
     // 4. Select channel via routing (priority + weighted random + circuit breaker)
     let selected =
@@ -70,30 +145,22 @@ pub async fn proxy_chat(
     let token_id = token.id.clone();
     let channel_id = channel.id.clone();
     let model = ir.model.clone();
-    let input_fmt_str = input_format.as_str().to_string();
+    let input_fmt_str = input_format_slug.to_string();
     let request_body_str = String::from_utf8_lossy(&body).to_string();
 
     // 5. Determine upstream format from channel provider
-    let upstream_format = ChatFormat::from_provider(&channel.provider)
-        .ok_or_else(|| AppError::Internal(format!("Unknown provider: {}", channel.provider)))?;
-    let output_fmt_str = upstream_format.as_str().to_string();
+    let upstream_slug = channel.provider.clone();
+    let output_fmt_str = upstream_slug.clone();
 
     // 6. Encode IR → upstream format
-    let upstream_encoder = chat::get_encoder(upstream_format);
+    let upstream_encoder = resolve_encoder(&state.registry, &upstream_slug).await?;
     let upstream_body = upstream_encoder.encode_request(&ir, &mapping.actual_name)?;
 
-    // 7. Build upstream URL
-    let upstream_url =
-        build_upstream_url(&channel.base_url, upstream_format, &mapping.actual_name, ir.stream);
-
-    // 8. Build upstream request with provider-specific auth
-    let mut req_builder = state
-        .http_client
-        .post(&upstream_url)
-        .header("Content-Type", "application/json")
-        .body(upstream_body);
-
-    req_builder = apply_auth(req_builder, upstream_format, api_key);
+    // 7. Build upstream URL and request with provider-specific auth
+    let (upstream_url, req_builder) = build_upstream_request(
+        &state, &upstream_slug, &channel.base_url, &mapping.actual_name,
+        ir.stream, api_key, upstream_body,
+    ).await?;
 
     // 9. Send request
     let upstream_resp = req_builder.send().await;
@@ -141,15 +208,15 @@ pub async fn proxy_chat(
             &input_fmt_str, &output_fmt_str, Some(200),
             latency, None, None, Some(&request_body_str), None,
         ).await;
-        return proxy_stream(upstream_resp, upstream_format, output_format, state.db.clone(), log_id).await;
+        return proxy_stream(upstream_resp, upstream_slug.clone(), output_slug.clone(), state.registry.clone(), state.db.clone(), log_id).await;
     }
 
     // Non-streaming: decode upstream response → IR → encode to output format
     let resp_bytes = upstream_resp.bytes().await?;
-    let upstream_decoder = chat::get_decoder(upstream_format);
+    let upstream_decoder = resolve_decoder(&state.registry, &upstream_slug).await?;
     let ir_response = upstream_decoder.decode_response(&resp_bytes)?;
 
-    let output_encoder = chat::get_encoder(output_format);
+    let output_encoder = resolve_encoder(&state.registry, &output_slug).await?;
     let output_bytes = output_encoder.encode_response(&ir_response)?;
 
     // Log the request with token usage
@@ -187,13 +254,14 @@ pub async fn proxy_chat(
 /// Accumulates the output chunks and updates the log entry's response_body when the stream ends.
 async fn proxy_stream(
     upstream_resp: reqwest::Response,
-    upstream_format: ChatFormat,
-    output_format: ChatFormat,
+    upstream_slug: String,
+    output_slug: String,
+    registry: Arc<RuleRegistry>,
     db: SqlitePool,
     log_id: String,
 ) -> Result<Response, AppError> {
-    let upstream_decoder = chat::get_decoder(upstream_format);
-    let output_encoder = chat::get_encoder(output_format);
+    let upstream_decoder = resolve_decoder(&registry, &upstream_slug).await?;
+    let output_encoder = resolve_encoder(&registry, &output_slug).await?;
 
     let byte_stream = upstream_resp.bytes_stream();
 

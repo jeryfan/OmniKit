@@ -1,7 +1,7 @@
 use super::generic_proxy::{self, GenericProxyState};
 use super::proxy::{self, ProxyState};
 use crate::error::AppError;
-use crate::modality::chat::ChatFormat;
+use crate::rules::registry::RuleRegistry;
 use crate::routing::circuit::CircuitBreaker;
 use axum::body::Bytes;
 use axum::extract::State;
@@ -14,9 +14,11 @@ use sqlx::SqlitePool;
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
-pub fn create_router(pool: SqlitePool) -> Router {
+pub async fn create_router(pool: SqlitePool) -> Router {
     let http_client = reqwest::Client::new();
     let circuit = Arc::new(CircuitBreaker::new(5, 60));
+    let registry = Arc::new(RuleRegistry::new());
+    registry.load_from_db(&pool).await;
 
     let generic_state = GenericProxyState {
         db: pool.clone(),
@@ -27,6 +29,7 @@ pub fn create_router(pool: SqlitePool) -> Router {
         db: pool,
         http_client,
         circuit,
+        registry,
     };
 
     Router::new()
@@ -85,7 +88,7 @@ async fn handle_openai_chat(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Response, AppError> {
-    proxy::proxy_chat(state, headers, ChatFormat::OpenaiChat, body).await
+    proxy::proxy_chat(state, headers, "openai-chat", body).await
 }
 
 async fn handle_openai_responses(
@@ -93,7 +96,7 @@ async fn handle_openai_responses(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Response, AppError> {
-    proxy::proxy_chat(state, headers, ChatFormat::OpenaiResponses, body).await
+    proxy::proxy_chat(state, headers, "openai-responses", body).await
 }
 
 async fn handle_anthropic(
@@ -101,5 +104,5 @@ async fn handle_anthropic(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<Response, AppError> {
-    proxy::proxy_chat(state, headers, ChatFormat::Anthropic, body).await
+    proxy::proxy_chat(state, headers, "anthropic", body).await
 }
