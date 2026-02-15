@@ -1254,7 +1254,7 @@ This is the largest frontend task. Key elements:
 - **Tabs component** for "My Rules" / "Rule Store"
 - **DataTable** with columns: name, slug, type (system/user badge), modality, version, enabled toggle, actions
 - **Create/Edit dialog**: left panel for metadata (name, slug, description, tags, http_config), right panel for JSONata template editors (textarea initially — code editor in a follow-up)
-- **Import button**: file input accepting `.anyllm.json` and `.zip`
+- **Import button**: file input accepting `.omnikit.json` and `.zip`
 - **Export button**: per-rule and bulk export
 - **Delete with confirmation**
 - **Duplicate action** for system rules ("copy to user rule")
@@ -1338,12 +1338,12 @@ feat(frontend): add rule editor with template editing and test panel
 
 **Step 1: Implement single-rule export**
 
-Add an export function that serializes a rule to the `.anyllm.json` format and triggers a file download:
+Add an export function that serializes a rule to the `.omnikit.json` format and triggers a file download:
 
 ```typescript
 function exportRule(rule: ConversionRule) {
   const exportData = {
-    anyllm_rule: "1.0",
+    "omnikit_rule": "1.0",
     slug: rule.slug,
     name: rule.name,
     description: rule.description,
@@ -1365,7 +1365,7 @@ function exportRule(rule: ConversionRule) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${rule.slug}.anyllm.json`;
+  a.download = `${rule.slug}.omnikit.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -1373,7 +1373,7 @@ function exportRule(rule: ConversionRule) {
 
 **Step 2: Implement single-rule import**
 
-Add a file input handler that reads `.anyllm.json` files, parses them, validates the structure, and calls `createConversionRule`. Handle slug conflicts with a dialog offering overwrite/skip/import-as-new options.
+Add a file input handler that reads `.omnikit.json` files, parses them, validates the structure, and calls `createConversionRule`. Handle slug conflicts with a dialog offering overwrite/skip/import-as-new options.
 
 **Step 3: Implement bulk export (ZIP)**
 
@@ -1388,7 +1388,7 @@ async function exportAllRules(rules: ConversionRule[]) {
   const folder = zip.folder("rules")!;
   for (const rule of rules.filter(r => r.rule_type === "user")) {
     const data = { /* same format as single export */ };
-    folder.file(`${rule.slug}.anyllm.json`, JSON.stringify(data, null, 2));
+    folder.file(`${rule.slug}.omnikit.json`, JSON.stringify(data, null, 2));
   }
   const blob = await zip.generateAsync({ type: "blob" });
   // trigger download
@@ -1397,7 +1397,7 @@ async function exportAllRules(rules: ConversionRule[]) {
 
 **Step 4: Implement ZIP import**
 
-Read ZIP file, iterate entries, parse each `.anyllm.json` file, import each rule.
+Read ZIP file, iterate entries, parse each `.omnikit.json` file, import each rule.
 
 **Step 5: Commit**
 
@@ -1580,7 +1580,7 @@ feat(rules): seed built-in system rules on first startup
 ```rust
 use serde::{Deserialize, Serialize};
 
-const INDEX_URL: &str = "https://raw.githubusercontent.com/<org>/anyllm-rules/main/index.json";
+const INDEX_URL: &str = "https://raw.githubusercontent.com/<org>/omnikit-rules/main/index.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleIndexEntry {
@@ -1613,7 +1613,7 @@ pub async fn fetch_index() -> Option<RuleIndex> {
 /// Fetch a single rule file from the remote repository.
 pub async fn fetch_rule(slug: &str) -> Option<serde_json::Value> {
     let url = format!(
-        "https://raw.githubusercontent.com/<org>/anyllm-rules/main/{}.anyllm.json",
+        "https://raw.githubusercontent.com/<org>/omnikit-rules/main/{}.omnikit.json",
         slug
     );
     let client = reqwest::Client::new();
@@ -1651,7 +1651,7 @@ pub async fn install_rule_from_store(
         .ok_or_else(|| IpcError::internal("Failed to fetch rule from store"))?;
 
     // Parse and insert into DB
-    // ... (parse the .anyllm.json format, create in DB)
+    // ... (parse the .omnikit.json format, create in DB)
     todo!("Parse rule_data and insert — follow the import format from design doc")
 }
 ```

@@ -77,7 +77,7 @@ pub fn run() {
                     .path()
                     .app_data_dir()
                     .expect("failed to resolve app data dir");
-                let db_path = app_dir.join("anyllm.db");
+                let db_path = app_dir.join("omnikit.db");
 
                 let pool = db::init_pool(&db_path)
                     .await

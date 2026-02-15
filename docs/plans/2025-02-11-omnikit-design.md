@@ -1,8 +1,8 @@
-# AnyLLM - 设计文档
+# OmniKit - 设计文档
 
 ## 概述
 
-AnyLLM 是一个开箱即用的 Tauri 桌面应用，作为 LLM API 中转网关，实现各厂商 API 格式的任意互转。用户无需部署服务器，启动应用即可对外提供中转服务。
+OmniKit 是一个开箱即用的 Tauri 桌面应用，作为 LLM API 中转网关，实现各厂商 API 格式的任意互转。用户无需部署服务器，启动应用即可对外提供中转服务。
 
 ## 技术栈
 
@@ -178,7 +178,7 @@ struct ModelMapping {
 基础地址: http://localhost:{配置端口}
 
 请求头:
-  Authorization: Bearer sk-anyllm-xxxxx
+  Authorization: Bearer sk-omnikit-xxxxx
   X-Output-Format: anthropic          # 可选，指定输出格式
 
 输出格式优先级:
@@ -231,7 +231,7 @@ struct ModelMapping {
 |------|------|------|
 | id | TEXT PK | UUID |
 | name | TEXT | 令牌名称 |
-| key_value | TEXT UNIQUE | sk-anyllm-xxxxx |
+| key_value | TEXT UNIQUE | sk-omnikit-xxxxx |
 | quota_limit | INTEGER | Token 额度上限，NULL 不限 |
 | quota_used | INTEGER | 默认 0 |
 | expires_at | TIMESTAMP | NULL 永不过期 |
@@ -275,8 +275,8 @@ struct ModelMapping {
 - 开源协议：Apache 2.0
 - GitHub Actions CI/CD：PR 检查 + 多平台自动构建
 - 发布产物：macOS .dmg (aarch64 + x86_64)、Windows .msi、Linux .AppImage/.deb
-- Homebrew 安装：`brew tap <user>/anyllm && brew install anyllm`
-- 单独 Homebrew Tap 仓库 `homebrew-anyllm`，release 时自动更新 formula
+- Homebrew 安装：`brew tap <user>/omnikit && brew install omnikit`
+- 单独 Homebrew Tap 仓库 `homebrew-omnikit`，release 时自动更新 formula
 
 ## 实现阶段
 

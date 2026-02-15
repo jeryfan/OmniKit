@@ -22,7 +22,7 @@ import { useTheme } from "./ThemeProvider";
 import { useLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const STORAGE_KEY = "anyllm-sidebar-collapsed";
+const STORAGE_KEY = "omnikit-sidebar-collapsed";
 
 function getInitialCollapsed(): boolean {
   return localStorage.getItem(STORAGE_KEY) === "true";

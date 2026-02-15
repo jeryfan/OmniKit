@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-const INDEX_URL: &str = "https://raw.githubusercontent.com/AnyLLM/anyllm-rules/main/index.json";
+const INDEX_URL: &str = "https://raw.githubusercontent.com/OmniKit/omnikit-rules/main/index.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleIndexEntry {
@@ -33,7 +33,7 @@ pub async fn fetch_index() -> Option<RuleIndex> {
 /// Fetch a single rule file from the remote repository.
 pub async fn fetch_rule(slug: &str) -> Option<serde_json::Value> {
     let url = format!(
-        "https://raw.githubusercontent.com/AnyLLM/anyllm-rules/main/{}.anyllm.json",
+        "https://raw.githubusercontent.com/OmniKit/omnikit-rules/main/{}.omnikit.json",
         slug
     );
     let client = reqwest::Client::new();

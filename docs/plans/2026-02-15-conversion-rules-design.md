@@ -4,7 +4,7 @@
 
 ## 背景
 
-AnyLLM 当前的 API 格式转换完全由硬编码的 Rust Codec 实现，每新增一个厂商需要写 Rust 代码并重新编译。为了让系统更灵活，引入用户可自定义的转换规则引擎，允许用户自行创建、编辑、导入导出转换规则，同时保留现有内置 Codec 的性能优势。
+OmniKit 当前的 API 格式转换完全由硬编码的 Rust Codec 实现，每新增一个厂商需要写 Rust 代码并重新编译。为了让系统更灵活，引入用户可自定义的转换规则引擎，允许用户自行创建、编辑、导入导出转换规则，同时保留现有内置 Codec 的性能优势。
 
 ## 关键设计决策
 
@@ -101,7 +101,7 @@ CREATE TABLE conversion_rule (
 
 ```json
 {
-  "anyllm_rule": "1.0",
+  "omnikit_rule": "1.0",
   "slug": "deepseek-chat",
   "name": "DeepSeek Chat API",
   "description": "DeepSeek 对话 API 格式转换",
@@ -125,17 +125,17 @@ CREATE TABLE conversion_rule (
 }
 ```
 
-文件扩展名使用 `.anyllm.json`，便于系统识别和文件关联。
+文件扩展名使用 `.omnikit.json`，便于系统识别和文件关联。
 
 ### 批量导出格式（ZIP）
 
-文件名为 `anyllm-rules-export-{date}.zip`，内部结构：
+文件名为 `omnikit-rules-export-{date}.zip`，内部结构：
 
 ```
 rules/
-├── deepseek-chat.anyllm.json
-├── cohere-chat.anyllm.json
-└── my-custom-format.anyllm.json
+├── deepseek-chat.omnikit.json
+├── cohere-chat.omnikit.json
+└── my-custom-format.omnikit.json
 ```
 
 ### 导入行为
@@ -155,9 +155,9 @@ rules/
 ```
 rules/
 ├── index.json          -- 规则索引清单
-├── deepseek-chat.anyllm.json
-├── cohere-chat.anyllm.json
-├── zhipu-glm.anyllm.json
+├── deepseek-chat.omnikit.json
+├── cohere-chat.omnikit.json
+├── zhipu-glm.omnikit.json
 └── ...
 ```
 
@@ -183,7 +183,7 @@ rules/
 - 表格列出所有本地规则（系统内置 + 用户自定义），显示名称、slug、模态、类型标签（`系统`/`自定义`）、启用状态
 - 系统规则行标记为只读，可查看但不可编辑删除
 - 操作：新建、编辑、复制（基于现有规则创建副本）、删除、导出
-- 顶部工具栏：导入按钮（支持拖拽 `.anyllm.json` 或 `.zip`）、批量导出按钮
+- 顶部工具栏：导入按钮（支持拖拽 `.omnikit.json` 或 `.zip`）、批量导出按钮
 
 ### "规则仓库" tab
 

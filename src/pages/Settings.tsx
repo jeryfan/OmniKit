@@ -300,7 +300,7 @@ export default function Settings() {
                 <label className="text-sm font-medium text-muted-foreground">
                   {t.settings.application}
                 </label>
-                <div className="text-sm font-semibold">AnyLLM</div>
+                <div className="text-sm font-semibold">OmniKit</div>
               </div>
 
               <div className="space-y-1">

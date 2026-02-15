@@ -72,7 +72,7 @@ async fn list_models(
             json!({
                 "id": m,
                 "object": "model",
-                "owned_by": "anyllm",
+                "owned_by": "omnikit",
             })
         })
         .collect();

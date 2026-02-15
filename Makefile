@@ -82,12 +82,12 @@ clean-rs: ## Clean Rust build artifacts only
 # === Database ===
 
 db-path: ## Show the database file path (macOS)
-	@echo "$$HOME/Library/Application Support/com.anyllm.app/anyllm.db"
+	@echo "$$HOME/Library/Application Support/com.omnikit.app/omnikit.db"
 
 # === Info ===
 
 info: ## Show project info
-	@echo "AnyLLM - LLM API Gateway Desktop App"
+	@echo "OmniKit - LLM API Gateway Desktop App"
 	@echo ""
 	@echo "Frontend:  React 19 + TypeScript + Vite"
 	@echo "Backend:   Rust + Axum + SQLite"

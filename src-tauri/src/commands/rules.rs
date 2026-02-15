@@ -231,9 +231,9 @@ pub struct GeneratedRule {
     pub http_config: String,
 }
 
-const AI_SYSTEM_PROMPT: &str = r#"You are an expert at writing JSONata expressions for AnyLLM, an LLM API gateway that converts between different LLM provider API formats.
+const AI_SYSTEM_PROMPT: &str = r#"You are an expert at writing JSONata expressions for OmniKit, an LLM API gateway that converts between different LLM provider API formats.
 
-AnyLLM uses an intermediate representation (IR) for chat. The IR structures are:
+OmniKit uses an intermediate representation (IR) for chat. The IR structures are:
 
 **IrChatRequest** (decode_request output / encode_request input):
 ```json
@@ -465,7 +465,7 @@ pub async fn install_rule_from_store(
         .await
         .ok_or_else(|| IpcError::internal("Failed to fetch rule from store"))?;
 
-    // Parse the .anyllm.json format
+    // Parse the .omnikit.json format
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
 

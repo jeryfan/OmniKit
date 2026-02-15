@@ -1,4 +1,4 @@
-# AnyLLM
+# OmniKit
 
 A desktop LLM API gateway that translates between any provider's API format. Built with Tauri, Rust, and React.
 
@@ -27,13 +27,13 @@ A desktop LLM API gateway that translates between any provider's API format. Bui
 ### Homebrew (macOS)
 
 ```bash
-brew tap jeryfan/anyllm
-brew install anyllm
+brew tap jeryfan/omnikit
+brew install omnikit
 ```
 
 ### Download
 
-Download the latest release from [GitHub Releases](https://github.com/jeryfan/anyllm/releases).
+Download the latest release from [GitHub Releases](https://github.com/jeryfan/omnikit/releases).
 
 ## Development
 
@@ -61,7 +61,7 @@ pnpm tauri build
 
 ## Architecture
 
-AnyLLM uses a **modality-driven architecture** with an Intermediate Representation (IR) at its core:
+OmniKit uses a **modality-driven architecture** with an Intermediate Representation (IR) at its core:
 
 ```
 Input (any format) → Decoder → IR → Encoder → Output (any format)
@@ -69,7 +69,7 @@ Input (any format) → Decoder → IR → Encoder → Output (any format)
 
 Each modality (chat, image, tts, etc.) has its own IR and codec implementations. Adding a new provider means implementing a `Decoder` and `Encoder` trait for the target modality.
 
-See [Design Document](docs/plans/2025-02-11-anyllm-design.md) for full details.
+See [Design Document](docs/plans/2025-02-11-omnikit-design.md) for full details.
 
 ## License
 

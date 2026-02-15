@@ -419,7 +419,7 @@ export default function Rules() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${rule.slug}.anyllm.json`;
+    a.download = `${rule.slug}.omnikit.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success(t.rules.exportSuccess);
@@ -590,7 +590,7 @@ export default function Rules() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".json,.anyllm.json"
+              accept=".json,.omnikit.json"
               className="hidden"
               onChange={handleImport}
             />

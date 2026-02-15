@@ -210,7 +210,7 @@ Replace the entire file with:
 
 **Step 2: Verify the dev server compiles without error**
 
-Run: `cd /Users/fanjunjie/Documents/repositories/personal/anyllm && npm run dev`
+Run: `cd /Users/fanjunjie/Documents/repositories/personal/omnikit && npm run dev`
 Expected: No compilation errors.
 
 ---

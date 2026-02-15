@@ -70,7 +70,7 @@ jobs:
           # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: v__VERSION__
-          releaseName: 'AnyLLM v__VERSION__'
+          releaseName: 'OmniKit v__VERSION__'
           releaseBody: 'See the assets to download and install this version.'
           releaseDraft: true
           prerelease: false
@@ -106,9 +106,9 @@ jobs:
 
           # Download using gh release download
           gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
-            --pattern "AnyLLM_${VERSION}_aarch64.dmg" --output arm.dmg
+            --pattern "OmniKit_${VERSION}_aarch64.dmg" --output arm.dmg
           gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
-            --pattern "AnyLLM_${VERSION}_x64.dmg" --output intel.dmg
+            --pattern "OmniKit_${VERSION}_x64.dmg" --output intel.dmg
 
           ARM_SHA=$(sha256sum arm.dmg | cut -d' ' -f1)
           INTEL_SHA=$(sha256sum intel.dmg | cut -d' ' -f1)
@@ -133,23 +133,23 @@ jobs:
           INTEL_SHA=${{ steps.sha.outputs.intel }}
 
           CASK_CONTENT=$(cat <<'CASK_EOF'
-          cask "anyllm" do
+          cask "omnikit" do
             version "VERSION_PLACEHOLDER"
             sha256 arm:   "ARM_SHA_PLACEHOLDER",
                    intel: "INTEL_SHA_PLACEHOLDER"
 
             on_arm do
-              url "https://github.com/jeryfan/anyllm/releases/download/v#{version}/AnyLLM_#{version}_aarch64.dmg"
+              url "https://github.com/jeryfan/omnikit/releases/download/v#{version}/OmniKit_#{version}_aarch64.dmg"
             end
             on_intel do
-              url "https://github.com/jeryfan/anyllm/releases/download/v#{version}/AnyLLM_#{version}_x64.dmg"
+              url "https://github.com/jeryfan/omnikit/releases/download/v#{version}/OmniKit_#{version}_x64.dmg"
             end
 
-            name "AnyLLM"
+            name "OmniKit"
             desc "LLM API gateway desktop app"
-            homepage "https://github.com/jeryfan/anyllm"
+            homepage "https://github.com/jeryfan/omnikit"
 
-            app "AnyLLM.app"
+            app "OmniKit.app"
           end
           CASK_EOF
           )
@@ -159,11 +159,11 @@ jobs:
           CASK_CONTENT="${CASK_CONTENT//INTEL_SHA_PLACEHOLDER/$INTEL_SHA}"
 
           # Get current file SHA for update API
-          FILE_SHA=$(gh api repos/jeryfan/homebrew-anyllm/contents/Casks/anyllm.rb --jq '.sha')
+          FILE_SHA=$(gh api repos/jeryfan/homebrew-omnikit/contents/Casks/omnikit.rb --jq '.sha')
 
           # Update file via GitHub API
           echo "$CASK_CONTENT" | base64 | tr -d '\n' > /tmp/content.b64
-          gh api -X PUT repos/jeryfan/homebrew-anyllm/contents/Casks/anyllm.rb \
+          gh api -X PUT repos/jeryfan/homebrew-omnikit/contents/Casks/omnikit.rb \
             -f message="chore: bump to v${VERSION}" \
             -f content="$(cat /tmp/content.b64)" \
             -f sha="$FILE_SHA"

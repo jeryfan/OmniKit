@@ -65,7 +65,7 @@ git commit -m "chore: clean up stale scaffolding directories"
 
 ```json
 {
-  "name": "anyllm",
+  "name": "omnikit",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -198,7 +198,7 @@ export default defineConfig(async () => ({
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AnyLLM</title>
+    <title>OmniKit</title>
   </head>
   <body>
     <div id="root"></div>
@@ -231,7 +231,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 ```tsx
 function App() {
-  return <div>AnyLLM</div>;
+  return <div>OmniKit</div>;
 }
 
 export default App;
@@ -248,7 +248,7 @@ pnpm install
 ```bash
 pnpm dev
 # Expected: Vite dev server starts on http://localhost:1420
-# Visit the URL — should show "AnyLLM" text
+# Visit the URL — should show "OmniKit" text
 # Stop with Ctrl+C
 ```
 
@@ -293,14 +293,14 @@ pnpm install
 
 ```toml
 [package]
-name = "anyllm"
+name = "omnikit"
 version = "0.1.0"
 description = "LLM API Gateway Desktop App"
 authors = [""]
 edition = "2021"
 
 [lib]
-name = "anyllm_lib"
+name = "omnikit_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -327,9 +327,9 @@ fn main() {
 
 ```json
 {
-  "productName": "AnyLLM",
+  "productName": "OmniKit",
   "version": "0.1.0",
-  "identifier": "com.anyllm.app",
+  "identifier": "com.omnikit.app",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -339,7 +339,7 @@ fn main() {
   "app": {
     "windows": [
       {
-        "title": "AnyLLM",
+        "title": "OmniKit",
         "width": 1200,
         "height": 800,
         "minWidth": 900,
@@ -405,7 +405,7 @@ pub fn run() {
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    anyllm_lib::run()
+    omnikit_lib::run()
 }
 ```
 
@@ -434,7 +434,7 @@ impl Default for AppConfig {
 
 ```bash
 pnpm tauri dev
-# Expected: Desktop window opens showing "AnyLLM" text
+# Expected: Desktop window opens showing "OmniKit" text
 # Rust backend compiles successfully
 # Close the window to stop
 ```
@@ -647,7 +647,7 @@ import { Button } from "@/components/ui/button";
 function App() {
   return (
     <div className="flex h-screen items-center justify-center">
-      <Button>AnyLLM</Button>
+      <Button>OmniKit</Button>
     </div>
   );
 }
@@ -892,7 +892,7 @@ pub fn run() {
                     .path()
                     .app_data_dir()
                     .expect("failed to resolve app data dir");
-                let db_path = app_dir.join("anyllm.db");
+                let db_path = app_dir.join("omnikit.db");
 
                 let pool = db::init_pool(&db_path)
                     .await
@@ -917,7 +917,7 @@ pub fn run() {
 pnpm tauri dev
 # Expected: App launches without errors
 # Check that database file was created:
-ls ~/Library/Application\ Support/com.anyllm.app/anyllm.db
+ls ~/Library/Application\ Support/com.omnikit.app/omnikit.db
 # Expected: file exists
 ```
 
@@ -1033,7 +1033,7 @@ pub fn run() {
                     .path()
                     .app_data_dir()
                     .expect("failed to resolve app data dir");
-                let db_path = app_dir.join("anyllm.db");
+                let db_path = app_dir.join("omnikit.db");
 
                 let pool = db::init_pool(&db_path)
                     .await
@@ -1122,7 +1122,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("anyllm-theme") as Theme) || "system",
+    () => (localStorage.getItem("omnikit-theme") as Theme) || "system",
   );
 
   useEffect(() => {
@@ -1139,7 +1139,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.classList.add(theme);
     }
 
-    localStorage.setItem("anyllm-theme", theme);
+    localStorage.setItem("omnikit-theme", theme);
   }, [theme]);
 
   return (
@@ -1196,7 +1196,7 @@ export function Sidebar() {
     <TooltipProvider delayDuration={0}>
       <div className="flex h-screen w-56 flex-col border-r bg-sidebar-background text-sidebar-foreground">
         <div className="flex h-14 items-center px-4 font-semibold tracking-tight">
-          AnyLLM
+          OmniKit
         </div>
         <Separator />
         <ScrollArea className="flex-1 px-2 py-2">
@@ -1503,7 +1503,7 @@ pub fn run() {
                     .path()
                     .app_data_dir()
                     .expect("failed to resolve app data dir");
-                let db_path = app_dir.join("anyllm.db");
+                let db_path = app_dir.join("omnikit.db");
 
                 let pool = db::init_pool(&db_path)
                     .await

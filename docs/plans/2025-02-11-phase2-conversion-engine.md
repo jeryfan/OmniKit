@@ -1851,7 +1851,7 @@ async fn list_models(State(state): State<ProxyState>) -> Result<Json<Value>, App
     let model_list: Vec<Value> = models.iter().map(|m| json!({
         "id": m,
         "object": "model",
-        "owned_by": "anyllm",
+        "owned_by": "omnikit",
     })).collect();
 
     Ok(Json(json!({

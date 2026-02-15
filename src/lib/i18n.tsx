@@ -715,7 +715,7 @@ const en: Translations = {
     unknown: "Unknown",
     versionLabel: "Version",
     appearance: "Appearance",
-    appearanceDesc: "Customize how AnyLLM looks on your device.",
+    appearanceDesc: "Customize how OmniKit looks on your device.",
     theme: "Theme",
     light: "Light",
     dark: "Dark",
@@ -728,7 +728,7 @@ const en: Translations = {
     descriptionText: "LLM API Gateway Desktop App",
     license: "License",
     techStack: "Tech Stack",
-    aboutText: "AnyLLM converts between LLM provider API formats (OpenAI, Anthropic, Gemini, Moonshot) so you can use any client with any backend.",
+    aboutText: "OmniKit converts between LLM provider API formats (OpenAI, Anthropic, Gemini, Moonshot) so you can use any client with any backend.",
     saveSuccess: "Settings saved",
     restartHint: "Restart the app to apply port changes.",
   },
@@ -1102,7 +1102,7 @@ const zh: Translations = {
     unknown: "未知",
     versionLabel: "版本",
     appearance: "外观",
-    appearanceDesc: "自定义 AnyLLM 在您设备上的显示方式。",
+    appearanceDesc: "自定义 OmniKit 在您设备上的显示方式。",
     theme: "主题",
     light: "浅色",
     dark: "深色",
@@ -1115,7 +1115,7 @@ const zh: Translations = {
     descriptionText: "LLM API 网关桌面应用",
     license: "开源协议",
     techStack: "技术栈",
-    aboutText: "AnyLLM 实现各 LLM 供应商 API 格式互转（OpenAI、Anthropic、Gemini、Moonshot），让您可以用任意客户端对接任意后端。",
+    aboutText: "OmniKit 实现各 LLM 供应商 API 格式互转（OpenAI、Anthropic、Gemini、Moonshot），让您可以用任意客户端对接任意后端。",
     saveSuccess: "设置已保存",
     restartHint: "重启应用以使端口更改生效。",
   },
@@ -1180,7 +1180,7 @@ interface LanguageContextValue {
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
-const STORAGE_KEY = "anyllm-language";
+const STORAGE_KEY = "omnikit-language";
 
 function getInitialLanguage(): Language {
   const stored = localStorage.getItem(STORAGE_KEY);

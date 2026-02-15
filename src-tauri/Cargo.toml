@@ -1,12 +1,12 @@
 [package]
-name = "anyllm"
+name = "omnikit"
 version = "0.1.0"
 description = "LLM API Gateway Desktop App"
 authors = [""]
 edition = "2021"
 
 [lib]
-name = "anyllm_lib"
+name = "omnikit_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

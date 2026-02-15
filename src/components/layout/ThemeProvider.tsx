@@ -14,7 +14,7 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("anyllm-theme") as Theme) || "system",
+    () => (localStorage.getItem("omnikit-theme") as Theme) || "system",
   );
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.classList.add(theme);
     }
 
-    localStorage.setItem("anyllm-theme", theme);
+    localStorage.setItem("omnikit-theme", theme);
   }, [theme]);
 
   return (
