@@ -34,6 +34,12 @@
     ]
   },
   "plugins": {
-    "opener": {}
+    "opener": {},
+    "updater": {
+      "endpoints": [
+        "https://github.com/jeryfan/omnikit/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEQ4NkM5NTE0MDhFMjc0OUEKUldTYWRPSUlGSlZzMk5iZVJqakt1MVZiTWZvT2o3bjNJU3pMeXZkUWt4V3N0eUIzcXNoSTJDMHAK"
+    }
   }
 }

@@ -345,6 +345,17 @@ export interface Translations {
     saveSuccess: string;
     restartHint: string;
     aboutText: string;
+    checkForUpdates: string;
+    checkingForUpdates: string;
+    alreadyLatest: string;
+  };
+  updater: {
+    newVersion: (version: string) => string;
+    updateNow: string;
+    ignoreThisVersion: string;
+    downloading: string;
+    installing: string;
+    updateFailed: string;
   };
   proxy: {
     title: string;
@@ -760,6 +771,17 @@ const en: Translations = {
     aboutText: "OmniKit converts between LLM provider API formats (OpenAI, Anthropic, Gemini, Moonshot) so you can use any client with any backend.",
     saveSuccess: "Settings saved",
     restartHint: "Restart the app to apply port changes.",
+    checkForUpdates: "Check for Updates",
+    checkingForUpdates: "Checking...",
+    alreadyLatest: "You're on the latest version",
+  },
+  updater: {
+    newVersion: (version: string) => `A new version ${version} is available`,
+    updateNow: "Update Now",
+    ignoreThisVersion: "Ignore this version",
+    downloading: "Downloading update...",
+    installing: "Installing...",
+    updateFailed: "Update failed",
   },
   proxy: {
     title: "Proxy",
@@ -1175,6 +1197,17 @@ const zh: Translations = {
     aboutText: "OmniKit 实现各 LLM 供应商 API 格式互转（OpenAI、Anthropic、Gemini、Moonshot），让您可以用任意客户端对接任意后端。",
     saveSuccess: "设置已保存",
     restartHint: "重启应用以使端口更改生效。",
+    checkForUpdates: "检查更新",
+    checkingForUpdates: "检查中...",
+    alreadyLatest: "已是最新版本",
+  },
+  updater: {
+    newVersion: (version: string) => `发现新版本 ${version}`,
+    updateNow: "立即更新",
+    ignoreThisVersion: "忽略此版本",
+    downloading: "正在下载更新...",
+    installing: "正在安装...",
+    updateFailed: "更新失败",
   },
   proxy: {
     title: "代理",

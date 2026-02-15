@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2, Sun, Moon, Monitor, Server, Palette, Info, Languages, Save, CheckCircle2 } from "lucide-react";
+import { Loader2, Sun, Moon, Monitor, Server, Palette, Info, Languages, Save, CheckCircle2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ import { useLanguage } from "@/lib/i18n";
 import { toast } from "sonner";
 import { parseIpcError } from "@/lib/tauri";
 import { PageHeader } from "@/components/page-header";
+import { check } from "@tauri-apps/plugin-updater";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -32,6 +33,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [portChanged, setPortChanged] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -82,6 +84,26 @@ export default function Settings() {
     config !== null &&
     (String(config.server_port) !== editPort ||
       String(config.log_retention_days) !== editRetention);
+
+  const handleCheckUpdate = async () => {
+    setCheckingUpdate(true);
+    try {
+      const result = await check();
+      if (result) {
+        // Clear any previously ignored version so the banner shows
+        localStorage.removeItem("omnikit-ignored-update-version");
+        // Trigger the UpdateBanner to re-check and show
+        window.dispatchEvent(new CustomEvent("omnikit-check-update"));
+        toast.success(t.updater.newVersion(result.version));
+      } else {
+        toast.success(t.settings.alreadyLatest);
+      }
+    } catch {
+      toast.success(t.settings.alreadyLatest);
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -327,9 +349,25 @@ export default function Settings() {
 
             <Separator />
 
-            <p className="text-xs text-muted-foreground">
-              {t.settings.aboutText}
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {t.settings.aboutText}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 shrink-0 ml-4"
+                onClick={handleCheckUpdate}
+                disabled={checkingUpdate}
+              >
+                {checkingUpdate ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                {checkingUpdate ? t.settings.checkingForUpdates : t.settings.checkForUpdates}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
