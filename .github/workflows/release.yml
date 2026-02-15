@@ -93,8 +93,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Publish the draft release first
-          gh release edit ${{ github.ref_name }} --repo ${{ github.repository }} --draft=false
+          # Check if release exists and is a draft
+          IS_DRAFT=$(gh release view ${{ github.ref_name }} --repo ${{ github.repository }} --json isDraft --jq '.isDraft' 2>/dev/null || echo "not_found")
+          if [ "$IS_DRAFT" = "true" ]; then
+            gh release edit ${{ github.ref_name }} --repo ${{ github.repository }} --draft=false
+          elif [ "$IS_DRAFT" = "not_found" ]; then
+            echo "::error::Release ${{ github.ref_name }} not found"
+            exit 1
+          else
+            echo "Release is already published, skipping"
+          fi
 
       - name: Download DMGs and compute SHA-256
         id: sha
@@ -148,7 +156,7 @@ jobs:
             end
 
             name "OmniKit"
-            desc "LLM API gateway desktop app"
+            desc "A multi-functional toolkit desktop app"
             homepage "https://github.com/jeryfan/omnikit"
 
             app "OmniKit.app"
