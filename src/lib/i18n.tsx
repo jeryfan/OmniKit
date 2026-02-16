@@ -408,7 +408,16 @@ export interface Translations {
     subtitle: string;
     noRecords: string;
     noRecordsHint: string;
+    searchPlaceholder: string;
+    noSearchResults: string;
+    noSearchResultsHint: string;
     watch: string;
+    watching: string;
+    closePlayer: string;
+    previous: string;
+    next: string;
+    playerEmpty: string;
+    playerEmptyHint: string;
     deleteRecord: string;
     deleteConfirm: string;
     downloaded: string;
@@ -823,7 +832,16 @@ const en: Translations = {
     subtitle: "Browse and manage your parsed video history.",
     noRecords: "No video records yet",
     noRecordsHint: "Parse a video URL to create your first record.",
+    searchPlaceholder: "Search by title or platform",
+    noSearchResults: "No matching records",
+    noSearchResultsHint: "Try a different keyword.",
     watch: "Watch",
+    watching: "Playing",
+    closePlayer: "Close player",
+    previous: "Previous",
+    next: "Next",
+    playerEmpty: "Select a record to start playback",
+    playerEmptyHint: "Use the Play button in the list.",
     deleteRecord: "Delete Record",
     deleteConfirm: "Are you sure you want to delete this record?",
     downloaded: "Downloaded",
@@ -1238,7 +1256,16 @@ const zh: Translations = {
     subtitle: "浏览和管理视频解析历史。",
     noRecords: "暂无解析记录",
     noRecordsHint: "解析一个视频链接以创建第一条记录。",
+    searchPlaceholder: "按标题或平台搜索",
+    noSearchResults: "没有匹配的记录",
+    noSearchResultsHint: "试试其他关键词。",
     watch: "观看",
+    watching: "播放中",
+    closePlayer: "关闭播放器",
+    previous: "上一条",
+    next: "下一条",
+    playerEmpty: "选择一条记录开始播放",
+    playerEmptyHint: "点击列表里的播放按钮即可。",
     deleteRecord: "删除记录",
     deleteConfirm: "确定要删除此记录吗？",
     downloaded: "已下载",
