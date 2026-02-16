@@ -5,6 +5,7 @@ import UsageStats from "@/pages/UsageStats";
 import Settings from "@/pages/Settings";
 import Proxy from "@/pages/Proxy";
 import VideoDownload from "@/pages/VideoDownload";
+import VideoRecords from "@/pages/VideoRecords";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="settings" element={<Settings />} />
           <Route path="proxy" element={<Proxy />} />
           <Route path="video-download" element={<VideoDownload />} />
+          <Route path="video-records" element={<VideoRecords />} />
         </Route>
       </Routes>
     </BrowserRouter>

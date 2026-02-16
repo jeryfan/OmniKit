@@ -49,6 +49,7 @@ export interface Translations {
     proxy: string;
     rules: string;
     videoDownload: string;
+    videoRecords: string;
   };
   rules: {
     title: string;
@@ -400,6 +401,19 @@ export interface Translations {
     downloadComplete: string;
     downloadFailed: string;
   };
+  videoRecords: {
+    title: string;
+    subtitle: string;
+    noRecords: string;
+    noRecordsHint: string;
+    watch: string;
+    deleteRecord: string;
+    deleteConfirm: string;
+    downloaded: string;
+    pending: string;
+    failed: string;
+    backToDownload: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -451,6 +465,7 @@ const en: Translations = {
     proxy: "Proxy",
     rules: "Rules",
     videoDownload: "Video Download",
+    videoRecords: "Video Records",
   },
   rules: {
     title: "Conversion Rules",
@@ -799,6 +814,19 @@ const en: Translations = {
     downloadComplete: "Download complete!",
     downloadFailed: "Download failed",
   },
+  videoRecords: {
+    title: "Video Records",
+    subtitle: "Browse and manage your parsed video history.",
+    noRecords: "No video records yet",
+    noRecordsHint: "Parse a video URL to create your first record.",
+    watch: "Watch",
+    deleteRecord: "Delete Record",
+    deleteConfirm: "Are you sure you want to delete this record?",
+    downloaded: "Downloaded",
+    pending: "Not downloaded",
+    failed: "Download failed",
+    backToDownload: "Back to Download",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -850,6 +878,7 @@ const zh: Translations = {
     proxy: "代理",
     rules: "转换规则",
     videoDownload: "视频下载",
+    videoRecords: "解析记录",
   },
   rules: {
     title: "转换规则",
@@ -1197,6 +1226,19 @@ const zh: Translations = {
     downloadStarted: "开始下载",
     downloadComplete: "下载完成！",
     downloadFailed: "下载失败",
+  },
+  videoRecords: {
+    title: "解析记录",
+    subtitle: "浏览和管理视频解析历史。",
+    noRecords: "暂无解析记录",
+    noRecordsHint: "解析一个视频链接以创建第一条记录。",
+    watch: "观看",
+    deleteRecord: "删除记录",
+    deleteConfirm: "确定要删除此记录吗？",
+    downloaded: "已下载",
+    pending: "未下载",
+    failed: "下载失败",
+    backToDownload: "返回下载",
   },
 };
 

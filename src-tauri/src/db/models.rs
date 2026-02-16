@@ -114,3 +114,17 @@ pub struct ConversionRule {
     pub created_at: String,
     pub updated_at: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct VideoRecord {
+    pub id: String,
+    pub url: String,
+    pub title: String,
+    pub cover_url: Option<String>,
+    pub duration: Option<i64>,
+    pub platform: String,
+    pub formats: String,
+    pub download_status: String,
+    pub save_path: Option<String>,
+    pub created_at: String,
+}

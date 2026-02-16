@@ -706,3 +706,56 @@ export async function cancelVideoDownload(taskId: string): Promise<void> {
 export async function openInFolder(path: string): Promise<void> {
   return invoke<void>("open_in_folder", { path });
 }
+
+// === Video Records ===
+
+export interface VideoRecord {
+  id: string;
+  url: string;
+  title: string;
+  cover_url: string | null;
+  duration: number | null;
+  platform: string;
+  formats: string; // JSON string of VideoFormat[]
+  download_status: string; // "pending" | "downloaded" | "failed"
+  save_path: string | null;
+  created_at: string;
+}
+
+export async function saveVideoRecord(params: {
+  url: string;
+  title: string;
+  coverUrl: string | null;
+  duration: number | null;
+  platform: string;
+  formats: string;
+}): Promise<VideoRecord> {
+  return invoke<VideoRecord>("save_video_record", {
+    url: params.url,
+    title: params.title,
+    coverUrl: params.coverUrl,
+    duration: params.duration,
+    platform: params.platform,
+    formats: params.formats,
+  });
+}
+
+export async function listVideoRecords(): Promise<VideoRecord[]> {
+  return invoke<VideoRecord[]>("list_video_records");
+}
+
+export async function deleteVideoRecord(id: string): Promise<void> {
+  return invoke<void>("delete_video_record", { id });
+}
+
+export async function updateVideoRecordStatus(params: {
+  id: string;
+  downloadStatus: string;
+  savePath: string | null;
+}): Promise<void> {
+  return invoke<void>("update_video_record_status", {
+    id: params.id,
+    downloadStatus: params.downloadStatus,
+    savePath: params.savePath,
+  });
+}

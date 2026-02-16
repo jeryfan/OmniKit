@@ -76,6 +76,10 @@ pub fn run() {
             commands::video::download_video,
             commands::video::cancel_video_download,
             commands::video::open_in_folder,
+            commands::video::save_video_record,
+            commands::video::list_video_records,
+            commands::video::delete_video_record,
+            commands::video::update_video_record_status,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();

@@ -1,4 +1,4 @@
-.PHONY: dev build check clean fmt lint test install run-frontend run-backend help
+.PHONY: dev build check clean fmt lint test install run-frontend run-backend db-reset help
 
 # Default target
 help: ## Show this help
@@ -83,6 +83,10 @@ clean-rs: ## Clean Rust build artifacts only
 
 db-path: ## Show the database file path (macOS)
 	@echo "$$HOME/Library/Application Support/com.omnikit.desktop/omnikit.db"
+
+db-reset: ## Delete local database (fixes migration mismatch errors)
+	rm -f "$$HOME/Library/Application Support/com.omnikit.desktop/omnikit.db"*
+	@echo "Database deleted. It will be recreated on next launch."
 
 # === Info ===
 

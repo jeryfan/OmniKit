@@ -1,6 +1,8 @@
+use crate::db::models::VideoRecord;
 use crate::error::IpcError;
 use crate::video::{self, VideoInfo};
 use crate::video::downloader::DownloadManager;
+use crate::AppState;
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
 
@@ -83,5 +85,88 @@ pub async fn open_in_folder(path: String) -> Result<(), IpcError> {
             .map_err(|e| IpcError::internal(e.to_string()))?;
     }
 
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn save_video_record(
+    state: State<'_, AppState>,
+    url: String,
+    title: String,
+    cover_url: Option<String>,
+    duration: Option<i64>,
+    platform: String,
+    formats: String,
+) -> Result<VideoRecord, IpcError> {
+    let id = uuid::Uuid::new_v4().to_string();
+    let now = chrono::Utc::now().to_rfc3339();
+
+    sqlx::query(
+        "INSERT INTO video_records (id, url, title, cover_url, duration, platform, formats, download_status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)"
+    )
+    .bind(&id)
+    .bind(&url)
+    .bind(&title)
+    .bind(&cover_url)
+    .bind(&duration)
+    .bind(&platform)
+    .bind(&formats)
+    .bind(&now)
+    .execute(&state.db)
+    .await
+    .map_err(|e| IpcError::internal(e.to_string()))?;
+
+    let record = sqlx::query_as::<_, VideoRecord>("SELECT * FROM video_records WHERE id = ?")
+        .bind(&id)
+        .fetch_one(&state.db)
+        .await
+        .map_err(|e| IpcError::internal(e.to_string()))?;
+
+    Ok(record)
+}
+
+#[tauri::command]
+pub async fn list_video_records(
+    state: State<'_, AppState>,
+) -> Result<Vec<VideoRecord>, IpcError> {
+    let records = sqlx::query_as::<_, VideoRecord>(
+        "SELECT * FROM video_records ORDER BY created_at DESC"
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| IpcError::internal(e.to_string()))?;
+
+    Ok(records)
+}
+
+#[tauri::command]
+pub async fn delete_video_record(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<(), IpcError> {
+    sqlx::query("DELETE FROM video_records WHERE id = ?")
+        .bind(&id)
+        .execute(&state.db)
+        .await
+        .map_err(|e| IpcError::internal(e.to_string()))?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn update_video_record_status(
+    state: State<'_, AppState>,
+    id: String,
+    download_status: String,
+    save_path: Option<String>,
+) -> Result<(), IpcError> {
+    sqlx::query(
+        "UPDATE video_records SET download_status = ?, save_path = ? WHERE id = ?"
+    )
+    .bind(&download_status)
+    .bind(&save_path)
+    .bind(&id)
+    .execute(&state.db)
+    .await
+    .map_err(|e| IpcError::internal(e.to_string()))?;
     Ok(())
 }

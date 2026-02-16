@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { Download, FolderOpen, Link, Loader2, X } from "lucide-react";
+import { Download, FolderOpen, History, Link, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/page-header";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
 import {
@@ -15,6 +16,7 @@ import {
   downloadVideo,
   cancelVideoDownload,
   openInFolder,
+  saveVideoRecord,
   type VideoInfo,
   type DownloadProgress,
   type DownloadStatus,
@@ -60,6 +62,7 @@ function getStatusLabel(status: DownloadStatus, t: ReturnType<typeof useLanguage
 
 export default function VideoDownload() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [parsing, setParsing] = useState(false);
   const [videoInfo, setVideoInfo] = useState<VideoInfo | null>(null);
@@ -108,6 +111,17 @@ export default function VideoDownload() {
     try {
       const info = await parseVideoUrl(url.trim());
       setVideoInfo(info);
+      // Save parse record
+      saveVideoRecord({
+        url: url.trim(),
+        title: info.title,
+        coverUrl: info.cover_url,
+        duration: info.duration,
+        platform: info.platform,
+        formats: JSON.stringify(info.formats),
+      }).catch(() => {
+        // Silently ignore save failures
+      });
       if (info.formats.length > 0) {
         setSelectedFormat(info.formats[0].quality);
       }
@@ -191,7 +205,15 @@ export default function VideoDownload() {
 
   return (
     <div className="flex h-full flex-col">
-      <PageHeader title={t.videoDownload.title} description={t.videoDownload.subtitle} />
+      <PageHeader
+        title={t.videoDownload.title}
+        description={t.videoDownload.subtitle}
+        actions={
+          <Button variant="outline" size="icon" onClick={() => navigate("/video-records")}>
+            <History className="h-4 w-4" />
+          </Button>
+        }
+      />
 
       <div className="flex-1 overflow-auto p-6 space-y-6">
         {/* URL Input */}
