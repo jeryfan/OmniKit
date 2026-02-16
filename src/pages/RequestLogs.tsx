@@ -89,7 +89,7 @@ function prettyJson(raw: string | null): string {
 
 // StatusBadge is now imported from @/components/status-badge as HttpStatusBadge
 
-export default function RequestLogs() {
+export default function RequestLogs({ embedded = false }: { embedded?: boolean }) {
   const { t } = useLanguage();
   const [logs, setLogs] = useState<RequestLog[]>([]);
   const [total, setTotal] = useState(0);
@@ -206,44 +206,50 @@ export default function RequestLogs() {
     }
   }
 
+  const actionButtons = (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm" disabled={clearing}>
+          {clearing ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <Trash2 />
+          )}
+          {t.requestLogs.clearLogs}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{t.requestLogs.clearLogsTitle}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t.requestLogs.clearLogsDesc}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={handleClearLogs}
+          >
+            {t.requestLogs.clearAll}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <PageHeader
-        title={t.requestLogs.title}
-        description={t.requestLogs.subtitle}
-        actions={
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" disabled={clearing}>
-                {clearing ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <Trash2 />
-                )}
-                {t.requestLogs.clearLogs}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t.requestLogs.clearLogsTitle}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t.requestLogs.clearLogsDesc}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
-                <AlertDialogAction
-                  variant="destructive"
-                  onClick={handleClearLogs}
-                >
-                  {t.requestLogs.clearAll}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title={t.requestLogs.title}
+          description={t.requestLogs.subtitle}
+          actions={actionButtons}
+        />
+      ) : (
+        <div className="flex justify-end">{actionButtons}</div>
+      )}
 
       {/* Filter bar */}
       <div className="flex items-center gap-2">

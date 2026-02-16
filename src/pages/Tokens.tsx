@@ -514,7 +514,7 @@ function ResetQuotaDialog({
 // Main Page
 // ---------------------------------------------------------------------------
 
-export default function Tokens() {
+export default function Tokens({ embedded = false }: { embedded?: boolean }) {
   const { t } = useLanguage();
   const [tokens, setTokens] = useState<Token[]>([]);
   const [loading, setLoading] = useState(true);
@@ -577,19 +577,25 @@ export default function Tokens() {
     );
   }
 
+  const actionButtons = (
+    <Button onClick={() => setGenerateOpen(true)}>
+      <Plus />
+      {t.tokens.generateToken}
+    </Button>
+  );
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <PageHeader
-        title={t.tokens.title}
-        description={t.tokens.subtitle}
-        actions={
-          <Button onClick={() => setGenerateOpen(true)}>
-            <Plus />
-            {t.tokens.generateToken}
-          </Button>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title={t.tokens.title}
+          description={t.tokens.subtitle}
+          actions={actionButtons}
+        />
+      ) : (
+        <div className="flex justify-end">{actionButtons}</div>
+      )}
 
       {/* Table or Empty State */}
       {tokens.length === 0 ? (

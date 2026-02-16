@@ -88,7 +88,7 @@ function modalityBadgeVariant(modality: string) {
   }
 }
 
-export default function ModelMappings() {
+export default function ModelMappings({ embedded = false }: { embedded?: boolean }) {
   const { t } = useLanguage();
   const [mappings, setMappings] = useState<ModelMapping[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -205,19 +205,25 @@ export default function ModelMappings() {
 
   // --- Render ---
 
+  const actionButtons = (
+    <Button onClick={openAddDialog}>
+      <Plus className="size-4" />
+      {t.modelMappings.addMapping}
+    </Button>
+  );
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <PageHeader
-        title={t.modelMappings.title}
-        description={t.modelMappings.subtitle}
-        actions={
-          <Button onClick={openAddDialog}>
-            <Plus className="size-4" />
-            {t.modelMappings.addMapping}
-          </Button>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title={t.modelMappings.title}
+          description={t.modelMappings.subtitle}
+          actions={actionButtons}
+        />
+      ) : (
+        <div className="flex justify-end">{actionButtons}</div>
+      )}
 
       {/* Content */}
       {loading ? (

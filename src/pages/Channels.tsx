@@ -151,7 +151,7 @@ interface TestState {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function Channels() {
+export default function Channels({ embedded = false }: { embedded?: boolean }) {
   const { t } = useLanguage();
 
   // --- Channel list state ---
@@ -521,19 +521,25 @@ export default function Channels() {
   // Render
   // =========================================================================
 
+  const actionButtons = (
+    <Button onClick={openAddDialog}>
+      <Plus className="size-4" />
+      {t.channels.addChannel}
+    </Button>
+  );
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <PageHeader
-        title={t.channels.title}
-        description={t.channels.subtitle}
-        actions={
-          <Button onClick={openAddDialog}>
-            <Plus className="size-4" />
-            {t.channels.addChannel}
-          </Button>
-        }
-      />
+      {!embedded ? (
+        <PageHeader
+          title={t.channels.title}
+          description={t.channels.subtitle}
+          actions={actionButtons}
+        />
+      ) : (
+        <div className="flex justify-end">{actionButtons}</div>
+      )}
 
       {/* Channel Table */}
       {loading ? (
@@ -685,6 +691,7 @@ export default function Channels() {
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">{t.channels.providerHint}</p>
             </div>
 
             {/* Base URL */}

@@ -156,7 +156,7 @@ type TemplateKey = (typeof TEMPLATE_FIELDS)[number]["key"];
 // Component
 // ---------------------------------------------------------------------------
 
-export default function Rules() {
+export default function Rules({ embedded = false }: { embedded?: boolean }) {
   const { t } = useLanguage();
 
   // --- Rule list state ---
@@ -579,43 +579,51 @@ export default function Rules() {
   // Render
   // =========================================================================
 
+  const actionButtons = (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <Upload className="size-4" />
+        {t.rules.importRule}
+      </Button>
+      <Button
+        variant="outline"
+        onClick={handleExportAll}
+        disabled={rules.filter((r) => r.rule_type === "user").length === 0}
+      >
+        <Download className="size-4" />
+        {t.rules.exportAll}
+      </Button>
+      <Button onClick={openAddDialog}>
+        <Plus className="size-4" />
+        {t.rules.createRule}
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <PageHeader
-        title={t.rules.title}
-        description={t.rules.subtitle}
-        actions={
-          <div className="flex items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json,.omnikit.json"
-              className="hidden"
-              onChange={handleImport}
-            />
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="size-4" />
-              {t.rules.importRule}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleExportAll}
-              disabled={rules.filter((r) => r.rule_type === "user").length === 0}
-            >
-              <Download className="size-4" />
-              {t.rules.exportAll}
-            </Button>
-            <Button onClick={openAddDialog}>
-              <Plus className="size-4" />
-              {t.rules.createRule}
-            </Button>
-          </div>
-        }
+      {/* Hidden file input for import */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.omnikit.json"
+        className="hidden"
+        onChange={handleImport}
       />
+
+      {/* Header */}
+      {!embedded ? (
+        <PageHeader
+          title={t.rules.title}
+          description={t.rules.subtitle}
+          actions={actionButtons}
+        />
+      ) : (
+        <div className="flex justify-end">{actionButtons}</div>
+      )}
 
       {/* Tabs: My Rules / Rule Store */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

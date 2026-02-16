@@ -35,6 +35,7 @@ export interface Translations {
     unknownError: string;
   };
   sidebar: {
+    apiGateway: string;
     channels: string;
     modelMappings: string;
     tokens: string;
@@ -165,6 +166,7 @@ export interface Translations {
     saveToChannel: string;
     testConfigSaved: string;
     hasCustomConfig: string;
+    providerHint: string;
   };
   modelMappings: {
     title: string;
@@ -435,6 +437,7 @@ const en: Translations = {
     unknownError: "Unknown error",
   },
   sidebar: {
+    apiGateway: "API Gateway",
     channels: "Channels",
     modelMappings: "Model Mappings",
     tokens: "Tokens",
@@ -564,6 +567,7 @@ const en: Translations = {
     saveToChannel: "Save to Channel",
     testConfigSaved: "Test config saved",
     hasCustomConfig: "Custom test config",
+    providerHint: "Conversion rules are automatically applied based on the provider.",
   },
   modelMappings: {
     title: "Model Mappings",
@@ -832,6 +836,7 @@ const zh: Translations = {
     unknownError: "未知错误",
   },
   sidebar: {
+    apiGateway: "API 网关",
     channels: "渠道",
     modelMappings: "模型映射",
     tokens: "令牌",
@@ -961,6 +966,7 @@ const zh: Translations = {
     saveToChannel: "保存到渠道",
     testConfigSaved: "测试配置已保存",
     hasCustomConfig: "自定义测试配置",
+    providerHint: "转换规则会根据所选服务商自动应用。",
   },
   modelMappings: {
     title: "模型映射",

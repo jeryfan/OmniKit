@@ -41,7 +41,8 @@ pub async fn select_channel(
     .await?;
 
     if rows.is_empty() {
-        return Err(AppError::NoChannel(model.to_string()));
+        // Fallback: no explicit model mapping found, try passthrough on all enabled channels
+        return select_channel_passthrough(model, db, circuit).await;
     }
 
     // Group by priority
@@ -132,6 +133,129 @@ fn weighted_random_select<'a>(channels: &[&'a &ChannelWithMapping]) -> &'a Chann
     }
 
     channels.last().unwrap()
+}
+
+/// Fallback: when no ModelMapping exists, query all enabled channels and pass the model name through.
+async fn select_channel_passthrough(
+    model: &str,
+    db: &SqlitePool,
+    circuit: &CircuitBreaker,
+) -> Result<SelectedChannel, AppError> {
+    let channels = sqlx::query_as::<_, ChannelRow>(
+        "SELECT id, name, provider, base_url, priority, weight, enabled,
+                key_rotation, rate_limit, created_at, updated_at
+         FROM channels
+         WHERE enabled = 1
+         ORDER BY priority ASC",
+    )
+    .fetch_all(db)
+    .await?;
+
+    if channels.is_empty() {
+        return Err(AppError::NoChannel(model.to_string()));
+    }
+
+    // Group by priority
+    let mut priority_groups: Vec<(i32, Vec<&ChannelRow>)> = Vec::new();
+    for ch in &channels {
+        if let Some(group) = priority_groups.last_mut() {
+            if group.0 == ch.priority {
+                group.1.push(ch);
+                continue;
+            }
+        }
+        priority_groups.push((ch.priority, vec![ch]));
+    }
+
+    // Try each priority group
+    for (_priority, group) in &priority_groups {
+        // Filter by circuit breaker
+        let available: Vec<&&ChannelRow> = group
+            .iter()
+            .filter(|r| circuit.is_available(&r.id))
+            .collect();
+
+        if available.is_empty() {
+            continue;
+        }
+
+        // Weighted random selection
+        let selected = weighted_random_select_channel(&available);
+
+        // Fetch API key
+        let api_key = sqlx::query_scalar::<_, String>(
+            "SELECT key_value FROM channel_api_keys WHERE channel_id = ? AND enabled = 1 LIMIT 1",
+        )
+        .bind(&selected.id)
+        .fetch_optional(db)
+        .await?
+        .ok_or_else(|| {
+            AppError::Internal(format!("No API key for channel '{}'", selected.name))
+        })?;
+
+        return Ok(SelectedChannel {
+            channel: Channel {
+                id: selected.id.clone(),
+                name: selected.name.clone(),
+                provider: selected.provider.clone(),
+                base_url: selected.base_url.clone(),
+                priority: selected.priority,
+                weight: selected.weight,
+                enabled: selected.enabled,
+                key_rotation: selected.key_rotation,
+                rate_limit: selected.rate_limit.clone(),
+                test_url: None,
+                test_headers: None,
+                created_at: selected.created_at.clone(),
+                updated_at: selected.updated_at.clone(),
+            },
+            mapping: ModelMapping {
+                id: String::new(), // virtual mapping, no real ID
+                public_name: model.to_string(),
+                channel_id: selected.id.clone(),
+                actual_name: model.to_string(),
+                modality: "chat".to_string(),
+            },
+            api_key,
+        });
+    }
+
+    Err(AppError::AllChannelsFailed(model.to_string()))
+}
+
+fn weighted_random_select_channel<'a>(channels: &[&'a &ChannelRow]) -> &'a ChannelRow {
+    if channels.len() == 1 {
+        return channels[0];
+    }
+
+    let total_weight: i32 = channels.iter().map(|c| c.weight.max(1)).sum();
+    let mut rng = rand::rng();
+    let mut pick = rng.random_range(0..total_weight);
+
+    for ch in channels {
+        pick -= ch.weight.max(1);
+        if pick < 0 {
+            return ch;
+        }
+    }
+
+    channels.last().unwrap()
+}
+
+// Internal query result for channel-only rows (used in passthrough fallback)
+#[derive(Debug, sqlx::FromRow)]
+struct ChannelRow {
+    id: String,
+    name: String,
+    provider: String,
+    base_url: String,
+    priority: i32,
+    weight: i32,
+    enabled: bool,
+    key_rotation: bool,
+    rate_limit: Option<String>,
+    created_at: String,
+    updated_at: String,
 }
 
 // Internal joined query result

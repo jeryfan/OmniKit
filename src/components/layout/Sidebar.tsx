@@ -2,11 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router";
 import {
   Network,
-  ArrowRightLeft,
-  KeyRound,
-  ScrollText,
   Waypoints,
-  FileCode2,
   Settings,
   Sun,
   Moon,
@@ -50,11 +46,7 @@ export function Sidebar() {
   };
 
   const navItems = [
-    { to: "/channels", icon: Network, label: t.sidebar.channels },
-    { to: "/rules", icon: FileCode2, label: t.sidebar.rules },
-    { to: "/model-mappings", icon: ArrowRightLeft, label: t.sidebar.modelMappings },
-    { to: "/tokens", icon: KeyRound, label: t.sidebar.tokens },
-    { to: "/request-logs", icon: ScrollText, label: t.sidebar.requestLogs },
+    { to: "/api-gateway", icon: Network, label: t.sidebar.apiGateway },
     { to: "/proxy", icon: Waypoints, label: t.sidebar.proxy },
     { to: "/video-download", icon: Download, label: t.sidebar.videoDownload },
   ];
@@ -91,7 +83,7 @@ export function Sidebar() {
             collapsed ? (
               <Tooltip key={item.to}>
                 <TooltipTrigger asChild>
-                  <NavLink to={item.to} end={item.to === "/channels"} className={navLinkClass}>
+                  <NavLink to={item.to} className={navLinkClass}>
                     <item.icon className="h-4 w-4 shrink-0" />
                   </NavLink>
                 </TooltipTrigger>
