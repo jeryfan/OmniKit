@@ -148,14 +148,51 @@ async fn do_download(
         return Ok(());
     }
 
-    // Download video
-    download_file(app, task_id, &client, &format.url, save_path, cancel_token).await?;
-
-    // If there's a separate audio URL, download and we just save it alongside
-    // (full muxing would require ffmpeg, so we save audio separately)
     if let Some(audio_url) = &format.audio_url {
-        let audio_path = save_path.with_extension("audio.m4a");
-        download_file(app, task_id, &client, audio_url, &audio_path, cancel_token).await?;
+        // DASH format: download video & audio to temp files, then mux with ffmpeg
+        let video_tmp = save_path.with_extension("video.tmp");
+        let audio_tmp = save_path.with_extension("audio.tmp");
+
+        // Download video stream
+        download_file(app, task_id, &client, &format.url, &video_tmp, cancel_token).await?;
+        // Download audio stream
+        download_file(app, task_id, &client, audio_url, &audio_tmp, cancel_token).await?;
+
+        // Try muxing with ffmpeg (-c copy = no re-encoding, very fast)
+        let mux_result = tokio::process::Command::new("ffmpeg")
+            .args([
+                "-y",
+                "-i", video_tmp.to_str().unwrap_or_default(),
+                "-i", audio_tmp.to_str().unwrap_or_default(),
+                "-c", "copy",
+                "-movflags", "+faststart",
+                save_path.to_str().unwrap_or_default(),
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null())
+            .status()
+            .await;
+
+        // Clean up temp files
+        let _ = tokio::fs::remove_file(&video_tmp).await;
+        let _ = tokio::fs::remove_file(&audio_tmp).await;
+
+        match mux_result {
+            Ok(status) if status.success() => {
+                // Muxed successfully
+            }
+            _ => {
+                // ffmpeg not available or failed — fallback: re-download video only
+                // (temp files already cleaned up, so download again to the final path)
+                download_file(app, task_id, &client, &format.url, save_path, cancel_token).await?;
+                // Save audio alongside as separate file
+                let audio_path = save_path.with_extension("m4a");
+                download_file(app, task_id, &client, audio_url, &audio_path, cancel_token).await?;
+            }
+        }
+    } else {
+        // Single-stream format (e.g. Douyin): download directly
+        download_file(app, task_id, &client, &format.url, save_path, cancel_token).await?;
     }
 
     Ok(())
