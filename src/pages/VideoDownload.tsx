@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { Download, FolderOpen, History, Link, Loader2, X } from "lucide-react";
+import { Download, FolderOpen, History, Link, Loader2, Music, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -133,10 +133,19 @@ export default function VideoDownload() {
     }
   }, [url, t]);
 
-  const handleDownload = useCallback(async () => {
+  const selectedFormatInfo = useMemo(() => {
+    if (!videoInfo || !selectedFormat) return null;
+    return videoInfo.formats.find((f) => f.quality === selectedFormat) ?? null;
+  }, [videoInfo, selectedFormat]);
+
+  const handleDownload = useCallback(async (audioOnly: boolean) => {
     if (!videoInfo || !selectedFormat) return;
     const format = videoInfo.formats.find((f) => f.quality === selectedFormat);
     if (!format) return;
+    if (audioOnly && !format.audio_url) {
+      toast.error(t.videoDownload.audioNotAvailable);
+      return;
+    }
 
     const taskId = crypto.randomUUID();
     const newTask: DownloadTask = {
@@ -146,7 +155,7 @@ export default function VideoDownload() {
       quality: format.quality,
       savePath: "",
       downloaded: 0,
-      total: format.size,
+      total: audioOnly ? null : format.size,
       speed: 0,
       status: "Downloading",
     };
@@ -161,6 +170,7 @@ export default function VideoDownload() {
         audioUrl: format.audio_url,
         quality: format.quality,
         saveDir: null,
+        audioOnly,
       });
       setTasks((prev) =>
         prev.map((task) => (task.taskId === taskId ? { ...task, savePath } : task)),
@@ -259,9 +269,17 @@ export default function VideoDownload() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={handleDownload} disabled={!selectedFormat}>
+                <Button onClick={() => handleDownload(false)} disabled={!selectedFormat}>
                   <Download className="mr-2 h-4 w-4" />
                   {t.videoDownload.download}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleDownload(true)}
+                  disabled={!selectedFormatInfo?.audio_url}
+                >
+                  <Music className="mr-2 h-4 w-4" />
+                  {t.videoDownload.downloadAudio}
                 </Button>
               </div>
             </div>

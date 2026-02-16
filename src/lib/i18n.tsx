@@ -381,6 +381,7 @@ export interface Translations {
     parse: string;
     parsing: string;
     download: string;
+    downloadAudio: string;
     downloading: string;
     selectQuality: string;
     fileName: string;
@@ -397,6 +398,7 @@ export interface Translations {
     openFolder: string;
     noFormats: string;
     unsupportedUrl: string;
+    audioNotAvailable: string;
     downloadStarted: string;
     downloadComplete: string;
     downloadFailed: string;
@@ -794,6 +796,7 @@ const en: Translations = {
     parse: "Parse",
     parsing: "Parsing...",
     download: "Download",
+    downloadAudio: "Audio Only",
     downloading: "Downloading...",
     selectQuality: "Select quality",
     fileName: "File Name",
@@ -810,6 +813,7 @@ const en: Translations = {
     openFolder: "Open Folder",
     noFormats: "No downloadable formats found",
     unsupportedUrl: "Unsupported URL",
+    audioNotAvailable: "No separate audio stream for this quality",
     downloadStarted: "Download started",
     downloadComplete: "Download complete!",
     downloadFailed: "Download failed",
@@ -1207,6 +1211,7 @@ const zh: Translations = {
     parse: "解析",
     parsing: "解析中...",
     download: "下载",
+    downloadAudio: "仅音频",
     downloading: "下载中...",
     selectQuality: "选择清晰度",
     fileName: "文件名",
@@ -1223,6 +1228,7 @@ const zh: Translations = {
     openFolder: "打开文件夹",
     noFormats: "未找到可下载的格式",
     unsupportedUrl: "不支持的链接",
+    audioNotAvailable: "当前清晰度没有独立音频流",
     downloadStarted: "开始下载",
     downloadComplete: "下载完成！",
     downloadFailed: "下载失败",

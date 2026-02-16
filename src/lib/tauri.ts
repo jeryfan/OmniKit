@@ -688,6 +688,7 @@ export async function downloadVideo(params: {
   audioUrl: string | null;
   quality: string;
   saveDir: string | null;
+  audioOnly?: boolean;
 }): Promise<string> {
   return invoke<string>("download_video", {
     taskId: params.taskId,
@@ -696,6 +697,7 @@ export async function downloadVideo(params: {
     audioUrl: params.audioUrl,
     quality: params.quality,
     saveDir: params.saveDir,
+    audioOnly: params.audioOnly ?? false,
   });
 }
 

@@ -21,7 +21,9 @@ pub async fn download_video(
     audio_url: Option<String>,
     quality: String,
     save_dir: Option<String>,
+    audio_only: Option<bool>,
 ) -> Result<String, IpcError> {
+    let audio_only = audio_only.unwrap_or(false);
     let save_dir = if let Some(dir) = save_dir {
         PathBuf::from(dir)
     } else {
@@ -38,7 +40,7 @@ pub async fn download_video(
     };
 
     let save_path = manager
-        .start_download(app, task_id, title, format, save_dir)
+        .start_download(app, task_id, title, format, save_dir, audio_only)
         .await?;
 
     Ok(save_path.to_string_lossy().to_string())

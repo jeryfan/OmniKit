@@ -34,11 +34,20 @@ impl DownloadManager {
         title: String,
         format: VideoFormat,
         save_dir: PathBuf,
+        audio_only: bool,
     ) -> Result<PathBuf, IpcError> {
         // Sanitize filename
         let sanitized_title = sanitize_filename(&title);
-        let filename = format!("{}.mp4", sanitized_title);
-        let save_path = save_dir.join(&filename);
+        let save_path = if audio_only {
+            if format.audio_url.is_none() {
+                return Err(IpcError::validation(
+                    "Audio-only download is unavailable for this format",
+                ));
+            }
+            save_dir.join(format!("{}.m4a", sanitized_title))
+        } else {
+            save_dir.join(format!("{}.mp4", sanitized_title))
+        };
 
         // Ensure save directory exists
         tokio::fs::create_dir_all(&save_dir)
@@ -69,6 +78,7 @@ impl DownloadManager {
                 &format,
                 &save_path_clone,
                 &cancel_token,
+                audio_only,
             )
             .await;
 
@@ -126,8 +136,17 @@ async fn do_download(
     format: &VideoFormat,
     save_path: &PathBuf,
     cancel_token: &CancellationToken,
+    audio_only: bool,
 ) -> Result<(), IpcError> {
     let client = super::create_http_client();
+
+    if audio_only {
+        let audio_url = format.audio_url.as_ref().ok_or_else(|| {
+            IpcError::validation("Audio-only download is unavailable for this format")
+        })?;
+        download_file(app, task_id, &client, audio_url, save_path, cancel_token).await?;
+        return Ok(());
+    }
 
     // Download video
     download_file(app, task_id, &client, &format.url, save_path, cancel_token).await?;
