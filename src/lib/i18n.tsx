@@ -425,6 +425,16 @@ export interface Translations {
     failed: string;
     backToDownload: string;
   };
+  player: {
+    play: string;
+    pause: string;
+    mute: string;
+    unmute: string;
+    fullscreen: string;
+    exitFullscreen: string;
+    playbackRate: string;
+    buffering: string;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -849,6 +859,16 @@ const en: Translations = {
     failed: "Download failed",
     backToDownload: "Back to Download",
   },
+  player: {
+    play: "Play",
+    pause: "Pause",
+    mute: "Mute",
+    unmute: "Unmute",
+    fullscreen: "Fullscreen",
+    exitFullscreen: "Exit Fullscreen",
+    playbackRate: "Playback Speed",
+    buffering: "Buffering...",
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -1272,6 +1292,16 @@ const zh: Translations = {
     pending: "未下载",
     failed: "下载失败",
     backToDownload: "返回下载",
+  },
+  player: {
+    play: "播放",
+    pause: "暂停",
+    mute: "静音",
+    unmute: "取消静音",
+    fullscreen: "全屏",
+    exitFullscreen: "退出全屏",
+    playbackRate: "播放速度",
+    buffering: "缓冲中...",
   },
 };
 

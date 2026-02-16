@@ -122,15 +122,14 @@ async fn handle_video_proxy(
 ) -> Result<Response<Body>, AppError> {
     let video_url = &query.url;
 
-    // Build a client that does NOT follow redirects so we can resolve 302s manually
-    let no_redirect_client = reqwest::Client::builder()
-        .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
-        .redirect(reqwest::redirect::Policy::none())
-        .build()
-        .map_err(|e| AppError::Internal(format!("Failed to build HTTP client: {}", e)))?;
-
     // Resolve the actual CDN URL (handle Douyin 302 redirects)
     let resolved_url = if video_url.contains("aweme.snssdk.com") || video_url.contains("api-h2.amemv.com") {
+        // Build a no-redirect client only when needed (Douyin short URLs)
+        let no_redirect_client = reqwest::Client::builder()
+            .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|e| AppError::Internal(format!("Failed to build HTTP client: {}", e)))?;
         let resp = no_redirect_client
             .get(video_url)
             .send()
@@ -150,7 +149,9 @@ async fn handle_video_proxy(
     };
 
     // Build the upstream request with platform-specific headers
-    let mut req = state.http_client.get(&resolved_url);
+    // Add browser User-Agent (required by Bilibili CDN etc.) per-request to reuse shared client's connection pool
+    let mut req = state.http_client.get(&resolved_url)
+        .header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36");
 
     if video_url.contains("bilibili.com") || video_url.contains("bilivideo") {
         req = req.header("Referer", "https://www.bilibili.com/");

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/page-header";
+import { DashPlayer } from "@/components/dash-player";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
@@ -213,6 +214,13 @@ export default function VideoDownload() {
     return `http://127.0.0.1:${serverPort}/video-proxy?url=${encodeURIComponent(format.url)}`;
   }, [videoInfo, selectedFormat, serverPort]);
 
+  const audioProxyUrl = useMemo(() => {
+    if (!videoInfo || !selectedFormat || !serverPort) return null;
+    const format = videoInfo.formats.find((f) => f.quality === selectedFormat);
+    if (!format?.audio_url) return null;
+    return `http://127.0.0.1:${serverPort}/video-proxy?url=${encodeURIComponent(format.audio_url)}`;
+  }, [videoInfo, selectedFormat, serverPort]);
+
   return (
     <div className="flex h-full flex-col">
       <PageHeader
@@ -285,11 +293,11 @@ export default function VideoDownload() {
             </div>
             {videoProxyUrl && (
               <div className="overflow-hidden rounded-lg bg-black">
-                <video
+                <DashPlayer
                   key={videoProxyUrl}
-                  controls
-                  className="mx-auto max-h-[480px] w-full"
-                  src={videoProxyUrl}
+                  videoUrl={videoProxyUrl}
+                  audioUrl={audioProxyUrl}
+                  className="max-h-[480px]"
                 />
               </div>
             )}

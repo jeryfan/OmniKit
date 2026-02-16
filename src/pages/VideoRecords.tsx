@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
+import { DashPlayer } from "@/components/dash-player";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -188,6 +189,11 @@ export default function VideoRecords() {
   const playerVideoUrl = useMemo(() => {
     if (!serverPort || !playingFormat) return null;
     return `http://127.0.0.1:${serverPort}/video-proxy?url=${encodeURIComponent(playingFormat.url)}`;
+  }, [serverPort, playingFormat]);
+
+  const playerAudioUrl = useMemo(() => {
+    if (!serverPort || !playingFormat?.audio_url) return null;
+    return `http://127.0.0.1:${serverPort}/video-proxy?url=${encodeURIComponent(playingFormat.audio_url)}`;
   }, [serverPort, playingFormat]);
 
   const playingIndex = useMemo(() => {
@@ -594,12 +600,12 @@ export default function VideoRecords() {
 
             {playerVideoUrl ? (
               <div className="overflow-hidden rounded-lg bg-black">
-                <video
+                <DashPlayer
                   key={`${playingRecord?.id ?? "unknown"}-${playingFormat?.quality ?? "default"}`}
-                  controls
+                  videoUrl={playerVideoUrl}
+                  audioUrl={playerAudioUrl}
                   autoPlay
-                  className="mx-auto max-h-[70vh] w-full"
-                  src={playerVideoUrl}
+                  className="max-h-[70vh]"
                 />
               </div>
             ) : (
