@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Search, Trash2, Eye, ArrowRight, RotateCcw, Copy, Check, RefreshCw } from "lucide-react";
+import { Loader2, Search, Trash2, RotateCcw, Copy, Check, RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,7 +45,27 @@ import { parseIpcError } from "@/lib/tauri";
 
 const PAGE_SIZE = 20;
 
-function formatDatetime(iso: string): string {
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  if (isToday) {
+    return d.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }
+  return d.toLocaleString(undefined, {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
+
+function formatDatetimeFull(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleString(undefined, {
     year: "numeric",
@@ -59,7 +79,8 @@ function formatDatetime(iso: string): string {
 
 function formatLatency(ms: number | null): string {
   if (ms === null || ms === undefined) return "-";
-  return `${ms}ms`;
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
 }
 
 function formatTokens(
@@ -86,8 +107,6 @@ function prettyJson(raw: string | null): string {
     return raw;
   }
 }
-
-// StatusBadge is now imported from @/components/status-badge as HttpStatusBadge
 
 export default function RequestLogs({ embedded = false }: { embedded?: boolean }) {
   const { t } = useLanguage();
@@ -207,39 +226,49 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
   }
 
   const actionButtons = (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" disabled={clearing}>
-          {clearing ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Trash2 />
-          )}
-          {t.requestLogs.clearLogs}
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{t.requestLogs.clearLogsTitle}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {t.requestLogs.clearLogsDesc}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
-          <AlertDialogAction
-            variant="destructive"
-            onClick={handleClearLogs}
-          >
-            {t.requestLogs.clearAll}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <div className="flex items-center gap-2">
+      <Button
+        variant={autoRefresh ? "default" : "outline"}
+        size="sm"
+        onClick={() => setAutoRefresh((v) => !v)}
+      >
+        <RefreshCw className={autoRefresh ? "animate-spin" : ""} />
+        {t.requestLogs.autoRefresh}
+      </Button>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="outline" size="sm" disabled={clearing}>
+            {clearing ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Trash2 />
+            )}
+            {t.requestLogs.clearLogs}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.requestLogs.clearLogsTitle}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t.requestLogs.clearLogsDesc}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={handleClearLogs}
+            >
+              {t.requestLogs.clearAll}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {/* Header */}
       {!embedded ? (
         <PageHeader
@@ -248,42 +277,51 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
           actions={actionButtons}
         />
       ) : (
-        <div className="flex justify-end">{actionButtons}</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1">
+            <Input
+              placeholder={t.requestLogs.filterPlaceholder}
+              value={modelFilter}
+              onChange={(e) => setModelFilter(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
+              className="max-w-[240px] h-8 text-sm"
+            />
+            <Button variant="outline" size="sm" onClick={handleSearch} className="h-8">
+              <Search className="size-3.5" />
+              {t.common.search}
+            </Button>
+          </div>
+          {actionButtons}
+        </div>
       )}
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder={t.requestLogs.filterPlaceholder}
-          value={modelFilter}
-          onChange={(e) => setModelFilter(e.target.value)}
-          onKeyDown={handleSearchKeyDown}
-          className="max-w-sm"
-        />
-        <Button variant="outline" size="sm" onClick={handleSearch}>
-          <Search />
-          {t.common.search}
-        </Button>
-        <Button
-          variant={autoRefresh ? "default" : "outline"}
-          size="sm"
-          onClick={() => setAutoRefresh((v) => !v)}
-        >
-          <RefreshCw className={autoRefresh ? "animate-spin" : ""} />
-          {t.requestLogs.autoRefresh}
-        </Button>
-      </div>
+      {/* Filter bar (non-embedded) */}
+      {!embedded && (
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder={t.requestLogs.filterPlaceholder}
+            value={modelFilter}
+            onChange={(e) => setModelFilter(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            className="max-w-[240px] h-8 text-sm"
+          />
+          <Button variant="outline" size="sm" onClick={handleSearch} className="h-8">
+            <Search className="size-3.5" />
+            {t.common.search}
+          </Button>
+        </div>
+      )}
 
       {/* Table */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-          <span className="ml-2 text-muted-foreground">{t.requestLogs.loadingLogs}</span>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="size-5 animate-spin text-muted-foreground" />
+          <span className="ml-2 text-sm text-muted-foreground">{t.requestLogs.loadingLogs}</span>
         </div>
       ) : logs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-          <p className="text-lg font-medium">{t.requestLogs.noLogs}</p>
-          <p className="mt-1 text-sm">
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <p className="text-sm font-medium">{t.requestLogs.noLogs}</p>
+          <p className="mt-1 text-xs">
             {appliedFilter
               ? t.requestLogs.noLogsFilterHint(appliedFilter)
               : t.requestLogs.noLogsHint}
@@ -295,65 +333,58 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t.requestLogs.time}</TableHead>
+                <TableHead className="w-[140px]">{t.requestLogs.time}</TableHead>
                 <TableHead>{t.requestLogs.model}</TableHead>
-                <TableHead>{t.requestLogs.inputOutput}</TableHead>
-                <TableHead>{t.common.status}</TableHead>
-                <TableHead>{t.requestLogs.latency}</TableHead>
-                <TableHead>{t.requestLogs.tokensCol}</TableHead>
-                <TableHead className="text-right">{t.common.actions}</TableHead>
+                <TableHead className="w-[120px]">{t.requestLogs.inputOutput}</TableHead>
+                <TableHead className="w-[70px]">{t.common.status}</TableHead>
+                <TableHead className="w-[80px]">{t.requestLogs.latency}</TableHead>
+                <TableHead className="w-[100px]">{t.requestLogs.tokensCol}</TableHead>
+                <TableHead className="w-[60px] text-right">{t.common.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell className="text-muted-foreground">
-                    {formatDatetime(log.created_at)}
+                <TableRow
+                  key={log.id}
+                  className="cursor-pointer h-9"
+                  onClick={() => handleViewDetails(log.id)}
+                >
+                  <TableCell className="text-xs text-muted-foreground tabular-nums py-1.5">
+                    {formatTime(log.created_at)}
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="text-xs font-medium py-1.5">
                     {log.model ?? "-"}
                   </TableCell>
-                  <TableCell>
-                    <span className="inline-flex items-center gap-1 text-sm">
+                  <TableCell className="py-1.5">
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                       <span>{log.input_format ?? "?"}</span>
-                      <ArrowRight className="size-3 text-muted-foreground" />
+                      <ArrowRight className="size-2.5" />
                       <span>{log.output_format ?? "?"}</span>
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-1.5">
                     <HttpStatusBadge status={log.status} />
                   </TableCell>
-                  <TableCell className="tabular-nums">
+                  <TableCell className="text-xs tabular-nums text-muted-foreground py-1.5">
                     {formatLatency(log.latency_ms)}
                   </TableCell>
-                  <TableCell className="tabular-nums">
+                  <TableCell className="text-xs tabular-nums text-muted-foreground py-1.5">
                     {formatTokens(log.prompt_tokens, log.completion_tokens)}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="inline-flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8"
-                        disabled={retrying === log.id}
-                        onClick={() => handleRetry(log.id)}
-                        title={t.requestLogs.retry}
-                      >
-                        {retrying === log.id ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <RotateCcw className="size-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewDetails(log.id)}
-                      >
-                        <Eye />
-                        {t.requestLogs.viewDetails}
-                      </Button>
-                    </div>
+                  <TableCell className="text-right py-1.5" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      disabled={retrying === log.id}
+                      onClick={() => handleRetry(log.id)}
+                      title={t.requestLogs.retry}
+                    >
+                      {retrying === log.id ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <RotateCcw className="size-3" />
+                      )}
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -373,103 +404,72 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{t.requestLogs.detailTitle}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedLog?.model ?? t.requestLogs.detailTitle}
+              {selectedLog && <HttpStatusBadge status={selectedLog.status} />}
+            </DialogTitle>
             <DialogDescription>
-              {t.requestLogs.detailDesc}
+              {selectedLog ? formatDatetimeFull(selectedLog.created_at) : t.requestLogs.detailDesc}
             </DialogDescription>
           </DialogHeader>
 
           {detailLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="size-5 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-muted-foreground">{t.common.loading}</span>
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">{t.common.loading}</span>
             </div>
           ) : selectedLog ? (
-            <div className="flex flex-col gap-4 overflow-hidden">
-              {/* Metadata grid */}
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
-                <div>
-                  <span className="text-muted-foreground">{t.requestLogs.model}</span>
-                  <p className="font-medium">{selectedLog.model ?? "-"}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.common.status}</span>
-                  <div className="mt-0.5">
-                    <HttpStatusBadge status={selectedLog.status} />
-                  </div>
-                </div>
-                <div>
+            <div className="flex flex-col gap-3 overflow-hidden">
+              {/* Compact metadata */}
+              <div className="grid grid-cols-3 gap-x-4 gap-y-1.5 text-xs rounded-lg bg-muted/40 p-3">
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{t.requestLogs.latency}</span>
-                  <p className="font-medium tabular-nums">
-                    {formatLatency(selectedLog.latency_ms)}
-                  </p>
+                  <span className="font-medium tabular-nums">{formatLatency(selectedLog.latency_ms)}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">{t.requestLogs.channelId}</span>
-                  <p className="font-medium truncate">
-                    {selectedLog.channel_id ?? "-"}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.requestLogs.tokenId}</span>
-                  <p className="font-medium truncate">
-                    {selectedLog.token_id ?? "-"}
-                  </p>
-                </div>
-                <div>
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{t.requestLogs.tokensCol}</span>
-                  <p className="font-medium tabular-nums">
-                    {formatTokens(
-                      selectedLog.prompt_tokens,
-                      selectedLog.completion_tokens
-                    )}
-                  </p>
+                  <span className="font-medium tabular-nums">{formatTokens(selectedLog.prompt_tokens, selectedLog.completion_tokens)}</span>
                 </div>
-                <div>
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{t.requestLogs.conversion}</span>
-                  <p className="font-medium">
-                    {formatConversion(
-                      selectedLog.input_format,
-                      selectedLog.output_format
-                    )}
-                  </p>
+                  <span className="font-medium">{formatConversion(selectedLog.input_format, selectedLog.output_format)}</span>
                 </div>
-                <div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t.requestLogs.channelId}</span>
+                  <span className="font-medium truncate ml-2">{selectedLog.channel_id ?? "-"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t.requestLogs.tokenId}</span>
+                  <span className="font-medium truncate ml-2">{selectedLog.token_id ?? "-"}</span>
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{t.requestLogs.modalityLabel}</span>
-                  <p className="font-medium">
-                    {selectedLog.modality ?? "-"}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">{t.requestLogs.time}</span>
-                  <p className="font-medium">
-                    {formatDatetime(selectedLog.created_at)}
-                  </p>
+                  <span className="font-medium">{selectedLog.modality ?? "-"}</span>
                 </div>
               </div>
 
-              {/* Retry button */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="self-start"
-                disabled={retrying === selectedLog.id}
-                onClick={() => handleRetry(selectedLog.id)}
-              >
-                {retrying === selectedLog.id ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  <RotateCcw />
-                )}
-                {t.requestLogs.retry}
-              </Button>
-
               {/* Request / Response tabs */}
               <Tabs defaultValue="request" className="flex-1 overflow-hidden">
-                <TabsList>
-                  <TabsTrigger value="request">{t.requestLogs.requestBody}</TabsTrigger>
-                  <TabsTrigger value="response">{t.requestLogs.responseBody}</TabsTrigger>
-                </TabsList>
+                <div className="flex items-center justify-between">
+                  <TabsList>
+                    <TabsTrigger value="request">{t.requestLogs.requestBody}</TabsTrigger>
+                    <TabsTrigger value="response">{t.requestLogs.responseBody}</TabsTrigger>
+                  </TabsList>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    disabled={retrying === selectedLog.id}
+                    onClick={() => handleRetry(selectedLog.id)}
+                  >
+                    {retrying === selectedLog.id ? (
+                      <Loader2 className="size-3 animate-spin" />
+                    ) : (
+                      <RotateCcw className="size-3" />
+                    )}
+                    {t.requestLogs.retry}
+                  </Button>
+                </div>
                 <TabsContent
                   value="request"
                   className="overflow-auto max-h-[40vh]"
@@ -477,17 +477,17 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                   <div className="relative">
                     <Button
                       variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-2 size-7"
+                      size="icon-xs"
+                      className="absolute right-2 top-2"
                       onClick={() => handleCopy(prettyJson(selectedLog.request_body) || "", "request")}
                     >
                       {copiedTab === "request" ? (
-                        <Check className="size-3.5" />
+                        <Check className="size-3" />
                       ) : (
-                        <Copy className="size-3.5" />
+                        <Copy className="size-3" />
                       )}
                     </Button>
-                    <pre className="code-block">
+                    <pre className="code-block text-[11px] leading-relaxed">
                       {prettyJson(selectedLog.request_body) || "(empty)"}
                     </pre>
                   </div>
@@ -500,18 +500,18 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                     {selectedLog.response_body && (
                       <Button
                         variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-2 size-7"
+                        size="icon-xs"
+                        className="absolute right-2 top-2"
                         onClick={() => handleCopy(prettyJson(selectedLog.response_body) || "", "response")}
                       >
                         {copiedTab === "response" ? (
-                          <Check className="size-3.5" />
+                          <Check className="size-3" />
                         ) : (
-                          <Copy className="size-3.5" />
+                          <Copy className="size-3" />
                         )}
                       </Button>
                     )}
-                    <pre className="code-block">
+                    <pre className="code-block text-[11px] leading-relaxed">
                       {prettyJson(selectedLog.response_body) || "(empty)"}
                     </pre>
                   </div>
@@ -519,7 +519,7 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
               </Tabs>
             </div>
           ) : (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">
+            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
               {t.requestLogs.logNotFound}
             </div>
           )}

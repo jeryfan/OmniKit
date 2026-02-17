@@ -420,6 +420,8 @@ export interface Translations {
     playerEmptyHint: string;
     deleteRecord: string;
     deleteConfirm: string;
+    clearRecords: string;
+    clearConfirm: string;
     downloaded: string;
     pending: string;
     failed: string;
@@ -854,6 +856,8 @@ const en: Translations = {
     playerEmptyHint: "Use the Play button in the list.",
     deleteRecord: "Delete Record",
     deleteConfirm: "Are you sure you want to delete this record?",
+    clearRecords: "Clear All",
+    clearConfirm: "Are you sure you want to clear all records? This action cannot be undone.",
     downloaded: "Downloaded",
     pending: "Not downloaded",
     failed: "Download failed",
@@ -1288,6 +1292,8 @@ const zh: Translations = {
     playerEmptyHint: "点击列表里的播放按钮即可。",
     deleteRecord: "删除记录",
     deleteConfirm: "确定要删除此记录吗？",
+    clearRecords: "清空全部",
+    clearConfirm: "确定要清空所有记录吗？此操作不可撤销。",
     downloaded: "已下载",
     pending: "未下载",
     failed: "下载失败",

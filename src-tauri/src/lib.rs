@@ -79,6 +79,7 @@ pub fn run() {
             commands::video::save_video_record,
             commands::video::list_video_records,
             commands::video::delete_video_record,
+            commands::video::clear_video_records,
             commands::video::update_video_record_status,
         ])
         .setup(|app| {

@@ -750,6 +750,10 @@ export async function deleteVideoRecord(id: string): Promise<void> {
   return invoke<void>("delete_video_record", { id });
 }
 
+export async function clearVideoRecords(): Promise<void> {
+  return invoke<void>("clear_video_records");
+}
+
 export async function updateVideoRecordStatus(params: {
   id: string;
   downloadStatus: string;

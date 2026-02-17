@@ -44,6 +44,7 @@ import {
   getConfig,
   listVideoRecords,
   deleteVideoRecord,
+  clearVideoRecords,
   updateVideoRecordStatus,
   downloadVideo,
   cancelVideoDownload,
@@ -102,6 +103,7 @@ export default function VideoRecords() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [playerState, setPlayerState] = useState<PlayerState | null>(null);
   const [serverPort, setServerPort] = useState<number | null>(null);
   const [activeDownloads, setActiveDownloads] = useState<ActiveDownload[]>([]);
@@ -246,6 +248,19 @@ export default function VideoRecords() {
       setDeleteId(null);
     }
   }, [deleteId, playerState]);
+
+  const handleClearAll = useCallback(async () => {
+    try {
+      await clearVideoRecords();
+      setRecords([]);
+      setPlayerState(null);
+    } catch (e: unknown) {
+      const err = e as { message?: string };
+      toast.error(err.message || "Failed to clear records");
+    } finally {
+      setShowClearConfirm(false);
+    }
+  }, []);
 
   const handleDownload = useCallback(
     async (record: VideoRecord) => {
@@ -408,6 +423,15 @@ export default function VideoRecords() {
                 />
               </div>
               <span className="shrink-0 text-xs text-muted-foreground">{t.common.totalItems(filteredRecords.length)}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowClearConfirm(true)}
+                disabled={records.length === 0}
+              >
+                <Trash2 className="mr-1.5 h-4 w-4" />
+                {t.videoRecords.clearRecords}
+              </Button>
             </div>
 
             {filteredRecords.length === 0 ? (
@@ -626,6 +650,19 @@ export default function VideoRecords() {
           <AlertDialogFooter>
             <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>{t.common.delete}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.videoRecords.clearRecords}</AlertDialogTitle>
+            <AlertDialogDescription>{t.videoRecords.clearConfirm}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleClearAll}>{t.common.delete}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

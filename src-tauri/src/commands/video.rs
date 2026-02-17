@@ -155,6 +155,17 @@ pub async fn delete_video_record(
 }
 
 #[tauri::command]
+pub async fn clear_video_records(
+    state: State<'_, AppState>,
+) -> Result<(), IpcError> {
+    sqlx::query("DELETE FROM video_records")
+        .execute(&state.db)
+        .await
+        .map_err(|e| IpcError::internal(e.to_string()))?;
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn update_video_record_status(
     state: State<'_, AppState>,
     id: String,
