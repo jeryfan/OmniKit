@@ -104,6 +104,46 @@ jobs:
             echo "Release is already published, skipping"
           fi
 
+      - name: Generate latest.json for Tauri updater
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Create latest.json
+          cat > latest.json << EOF
+          {
+            "version": "$VERSION",
+            "notes": "See the full release notes at https://github.com/${{ github.repository }}/releases/tag/v$VERSION",
+            "pub_date": "$PUB_DATE",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_aarch64.dmg"
+              },
+              "darwin-x86_64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_x64.dmg"
+              },
+              "linux-x86_64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_amd64.AppImage"
+              },
+              "windows-x86_64": {
+                "signature": "",
+                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_x64-setup.exe"
+              }
+            }
+          }
+          EOF
+
+          echo "Generated latest.json:"
+          cat latest.json
+
+          # Upload to release
+          gh release upload ${{ github.ref_name }} latest.json --repo ${{ github.repository }}
+
       - name: Download DMGs and compute SHA-256
         id: sha
         env:
