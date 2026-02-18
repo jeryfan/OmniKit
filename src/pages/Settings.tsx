@@ -119,6 +119,11 @@ export default function Settings() {
     { value: "system", label: t.settings.system, icon: <Monitor className="h-4 w-4" /> },
   ];
 
+  const languageOptions: { value: "en" | "zh"; label: string }[] = [
+    { value: "en", label: "English" },
+    { value: "zh", label: "中文" },
+  ];
+
   const isServerOk = serverStatus?.status === "ok";
 
   return (
@@ -137,11 +142,12 @@ export default function Settings() {
             {t.settings.serverConfigDesc}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <CardContent className="space-y-6">
+          {/* Server Config Grid */}
+          <div className="grid gap-6 sm:grid-cols-2">
             {/* Server Port */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
                 {t.settings.serverPort}
               </label>
               <Input
@@ -150,7 +156,8 @@ export default function Settings() {
                 max={65535}
                 value={editPort}
                 onChange={(e) => setEditPort(e.target.value)}
-                className="font-mono w-32"
+                className="font-mono"
+                placeholder="1024-65535"
               />
               <p className="text-xs text-muted-foreground">
                 {t.settings.requiresRestart}
@@ -158,25 +165,31 @@ export default function Settings() {
             </div>
 
             {/* Log Retention */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
                 {t.settings.logRetention}
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Input
                   type="number"
                   min={1}
                   value={editRetention}
                   onChange={(e) => setEditRetention(e.target.value)}
-                  className="font-mono w-32"
+                  className="font-mono flex-1"
+                  placeholder="≥ 1"
                 />
-                <span className="text-sm text-muted-foreground">{t.settings.days}</span>
+                <span className="text-sm text-muted-foreground shrink-0">{t.settings.days}</span>
               </div>
             </div>
+          </div>
 
+          <Separator />
+
+          {/* Status & Version Grid */}
+          <div className="grid gap-4 sm:grid-cols-2">
             {/* Server Status */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
                 {t.settings.serverStatusLabel}
               </label>
               <div>
@@ -199,8 +212,8 @@ export default function Settings() {
             </div>
 
             {/* Version */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-muted-foreground">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
                 {t.settings.versionLabel}
               </label>
               <div className="text-sm font-mono">
@@ -250,14 +263,14 @@ export default function Settings() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <label className="text-sm font-medium text-muted-foreground">
+            <label className="text-sm font-medium">
               {t.settings.theme}
             </label>
-            <div className="inline-flex gap-1 rounded-lg border bg-muted/30 p-1">
+            <div className="flex flex-wrap gap-2">
               {themeOptions.map((option) => (
                 <Button
                   key={option.value}
-                  variant={theme === option.value ? "default" : "outline"}
+                  variant={theme === option.value ? "default" : "secondary"}
                   size="sm"
                   onClick={() => setTheme(option.value)}
                   className="gap-2"
@@ -283,26 +296,17 @@ export default function Settings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-muted-foreground">
-              {t.settings.languageLabel}
-            </label>
-            <div className="inline-flex gap-1 rounded-lg border bg-muted/30 p-1">
+          <div className="flex flex-wrap gap-2">
+            {languageOptions.map((option) => (
               <Button
-                variant={language === "en" ? "default" : "outline"}
+                key={option.value}
+                variant={language === option.value ? "default" : "secondary"}
                 size="sm"
-                onClick={() => setLanguage("en")}
+                onClick={() => setLanguage(option.value)}
               >
-                English
+                {option.label}
               </Button>
-              <Button
-                variant={language === "zh" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setLanguage("zh")}
-              >
-                中文
-              </Button>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>
@@ -317,33 +321,33 @@ export default function Settings() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
                   {t.settings.application}
                 </label>
-                <div className="text-sm font-semibold">OmniKit</div>
+                <div className="text-sm text-muted-foreground font-medium">OmniKit</div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
                   {t.settings.description}
                 </label>
-                <div className="text-sm">{t.settings.descriptionText}</div>
+                <div className="text-sm text-muted-foreground">{t.settings.descriptionText}</div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
                   {t.settings.license}
                 </label>
-                <div className="text-sm">Apache 2.0</div>
+                <div className="text-sm text-muted-foreground">Apache 2.0</div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">
                   {t.settings.techStack}
                 </label>
-                <div className="text-sm">Tauri v2 + React + Rust</div>
+                <div className="text-sm text-muted-foreground">Tauri v2 + React + Rust</div>
               </div>
             </div>
 
