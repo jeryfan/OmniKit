@@ -44,18 +44,36 @@ export function UpdateBanner() {
   const handleUpdate = async () => {
     if (!update) return;
     setDownloading(true);
+    setProgress(t.updater.downloading);
     try {
-      setProgress(t.updater.downloading);
+      console.log("[Updater] Starting download and install...");
       await update.downloadAndInstall((event) => {
-        if (event.event === "Started" && event.data.contentLength) {
-          setProgress(t.updater.downloading);
+        console.log("[Updater] Event:", event);
+        if (event.event === "Started") {
+          if (event.data.contentLength) {
+            const totalMB = (event.data.contentLength / 1024 / 1024).toFixed(1);
+            setProgress(`${t.updater.downloading} (0% / ${totalMB} MB)`);
+          } else {
+            setProgress(t.updater.downloading);
+          }
+        } else if (event.event === "Progress") {
+          if (event.data.chunkLength && event.data.contentLength) {
+            // Note: Tauri updater doesn't provide total downloaded, only chunk
+            // We'll show a simple progress indication
+            const percent = Math.round((event.data.chunkLength / event.data.contentLength) * 100);
+            const totalMB = (event.data.contentLength / 1024 / 1024).toFixed(1);
+            setProgress(`${t.updater.downloading} (${percent}% / ${totalMB} MB)`);
+          }
         } else if (event.event === "Finished") {
           setProgress(t.updater.installing);
         }
       });
+      console.log("[Updater] Download and install completed, relaunching...");
       await relaunch();
-    } catch {
-      setProgress(t.updater.updateFailed);
+    } catch (err) {
+      console.error("[Updater] Error during update:", err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setProgress(`${t.updater.updateFailed}${errorMsg ? `: ${errorMsg}` : ""}`);
       setDownloading(false);
     }
   };

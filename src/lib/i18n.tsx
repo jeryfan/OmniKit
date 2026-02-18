@@ -330,6 +330,7 @@ export interface Translations {
     downloading: string;
     installing: string;
     updateFailed: string;
+    retry: string;
   };
   proxy: {
     title: string;
