@@ -95,7 +95,7 @@ function DualPlayer({ videoUrl, audioUrl, autoPlay, className }: DualPlayerProps
 
   // Internal refs
   const seekingRef = useRef(false);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const videoReadyRef = useRef(false);
   const audioReadyRef = useRef(false);
   const wantPlayRef = useRef(autoPlay ?? false);
@@ -104,7 +104,7 @@ function DualPlayer({ videoUrl, audioUrl, autoPlay, className }: DualPlayerProps
   const playingRef = useRef(false);
   const audioFailedRef = useRef(false);
   const playbackRateRef = useRef(1);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number>(undefined);
 
   // Keep refs in sync with state
   useEffect(() => { playingRef.current = playing; }, [playing]);
