@@ -425,18 +425,18 @@ export default function Proxy() {
               />
             ) : (
               <div className="table-wrapper">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t.common.name}</TableHead>
-                    <TableHead>{t.proxy.pathPrefix}</TableHead>
-                    <TableHead>{t.proxy.targetBaseUrl}</TableHead>
-                    <TableHead>{t.proxy.usage}</TableHead>
-                    <TableHead className="text-center">{t.common.status}</TableHead>
-                    <TableHead className="text-right">{t.common.actions}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t.common.name}</TableHead>
+                      <TableHead>{t.proxy.pathPrefix}</TableHead>
+                      <TableHead>{t.proxy.targetBaseUrl}</TableHead>
+                      <TableHead>{t.proxy.usage}</TableHead>
+                      <TableHead className="text-center">{t.common.status}</TableHead>
+                      <TableHead className="text-right">{t.common.actions}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                   {rules.map((rule) => (
                     <TableRow key={rule.id}>
                       <TableCell className="font-medium">
