@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/page-header";
 import { DashPlayer } from "@/components/dash-player";
+import { PlatformBadge } from "@/components/PlatformBadge";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
@@ -235,19 +236,19 @@ export default function VideoDownload() {
 
       <div className="flex-1 overflow-auto p-6 space-y-6">
         {/* URL Input */}
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <div className="relative flex-1">
-            <Link className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Link className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
-              className="pl-10"
+              className="h-8 pl-9 text-sm"
               placeholder={t.videoDownload.urlPlaceholder}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleParse()}
             />
           </div>
-          <Button onClick={handleParse} disabled={parsing || !url.trim()}>
-            {parsing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button size="sm" onClick={handleParse} disabled={parsing || !url.trim()}>
+            {parsing && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
             {parsing ? t.videoDownload.parsing : t.videoDownload.parse}
           </Button>
         </div>
@@ -257,36 +258,37 @@ export default function VideoDownload() {
           <div className="space-y-4">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-semibold line-clamp-2">{videoInfo.title}</h3>
-                <div className="mt-1 flex gap-3 text-sm text-muted-foreground">
-                  <span className="capitalize">{videoInfo.platform}</span>
+                <h3 className="text-base font-medium line-clamp-2">{videoInfo.title}</h3>
+                <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <PlatformBadge platform={videoInfo.platform} />
                   {videoInfo.duration && <span>{formatDuration(videoInfo.duration)}</span>}
                 </div>
               </div>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 items-center gap-1.5">
                 <Select value={selectedFormat} onValueChange={setSelectedFormat}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="h-8 w-36 text-xs">
                     <SelectValue placeholder={t.videoDownload.selectQuality} />
                   </SelectTrigger>
                   <SelectContent>
                     {videoInfo.formats.map((f) => (
-                      <SelectItem key={f.quality} value={f.quality}>
+                      <SelectItem key={f.quality} value={f.quality} className="text-xs">
                         {f.quality}
                         {f.size ? ` (${formatBytes(f.size)})` : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Button onClick={() => handleDownload(false)} disabled={!selectedFormat}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button size="sm" onClick={() => handleDownload(false)} disabled={!selectedFormat}>
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
                   {t.videoDownload.download}
                 </Button>
                 <Button
                   variant="secondary"
+                  size="sm"
                   onClick={() => handleDownload(true)}
                   disabled={!selectedFormatInfo?.audio_url}
                 >
-                  <Music className="mr-2 h-4 w-4" />
+                  <Music className="mr-1.5 h-3.5 w-3.5" />
                   {t.videoDownload.downloadAudio}
                 </Button>
               </div>
@@ -306,15 +308,15 @@ export default function VideoDownload() {
 
         {/* Download Tasks */}
         {tasks.length > 0 && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {tasks.map((task) => (
-              <Card key={task.taskId}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0 mr-4">
+              <Card key={task.taskId} className="overflow-hidden">
+                <CardContent className="p-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium truncate">{task.title}</span>
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        <span className="text-sm font-medium truncate">{task.title}</span>
+                        <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
                           task.status === "Completed"
                             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                             : task.status === "Downloading"
@@ -326,8 +328,8 @@ export default function VideoDownload() {
                           {getStatusLabel(task.status, t)}
                         </span>
                       </div>
-                      <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
-                        <span className="capitalize">{task.platform}</span>
+                      <div className="mt-0.5 flex gap-3 text-xs text-muted-foreground">
+                        <PlatformBadge platform={task.platform} />
                         <span>{task.quality}</span>
                         {task.status === "Downloading" && task.speed > 0 && (
                           <span>{formatSpeed(task.speed)}</span>
@@ -339,22 +341,22 @@ export default function VideoDownload() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5">
                       {task.status === "Downloading" && (
-                        <Button variant="ghost" size="icon" onClick={() => handleCancel(task.taskId)}>
-                          <X className="h-4 w-4" />
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleCancel(task.taskId)}>
+                          <X className="h-3.5 w-3.5" />
                         </Button>
                       )}
                       {task.status === "Completed" && task.savePath && (
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenFolder(task.savePath)}>
-                          <FolderOpen className="h-4 w-4" />
+                        <Button variant="ghost" size="icon-sm" onClick={() => handleOpenFolder(task.savePath)}>
+                          <FolderOpen className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
                   </div>
                   {task.status === "Downloading" && (
                     <Progress
-                      className="mt-2"
+                      className="mt-2 h-1"
                       value={task.total ? (task.downloaded / task.total) * 100 : undefined}
                     />
                   )}

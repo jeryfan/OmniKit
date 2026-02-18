@@ -28,6 +28,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
 import { DashPlayer } from "@/components/dash-player";
+import { PlatformBadge } from "@/components/PlatformBadge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -393,8 +394,8 @@ export default function VideoRecords() {
         title={t.videoRecords.title}
         description={t.videoRecords.subtitle}
         actions={
-          <Button variant="outline" size="sm" onClick={() => navigate("/video-download")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+          <Button variant="outline" size="sm" className="h-8" onClick={() => navigate("/video-download")}>
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
             {t.videoRecords.backToDownload}
           </Button>
         }
@@ -413,10 +414,10 @@ export default function VideoRecords() {
         ) : (
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  className="pl-9"
+                  className="h-8 pl-9 text-sm"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder={t.videoRecords.searchPlaceholder}
@@ -426,10 +427,11 @@ export default function VideoRecords() {
               <Button
                 variant="outline"
                 size="sm"
+                className="h-8"
                 onClick={() => setShowClearConfirm(true)}
                 disabled={records.length === 0}
               >
-                <Trash2 className="mr-1.5 h-4 w-4" />
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
                 {t.videoRecords.clearRecords}
               </Button>
             </div>
@@ -475,7 +477,7 @@ export default function VideoRecords() {
                                 <h3 className="line-clamp-1 font-medium">{record.title}</h3>
                               </button>
                               <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                <span className="capitalize">{record.platform}</span>
+                                <PlatformBadge platform={record.platform} />
                                 {record.duration && <span>{formatDuration(record.duration)}</span>}
                                 {isPlaying && (
                                   <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
@@ -490,53 +492,54 @@ export default function VideoRecords() {
                               <Button
                                 variant={isPlaying ? "secondary" : "outline"}
                                 size="sm"
+                                className="h-7"
                                 onClick={() => handleOpenPlayer(record)}
                                 disabled={!hasPlayableFormat}
                               >
-                                {isPlaying ? <Pause className="mr-1.5 h-4 w-4" /> : <Play className="mr-1.5 h-4 w-4" />}
-                                {isPlaying ? t.videoRecords.watching : t.videoRecords.watch}
+                                {isPlaying ? <Pause className="mr-1 h-3.5 w-3.5" /> : <Play className="mr-1 h-3.5 w-3.5" />}
+                                <span className="text-xs">{isPlaying ? t.videoRecords.watching : t.videoRecords.watch}</span>
                               </Button>
 
                               {!activeDl && record.download_status !== "downloaded" && (
                                 <Button
                                   variant="ghost"
-                                  size="icon"
+                                  size="icon-sm"
                                   onClick={() => handleDownload(record)}
                                   title={t.videoDownload.download}
                                 >
-                                  <Download className="h-4 w-4" />
+                                  <Download className="h-3.5 w-3.5" />
                                 </Button>
                               )}
 
                               {activeDl && (
                                 <Button
                                   variant="ghost"
-                                  size="icon"
+                                  size="icon-sm"
                                   onClick={() => handleCancelDownload(activeDl.taskId)}
                                   title={t.videoDownload.cancel}
                                 >
-                                  <X className="h-4 w-4" />
+                                  <X className="h-3.5 w-3.5" />
                                 </Button>
                               )}
 
                               {record.download_status === "downloaded" && record.save_path && (
                                 <Button
                                   variant="ghost"
-                                  size="icon"
+                                  size="icon-sm"
                                   onClick={() => handleOpenFolder(record.save_path!)}
                                   title={t.videoDownload.openFolder}
                                 >
-                                  <FolderOpen className="h-4 w-4" />
+                                  <FolderOpen className="h-3.5 w-3.5" />
                                 </Button>
                               )}
 
                               <Button
                                 variant="ghost"
-                                size="icon"
+                                size="icon-sm"
                                 onClick={() => setDeleteId(record.id)}
                                 title={t.videoRecords.deleteRecord}
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
                               </Button>
                             </div>
                           </div>
@@ -575,31 +578,31 @@ export default function VideoRecords() {
           <DialogHeader className="gap-2 border-b p-4 pb-3 pr-12">
             <DialogTitle className="line-clamp-1">{playingRecord?.title ?? t.videoRecords.watching}</DialogTitle>
             <DialogDescription className="flex flex-wrap items-center gap-3 text-xs">
-              {playingRecord && <span className="capitalize">{playingRecord.platform}</span>}
+              {playingRecord && <PlatformBadge platform={playingRecord.platform} />}
               {playingRecord?.duration && <span>{formatDuration(playingRecord.duration)}</span>}
               {playingFormat && <span>{playingFormat.quality}</span>}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 p-4">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-1.5">
               <Button
                 variant="outline"
-                size="icon"
+                size="icon-sm"
                 onClick={() => handlePlayNeighbor(-1)}
                 disabled={!hasPreviousPlayable}
                 title={t.videoRecords.previous}
               >
-                <SkipBack className="h-4 w-4" />
+                <SkipBack className="h-3.5 w-3.5" />
               </Button>
               <Button
                 variant="outline"
-                size="icon"
+                size="icon-sm"
                 onClick={() => handlePlayNeighbor(1)}
                 disabled={!hasNextPlayable}
                 title={t.videoRecords.next}
               >
-                <SkipForward className="h-4 w-4" />
+                <SkipForward className="h-3.5 w-3.5" />
               </Button>
 
               {playingFormats.length > 0 && (
@@ -607,12 +610,12 @@ export default function VideoRecords() {
                   value={playingFormat?.quality ?? playingFormats[0].quality}
                   onValueChange={handlePlayerQualityChange}
                 >
-                  <SelectTrigger className="h-9 w-44">
+                  <SelectTrigger className="h-7 w-36 text-xs">
                     <SelectValue placeholder={t.videoDownload.selectQuality} />
                   </SelectTrigger>
                   <SelectContent>
                     {playingFormats.map((format) => (
-                      <SelectItem key={format.quality} value={format.quality}>
+                      <SelectItem key={format.quality} value={format.quality} className="text-xs">
                         {format.quality}
                         {format.size ? ` (${formatBytes(format.size)})` : ""}
                       </SelectItem>
