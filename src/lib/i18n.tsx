@@ -767,6 +767,7 @@ const en: Translations = {
     downloading: "Downloading update...",
     installing: "Installing...",
     updateFailed: "Update failed",
+    retry: "Retry",
   },
   proxy: {
     title: "Proxy",
@@ -1203,6 +1204,7 @@ const zh: Translations = {
     downloading: "正在下载更新...",
     installing: "正在安装...",
     updateFailed: "更新失败",
+    retry: "重试",
   },
   proxy: {
     title: "代理",

@@ -57,12 +57,11 @@ export function UpdateBanner() {
             setProgress(t.updater.downloading);
           }
         } else if (event.event === "Progress") {
-          if (event.data.chunkLength && event.data.contentLength) {
+          if (event.data.chunkLength) {
             // Note: Tauri updater doesn't provide total downloaded, only chunk
-            // We'll show a simple progress indication
-            const percent = Math.round((event.data.chunkLength / event.data.contentLength) * 100);
-            const totalMB = (event.data.contentLength / 1024 / 1024).toFixed(1);
-            setProgress(`${t.updater.downloading} (${percent}% / ${totalMB} MB)`);
+            // We'll show a simple progress indication with the chunk size
+            const chunkMB = (event.data.chunkLength / 1024 / 1024).toFixed(2);
+            setProgress(`${t.updater.downloading} (${chunkMB} MB)`);
           }
         } else if (event.event === "Finished") {
           setProgress(t.updater.installing);
