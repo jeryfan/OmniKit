@@ -78,6 +78,9 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
+      # Note: We need to wait for all platform builds to complete before generating latest.json
+      # This job only runs after the release job completes (see job dependencies)
+
   publish-and-update-homebrew:
     needs: release
     runs-on: ubuntu-latest
@@ -104,14 +107,78 @@ jobs:
             echo "Release is already published, skipping"
           fi
 
-      - name: Generate latest.json for Tauri updater
+      - name: Download signatures and generate latest.json
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Create latest.json
+          # Download signature files
+          echo "Downloading signature files..."
+
+          # Wait a bit for all assets to be available
+          sleep 5
+
+          # macOS ARM64
+          if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
+            --pattern "OmniKit_${VERSION}_aarch64.dmg.sig" --output arm64.dmg.sig 2>/dev/null; then
+            echo "Downloaded ARM64 signature"
+          else
+            echo "ARM64 signature not found (may be first release)"
+          fi
+
+          # macOS x64
+          if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
+            --pattern "OmniKit_${VERSION}_x64.dmg.sig" --output x64.dmg.sig 2>/dev/null; then
+            echo "Downloaded x64 signature"
+          else
+            echo "x64 signature not found (may be first release)"
+          fi
+
+          # Linux
+          if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
+            --pattern "OmniKit_${VERSION}_amd64.AppImage.sig" --output linux.AppImage.sig 2>/dev/null; then
+            echo "Downloaded Linux signature"
+          else
+            echo "Linux signature not found (may be first release)"
+          fi
+
+          # Windows
+          if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
+            --pattern "OmniKit_${VERSION}_x64-setup.exe.sig" --output windows.exe.sig 2>/dev/null; then
+            echo "Downloaded Windows signature"
+          else
+            echo "Windows signature not found (may be first release)"
+          fi
+
+          # Read signature files if they exist
+          ARM64_SIG=""
+          X64_SIG=""
+          LINUX_SIG=""
+          WINDOWS_SIG=""
+
+          if [ -f "arm64.dmg.sig" ]; then
+            ARM64_SIG=$(cat arm64.dmg.sig | tr -d '\n')
+            echo "Found ARM64 signature"
+          fi
+
+          if [ -f "x64.dmg.sig" ]; then
+            X64_SIG=$(cat x64.dmg.sig | tr -d '\n')
+            echo "Found x64 signature"
+          fi
+
+          if [ -f "linux.AppImage.sig" ]; then
+            LINUX_SIG=$(cat linux.AppImage.sig | tr -d '\n')
+            echo "Found Linux signature"
+          fi
+
+          if [ -f "windows.exe.sig" ]; then
+            WINDOWS_SIG=$(cat windows.exe.sig | tr -d '\n')
+            echo "Found Windows signature"
+          fi
+
+          # Create latest.json with signatures
           cat > latest.json << EOF
           {
             "version": "$VERSION",
@@ -119,19 +186,19 @@ jobs:
             "pub_date": "$PUB_DATE",
             "platforms": {
               "darwin-aarch64": {
-                "signature": "",
+                "signature": "$ARM64_SIG",
                 "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_aarch64.dmg"
               },
               "darwin-x86_64": {
-                "signature": "",
+                "signature": "$X64_SIG",
                 "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_x64.dmg"
               },
               "linux-x86_64": {
-                "signature": "",
+                "signature": "$LINUX_SIG",
                 "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_amd64.AppImage"
               },
               "windows-x86_64": {
-                "signature": "",
+                "signature": "$WINDOWS_SIG",
                 "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_x64-setup.exe"
               }
             }
@@ -142,7 +209,7 @@ jobs:
           cat latest.json
 
           # Upload to release
-          gh release upload ${{ github.ref_name }} latest.json --repo ${{ github.repository }}
+          gh release upload ${{ github.ref_name }} latest.json --repo ${{ github.repository }} --clobber
 
       - name: Download DMGs and compute SHA-256
         id: sha
