@@ -13,6 +13,7 @@ export function UpdateBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   const doCheck = async (bypassIgnore: boolean) => {
     try {
@@ -44,24 +45,31 @@ export function UpdateBanner() {
   const handleUpdate = async () => {
     if (!update) return;
     setDownloading(true);
+    setError("");
     setProgress(t.updater.downloading);
+    let downloaded = 0;
+    let totalSize = 0;
     try {
       console.log("[Updater] Starting download and install...");
       await update.downloadAndInstall((event) => {
         console.log("[Updater] Event:", event);
         if (event.event === "Started") {
-          if (event.data.contentLength) {
-            const totalMB = (event.data.contentLength / 1024 / 1024).toFixed(1);
-            setProgress(`${t.updater.downloading} (0% / ${totalMB} MB)`);
+          totalSize = event.data.contentLength ?? 0;
+          if (totalSize) {
+            const totalMB = (totalSize / 1024 / 1024).toFixed(1);
+            setProgress(`${t.updater.downloading} (0 / ${totalMB} MB)`);
           } else {
             setProgress(t.updater.downloading);
           }
         } else if (event.event === "Progress") {
-          if (event.data.chunkLength) {
-            // Note: Tauri updater doesn't provide total downloaded, only chunk
-            // We'll show a simple progress indication with the chunk size
-            const chunkMB = (event.data.chunkLength / 1024 / 1024).toFixed(2);
-            setProgress(`${t.updater.downloading} (${chunkMB} MB)`);
+          downloaded += event.data.chunkLength;
+          const downloadedMB = (downloaded / 1024 / 1024).toFixed(1);
+          if (totalSize) {
+            const totalMB = (totalSize / 1024 / 1024).toFixed(1);
+            const percent = Math.round((downloaded / totalSize) * 100);
+            setProgress(`${t.updater.downloading} (${percent}% — ${downloadedMB} / ${totalMB} MB)`);
+          } else {
+            setProgress(`${t.updater.downloading} (${downloadedMB} MB)`);
           }
         } else if (event.event === "Finished") {
           setProgress(t.updater.installing);
@@ -72,7 +80,7 @@ export function UpdateBanner() {
     } catch (err) {
       console.error("[Updater] Error during update:", err);
       const errorMsg = err instanceof Error ? err.message : String(err);
-      setProgress(`${t.updater.updateFailed}${errorMsg ? `: ${errorMsg}` : ""}`);
+      setError(`${t.updater.updateFailed}${errorMsg ? `: ${errorMsg}` : ""}`);
       setDownloading(false);
     }
   };
@@ -102,8 +110,11 @@ export function UpdateBanner() {
           </span>
         ) : (
           <>
+            {error && (
+              <span className="text-xs text-red-600 dark:text-red-400 mr-2">{error}</span>
+            )}
             <Button size="sm" variant="default" className="h-7 text-xs" onClick={handleUpdate}>
-              {t.updater.updateNow}
+              {error ? t.updater.retry : t.updater.updateNow}
             </Button>
             <button
               onClick={handleIgnore}

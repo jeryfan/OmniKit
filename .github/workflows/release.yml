@@ -120,36 +120,36 @@ jobs:
           # Wait a bit for all assets to be available
           sleep 5
 
-          # macOS ARM64
+          # macOS ARM64 (.app.tar.gz.sig - updater format, NOT .dmg.sig)
           if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
-            --pattern "OmniKit_${VERSION}_aarch64.dmg.sig" --output arm64.dmg.sig 2>/dev/null; then
+            --pattern "OmniKit_aarch64.app.tar.gz.sig" --output arm64.sig 2>/dev/null; then
             echo "Downloaded ARM64 signature"
           else
-            echo "ARM64 signature not found (may be first release)"
+            echo "::warning::ARM64 .app.tar.gz.sig not found — check TAURI_SIGNING_PRIVATE_KEY secret"
           fi
 
-          # macOS x64
+          # macOS x64 (.app.tar.gz.sig - updater format, NOT .dmg.sig)
           if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
-            --pattern "OmniKit_${VERSION}_x64.dmg.sig" --output x64.dmg.sig 2>/dev/null; then
+            --pattern "OmniKit_x64.app.tar.gz.sig" --output x64.sig 2>/dev/null; then
             echo "Downloaded x64 signature"
           else
-            echo "x64 signature not found (may be first release)"
+            echo "::warning::x64 .app.tar.gz.sig not found — check TAURI_SIGNING_PRIVATE_KEY secret"
           fi
 
           # Linux
           if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
-            --pattern "OmniKit_${VERSION}_amd64.AppImage.sig" --output linux.AppImage.sig 2>/dev/null; then
+            --pattern "OmniKit_${VERSION}_amd64.AppImage.sig" --output linux.sig 2>/dev/null; then
             echo "Downloaded Linux signature"
           else
-            echo "Linux signature not found (may be first release)"
+            echo "::warning::Linux AppImage.sig not found — check TAURI_SIGNING_PRIVATE_KEY secret"
           fi
 
           # Windows
           if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
-            --pattern "OmniKit_${VERSION}_x64-setup.exe.sig" --output windows.exe.sig 2>/dev/null; then
+            --pattern "OmniKit_${VERSION}_x64-setup.exe.sig" --output windows.sig 2>/dev/null; then
             echo "Downloaded Windows signature"
           else
-            echo "Windows signature not found (may be first release)"
+            echo "::warning::Windows exe.sig not found — check TAURI_SIGNING_PRIVATE_KEY secret"
           fi
 
           # Read signature files if they exist
@@ -158,27 +158,28 @@ jobs:
           LINUX_SIG=""
           WINDOWS_SIG=""
 
-          if [ -f "arm64.dmg.sig" ]; then
-            ARM64_SIG=$(cat arm64.dmg.sig | tr -d '\n')
+          if [ -f "arm64.sig" ]; then
+            ARM64_SIG=$(cat arm64.sig | tr -d '\n')
             echo "Found ARM64 signature"
           fi
 
-          if [ -f "x64.dmg.sig" ]; then
-            X64_SIG=$(cat x64.dmg.sig | tr -d '\n')
+          if [ -f "x64.sig" ]; then
+            X64_SIG=$(cat x64.sig | tr -d '\n')
             echo "Found x64 signature"
           fi
 
-          if [ -f "linux.AppImage.sig" ]; then
-            LINUX_SIG=$(cat linux.AppImage.sig | tr -d '\n')
+          if [ -f "linux.sig" ]; then
+            LINUX_SIG=$(cat linux.sig | tr -d '\n')
             echo "Found Linux signature"
           fi
 
-          if [ -f "windows.exe.sig" ]; then
-            WINDOWS_SIG=$(cat windows.exe.sig | tr -d '\n')
+          if [ -f "windows.sig" ]; then
+            WINDOWS_SIG=$(cat windows.sig | tr -d '\n')
             echo "Found Windows signature"
           fi
 
           # Create latest.json with signatures
+          # macOS URLs must point to .app.tar.gz (updater format), NOT .dmg
           cat > latest.json << EOF
           {
             "version": "$VERSION",
@@ -187,11 +188,11 @@ jobs:
             "platforms": {
               "darwin-aarch64": {
                 "signature": "$ARM64_SIG",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_aarch64.dmg"
+                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_aarch64.app.tar.gz"
               },
               "darwin-x86_64": {
                 "signature": "$X64_SIG",
-                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_${VERSION}_x64.dmg"
+                "url": "https://github.com/${{ github.repository }}/releases/download/v$VERSION/OmniKit_x64.app.tar.gz"
               },
               "linux-x86_64": {
                 "signature": "$LINUX_SIG",
