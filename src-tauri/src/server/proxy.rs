@@ -2,8 +2,6 @@ use crate::error::AppError;
 use crate::modality::chat::{self, ChatFormat};
 use crate::routing::balancer;
 use crate::routing::circuit::CircuitBreaker;
-use crate::rules::registry::{CodecProvider, RuleRegistry, JsonataDecoder, JsonataEncoder};
-use crate::rules::HttpConfig;
 use crate::server::middleware;
 use axum::body::Body;
 use axum::extract::State;
@@ -19,36 +17,21 @@ pub struct ProxyState {
     pub db: SqlitePool,
     pub http_client: reqwest::Client,
     pub circuit: Arc<CircuitBreaker>,
-    pub registry: Arc<RuleRegistry>,
 }
 
-/// Resolve a codec slug to a Decoder via the registry.
-async fn resolve_decoder(registry: &RuleRegistry, slug: &str) -> Result<Box<dyn chat::Decoder>, AppError> {
-    match registry.get(slug).await {
-        Some(CodecProvider::Builtin(format)) => Ok(chat::get_decoder(format)),
-        Some(CodecProvider::Jsonata(rule)) => Ok(Box::new(JsonataDecoder { rule })),
-        None => {
-            // Fallback: try ChatFormat::from_str_loose for backward compat
-            ChatFormat::from_str_loose(slug)
-                .map(chat::get_decoder)
-                .ok_or_else(|| AppError::Codec(format!("Unknown format: {}", slug)))
-        }
-    }
+fn resolve_decoder(slug: &str) -> Result<Box<dyn chat::Decoder>, AppError> {
+    ChatFormat::from_str_loose(slug)
+        .map(chat::get_decoder)
+        .ok_or_else(|| AppError::Codec(format!("Unknown format: {}", slug)))
 }
 
-async fn resolve_encoder(registry: &RuleRegistry, slug: &str) -> Result<Box<dyn chat::Encoder>, AppError> {
-    match registry.get(slug).await {
-        Some(CodecProvider::Builtin(format)) => Ok(chat::get_encoder(format)),
-        Some(CodecProvider::Jsonata(rule)) => Ok(Box::new(JsonataEncoder { rule })),
-        None => {
-            ChatFormat::from_str_loose(slug)
-                .map(chat::get_encoder)
-                .ok_or_else(|| AppError::Codec(format!("Unknown format: {}", slug)))
-        }
-    }
+fn resolve_encoder(slug: &str) -> Result<Box<dyn chat::Encoder>, AppError> {
+    ChatFormat::from_str_loose(slug)
+        .map(chat::get_encoder)
+        .ok_or_else(|| AppError::Codec(format!("Unknown format: {}", slug)))
 }
 
-async fn build_upstream_request(
+fn build_upstream_request(
     state: &ProxyState,
     upstream_slug: &str,
     base_url: &str,
@@ -57,40 +40,20 @@ async fn build_upstream_request(
     api_key: &str,
     body: Vec<u8>,
 ) -> Result<(String, reqwest::RequestBuilder), AppError> {
-    // Check if this is a JSONata rule with http_config
-    if let Some(CodecProvider::Jsonata(rule)) = state.registry.get(upstream_slug).await {
-        if let Some(http_config) = HttpConfig::parse(rule.http_config.as_deref()) {
-            let url = http_config.url_template
-                .replace("{{base_url}}", base_url.trim_end_matches('/'))
-                .replace("{{model}}", model);
-            let url = if stream && url.contains("{{stream_suffix}}") {
-                url.replace("{{stream_suffix}}", "?alt=sse")
-            } else {
-                url.replace("{{stream_suffix}}", "")
-            };
-
-            let auth_value = http_config.auth_header_template.replace("{{key}}", api_key);
-            let builder = state.http_client
-                .post(&url)
-                .header("Content-Type", &http_config.content_type)
-                .header("Authorization", &auth_value)
-                .body(body);
-
-            return Ok((url, builder));
-        }
-    }
-
-    // Fallback to built-in URL/auth logic
     if let Some(format) = ChatFormat::from_str_loose(upstream_slug) {
         let url = build_upstream_url(base_url, format, model, stream);
-        let mut builder = state.http_client
+        let mut builder = state
+            .http_client
             .post(&url)
             .header("Content-Type", "application/json")
             .body(body);
         builder = apply_auth(builder, format, api_key);
         Ok((url, builder))
     } else {
-        Err(AppError::Codec(format!("Cannot determine upstream URL for format: {}", upstream_slug)))
+        Err(AppError::Codec(format!(
+            "Cannot determine upstream URL for format: {}",
+            upstream_slug
+        )))
     }
 }
 
@@ -123,7 +86,7 @@ pub async fn proxy_chat(
     }
 
     // 2. Decode request
-    let decoder = resolve_decoder(&state.registry, input_format_slug).await?;
+    let decoder = resolve_decoder(input_format_slug)?;
     let ir = decoder.decode_request(&body)?;
 
     // 3. Determine output format
@@ -134,8 +97,7 @@ pub async fn proxy_chat(
         .to_string();
 
     // 4. Select channel via routing (priority + weighted random + circuit breaker)
-    let selected =
-        balancer::select_channel(&ir.model, &state.db, &state.circuit).await?;
+    let selected = balancer::select_channel(&ir.model, &state.db, &state.circuit).await?;
 
     let channel = &selected.channel;
     let mapping = &selected.mapping;
@@ -153,14 +115,19 @@ pub async fn proxy_chat(
     let output_fmt_str = upstream_slug.clone();
 
     // 6. Encode IR → upstream format
-    let upstream_encoder = resolve_encoder(&state.registry, &upstream_slug).await?;
+    let upstream_encoder = resolve_encoder(&upstream_slug)?;
     let upstream_body = upstream_encoder.encode_request(&ir, &mapping.actual_name)?;
 
     // 7. Build upstream URL and request with provider-specific auth
-    let (upstream_url, req_builder) = build_upstream_request(
-        &state, &upstream_slug, &channel.base_url, &mapping.actual_name,
-        ir.stream, api_key, upstream_body,
-    ).await?;
+    let (_upstream_url, req_builder) = build_upstream_request(
+        &state,
+        &upstream_slug,
+        &channel.base_url,
+        &mapping.actual_name,
+        ir.stream,
+        api_key,
+        upstream_body,
+    )?;
 
     // 9. Send request
     let upstream_resp = req_builder.send().await;
@@ -171,10 +138,21 @@ pub async fn proxy_chat(
             state.circuit.record_failure(&channel.id);
             let latency = start.elapsed().as_millis() as i64;
             log_request(
-                &state.db, &token_id, &channel_id, &model, "chat",
-                &input_fmt_str, &output_fmt_str, None,
-                latency, None, None, Some(&request_body_str), Some(&e.to_string()),
-            ).await;
+                &state.db,
+                &token_id,
+                &channel_id,
+                &model,
+                "chat",
+                &input_fmt_str,
+                &output_fmt_str,
+                None,
+                latency,
+                None,
+                None,
+                Some(&request_body_str),
+                Some(&e.to_string()),
+            )
+            .await;
             return Err(AppError::HttpClient(e));
         }
     };
@@ -186,10 +164,21 @@ pub async fn proxy_chat(
         let error_body = upstream_resp.text().await.unwrap_or_default();
         let latency = start.elapsed().as_millis() as i64;
         log_request(
-            &state.db, &token_id, &channel_id, &model, "chat",
-            &input_fmt_str, &output_fmt_str, Some(status.as_u16() as i32),
-            latency, None, None, Some(&request_body_str), Some(&error_body),
-        ).await;
+            &state.db,
+            &token_id,
+            &channel_id,
+            &model,
+            "chat",
+            &input_fmt_str,
+            &output_fmt_str,
+            Some(status.as_u16() as i32),
+            latency,
+            None,
+            None,
+            Some(&request_body_str),
+            Some(&error_body),
+        )
+        .await;
         return Err(AppError::Upstream {
             status: status.as_u16(),
             body: error_body,
@@ -204,32 +193,63 @@ pub async fn proxy_chat(
         // Log streaming request (response body will be updated after stream ends)
         let latency = start.elapsed().as_millis() as i64;
         let log_id = log_request(
-            &state.db, &token_id, &channel_id, &model, "chat",
-            &input_fmt_str, &output_fmt_str, Some(200),
-            latency, None, None, Some(&request_body_str), None,
-        ).await;
-        return proxy_stream(upstream_resp, upstream_slug.clone(), output_slug.clone(), state.registry.clone(), state.db.clone(), log_id).await;
+            &state.db,
+            &token_id,
+            &channel_id,
+            &model,
+            "chat",
+            &input_fmt_str,
+            &output_fmt_str,
+            Some(200),
+            latency,
+            None,
+            None,
+            Some(&request_body_str),
+            None,
+        )
+        .await;
+        return proxy_stream(
+            upstream_resp,
+            upstream_slug.clone(),
+            output_slug.clone(),
+            state.db.clone(),
+            log_id,
+        )
+        .await;
     }
 
     // Non-streaming: decode upstream response → IR → encode to output format
     let resp_bytes = upstream_resp.bytes().await?;
-    let upstream_decoder = resolve_decoder(&state.registry, &upstream_slug).await?;
+    let upstream_decoder = resolve_decoder(&upstream_slug)?;
     let ir_response = upstream_decoder.decode_response(&resp_bytes)?;
 
-    let output_encoder = resolve_encoder(&state.registry, &output_slug).await?;
+    let output_encoder = resolve_encoder(&output_slug)?;
     let output_bytes = output_encoder.encode_response(&ir_response)?;
 
     // Log the request with token usage
     let latency = start.elapsed().as_millis() as i64;
     let prompt_tokens = ir_response.usage.as_ref().map(|u| u.prompt_tokens as i64);
-    let completion_tokens = ir_response.usage.as_ref().map(|u| u.completion_tokens as i64);
+    let completion_tokens = ir_response
+        .usage
+        .as_ref()
+        .map(|u| u.completion_tokens as i64);
     let resp_body_str = String::from_utf8_lossy(&output_bytes).to_string();
     log_request(
-        &state.db, &token_id, &channel_id, &model, "chat",
-        &input_fmt_str, &output_fmt_str, Some(200),
-        latency, prompt_tokens, completion_tokens,
-        Some(&request_body_str), Some(&resp_body_str),
-    ).await;
+        &state.db,
+        &token_id,
+        &channel_id,
+        &model,
+        "chat",
+        &input_fmt_str,
+        &output_fmt_str,
+        Some(200),
+        latency,
+        prompt_tokens,
+        completion_tokens,
+        Some(&request_body_str),
+        Some(&resp_body_str),
+    )
+    .await;
 
     // Update token quota usage
     if let Some(pt) = prompt_tokens {
@@ -256,21 +276,26 @@ async fn proxy_stream(
     upstream_resp: reqwest::Response,
     upstream_slug: String,
     output_slug: String,
-    registry: Arc<RuleRegistry>,
     db: SqlitePool,
     log_id: String,
 ) -> Result<Response, AppError> {
-    let upstream_decoder = resolve_decoder(&registry, &upstream_slug).await?;
-    let output_encoder = resolve_encoder(&registry, &output_slug).await?;
+    let upstream_decoder = resolve_decoder(&upstream_slug)?;
+    let output_encoder = resolve_encoder(&output_slug)?;
 
     let byte_stream = upstream_resp.bytes_stream();
 
     let sse_stream = async_stream::stream! {
         let mut buffer = String::new();
         let mut byte_stream = Box::pin(byte_stream);
-        let mut response_chunks: Vec<String> = Vec::new();
+        let mut response_body = String::new();
+        let mut has_response_chunk = false;
+        let mut stream_done = false;
 
-        while let Some(chunk_result) = byte_stream.next().await {
+        while !stream_done {
+            let chunk_result = match byte_stream.next().await {
+                Some(c) => c,
+                None => break,
+            };
             let chunk = match chunk_result {
                 Ok(c) => c,
                 Err(e) => {
@@ -279,12 +304,16 @@ async fn proxy_stream(
                 }
             };
 
-            buffer.push_str(&String::from_utf8_lossy(&chunk));
+            buffer.reserve(chunk.len());
+            match std::str::from_utf8(&chunk) {
+                Ok(text) => buffer.push_str(text),
+                Err(_) => buffer.push_str(&String::from_utf8_lossy(&chunk)),
+            }
 
             // Process complete SSE lines
             while let Some(pos) = buffer.find("\n\n") {
-                let event_block = buffer[..pos].to_string();
-                buffer = buffer[pos + 2..].to_string();
+                let event_block = buffer[..pos].to_owned();
+                buffer.drain(..pos + 2);
 
                 for line in event_block.lines() {
                     let data = if let Some(d) = line.strip_prefix("data: ") {
@@ -302,6 +331,7 @@ async fn proxy_stream(
                                 format!("data: {}\n\n", done)
                             );
                         }
+                        stream_done = true;
                         break;
                     }
 
@@ -309,7 +339,13 @@ async fn proxy_stream(
                         Ok(Some(ir_chunk)) => {
                             match output_encoder.encode_stream_chunk(&ir_chunk) {
                                 Ok(Some(encoded)) => {
-                                    response_chunks.push(encoded.clone());
+                                    if has_response_chunk {
+                                        response_body.push(',');
+                                    } else {
+                                        response_body.push('[');
+                                        has_response_chunk = true;
+                                    }
+                                    response_body.push_str(&encoded);
                                     yield Ok(format!("data: {}\n\n", encoded));
                                 }
                                 Ok(None) => {}
@@ -324,12 +360,16 @@ async fn proxy_stream(
                         }
                     }
                 }
+
+                if stream_done {
+                    break;
+                }
             }
         }
 
         // Stream finished — update the log with accumulated response body
-        if !response_chunks.is_empty() {
-            let response_body = format!("[{}]", response_chunks.join(","));
+        if has_response_chunk {
+            response_body.push(']');
             let _ = sqlx::query("UPDATE request_logs SET response_body = ? WHERE id = ?")
                 .bind(&response_body)
                 .bind(&log_id)

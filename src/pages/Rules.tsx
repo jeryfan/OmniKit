@@ -14,7 +14,7 @@ import {
   type ConversionRule,
   listConversionRules,
   parseIpcError,
-  updateConversionRule,
+  setConversionRuleEnabled,
 } from "@/lib/tauri";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
@@ -52,24 +52,7 @@ export default function Rules({ embedded = false }: { embedded?: boolean }) {
         return next;
       });
 
-      await updateConversionRule({
-        id: rule.id,
-        slug: rule.slug,
-        name: rule.name,
-        description: rule.description ?? undefined,
-        author: rule.author ?? undefined,
-        version: rule.version,
-        tags: rule.tags ?? undefined,
-        modality: rule.modality,
-        decode_request: rule.decode_request,
-        encode_request: rule.encode_request,
-        decode_response: rule.decode_response,
-        encode_response: rule.encode_response,
-        decode_stream_chunk: rule.decode_stream_chunk ?? undefined,
-        encode_stream_chunk: rule.encode_stream_chunk ?? undefined,
-        http_config: rule.http_config ?? undefined,
-        enabled,
-      });
+      await setConversionRuleEnabled(rule.id, enabled);
 
       setRules((prev) =>
         prev.map((item) => (item.id === rule.id ? { ...item, enabled } : item)),

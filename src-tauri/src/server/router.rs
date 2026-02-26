@@ -1,7 +1,6 @@
 use super::generic_proxy::{self, GenericProxyState};
 use super::proxy::{self, ProxyState};
 use crate::error::AppError;
-use crate::rules::registry::RuleRegistry;
 use crate::routing::circuit::CircuitBreaker;
 use axum::body::{Body, Bytes};
 use axum::extract::{Query, State};
@@ -18,8 +17,6 @@ use tower_http::cors::CorsLayer;
 pub async fn create_router(pool: SqlitePool) -> Router {
     let http_client = reqwest::Client::new();
     let circuit = Arc::new(CircuitBreaker::new(5, 60));
-    let registry = Arc::new(RuleRegistry::new());
-    registry.load_from_db(&pool).await;
 
     let generic_state = GenericProxyState {
         db: pool.clone(),
@@ -30,7 +27,6 @@ pub async fn create_router(pool: SqlitePool) -> Router {
         db: pool,
         http_client,
         circuit,
-        registry,
     };
 
     Router::new()
@@ -47,10 +43,7 @@ pub async fn create_router(pool: SqlitePool) -> Router {
         .route("/v1/messages", post(handle_anthropic))
         .layer(CorsLayer::permissive())
         .with_state(proxy_state)
-        .fallback(
-            axum::routing::any(generic_proxy::handle_generic_proxy)
-                .with_state(generic_state),
-        )
+        .fallback(axum::routing::any(generic_proxy::handle_generic_proxy).with_state(generic_state))
 }
 
 async fn health_check() -> Json<Value> {
@@ -60,14 +53,10 @@ async fn health_check() -> Json<Value> {
     }))
 }
 
-async fn list_models(
-    State(state): State<ProxyState>,
-) -> Result<Json<Value>, AppError> {
-    let models: Vec<String> = sqlx::query_scalar(
-        "SELECT DISTINCT public_name FROM model_mappings",
-    )
-    .fetch_all(&state.db)
-    .await?;
+async fn list_models(State(state): State<ProxyState>) -> Result<Json<Value>, AppError> {
+    let models: Vec<String> = sqlx::query_scalar("SELECT DISTINCT public_name FROM model_mappings")
+        .fetch_all(&state.db)
+        .await?;
 
     let model_list: Vec<Value> = models
         .iter()
@@ -123,7 +112,9 @@ async fn handle_video_proxy(
     let video_url = &query.url;
 
     // Resolve the actual CDN URL (handle Douyin 302 redirects)
-    let resolved_url = if video_url.contains("aweme.snssdk.com") || video_url.contains("api-h2.amemv.com") {
+    let resolved_url = if video_url.contains("aweme.snssdk.com")
+        || video_url.contains("api-h2.amemv.com")
+    {
         // Build a no-redirect client only when needed (Douyin short URLs)
         let no_redirect_client = reqwest::Client::builder()
             .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
@@ -171,7 +162,8 @@ async fn handle_video_proxy(
     let upstream_headers = upstream.headers().clone();
 
     // Build response with relevant headers
-    let mut response = Response::builder().status(StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::OK));
+    let mut response =
+        Response::builder().status(StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::OK));
 
     let passthrough_headers = [
         "content-type",

@@ -1,6 +1,7 @@
 use crate::db::models::{Channel, ModelMapping};
 use crate::error::AppError;
 use crate::routing::circuit::CircuitBreaker;
+use crate::rules;
 use rand::Rng;
 use sqlx::SqlitePool;
 
@@ -26,7 +27,7 @@ pub async fn select_channel(
     circuit: &CircuitBreaker,
 ) -> Result<SelectedChannel, AppError> {
     // Fetch all candidate channels with their mappings, ordered by priority
-    let rows = sqlx::query_as::<_, ChannelWithMapping>(
+    let mut rows = sqlx::query_as::<_, ChannelWithMapping>(
         "SELECT c.id as channel_id, c.name, c.provider, c.base_url,
                 c.priority, c.weight, c.enabled, c.key_rotation,
                 c.rate_limit, c.created_at, c.updated_at,
@@ -39,6 +40,8 @@ pub async fn select_channel(
     .bind(model)
     .fetch_all(db)
     .await?;
+
+    rows.retain(|row| rules::is_system_rule_slug(&row.provider));
 
     if rows.is_empty() {
         // Fallback: no explicit model mapping found, try passthrough on all enabled channels
@@ -79,12 +82,7 @@ pub async fn select_channel(
         .bind(&selected.channel_id)
         .fetch_optional(db)
         .await?
-        .ok_or_else(|| {
-            AppError::Internal(format!(
-                "No API key for channel '{}'",
-                selected.name
-            ))
-        })?;
+        .ok_or_else(|| AppError::Internal(format!("No API key for channel '{}'", selected.name)))?;
 
         return Ok(SelectedChannel {
             channel: Channel {
@@ -141,7 +139,7 @@ async fn select_channel_passthrough(
     db: &SqlitePool,
     circuit: &CircuitBreaker,
 ) -> Result<SelectedChannel, AppError> {
-    let channels = sqlx::query_as::<_, ChannelRow>(
+    let mut channels = sqlx::query_as::<_, ChannelRow>(
         "SELECT id, name, provider, base_url, priority, weight, enabled,
                 key_rotation, rate_limit, created_at, updated_at
          FROM channels
@@ -150,6 +148,8 @@ async fn select_channel_passthrough(
     )
     .fetch_all(db)
     .await?;
+
+    channels.retain(|channel| rules::is_system_rule_slug(&channel.provider));
 
     if channels.is_empty() {
         return Err(AppError::NoChannel(model.to_string()));
@@ -189,9 +189,7 @@ async fn select_channel_passthrough(
         .bind(&selected.id)
         .fetch_optional(db)
         .await?
-        .ok_or_else(|| {
-            AppError::Internal(format!("No API key for channel '{}'", selected.name))
-        })?;
+        .ok_or_else(|| AppError::Internal(format!("No API key for channel '{}'", selected.name)))?;
 
         return Ok(SelectedChannel {
             channel: Channel {
