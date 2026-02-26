@@ -493,7 +493,7 @@ const en: Translations = {
   },
   rules: {
     title: "Conversion Rules",
-    subtitle: "Manage API format conversion rules. Create custom rules or use built-in ones.",
+    subtitle: "Manage built-in API format conversion rules.",
     myRules: "My Rules",
     ruleStore: "Rule Store",
     createRule: "Create Rule",
@@ -930,7 +930,7 @@ const zh: Translations = {
   },
   rules: {
     title: "转换规则",
-    subtitle: "管理 API 格式转换规则。创建自定义规则或使用内置规则。",
+    subtitle: "管理内置 API 格式转换规则。",
     myRules: "我的规则",
     ruleStore: "规则仓库",
     createRule: "创建规则",

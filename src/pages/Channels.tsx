@@ -209,7 +209,9 @@ export default function Channels({ embedded = false }: { embedded?: boolean }) {
 
   useEffect(() => {
     fetchChannels();
-    listConversionRules().then(setConversionRules).catch(() => {});
+    listConversionRules()
+      .then((data) => setConversionRules(data.filter((rule) => rule.rule_type === "system")))
+      .catch(() => {});
   }, [fetchChannels]);
 
   // --- Fetch API keys for a channel ---
@@ -684,9 +686,6 @@ export default function Channels({ embedded = false }: { embedded?: boolean }) {
                   {conversionRules.filter(r => r.enabled).map((rule) => (
                     <SelectItem key={rule.slug} value={rule.slug}>
                       {rule.name}
-                      {rule.rule_type === "system" && (
-                        <span className="ml-2 text-xs text-muted-foreground">(Built-in)</span>
-                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>
