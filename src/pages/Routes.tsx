@@ -190,10 +190,12 @@ export default function Routes({ embedded }: RoutesProps) {
         setFormError("每个目标都需要填写 Base URL");
         return;
       }
-      const validKeys = t.keys.filter((k) => k.trim());
-      if (validKeys.length === 0) {
-        setFormError("每个目标至少需要一个 API Key");
-        return;
+      if (t.upstream_format !== "none") {
+        const validKeys = t.keys.filter((k) => k.trim());
+        if (validKeys.length === 0) {
+          setFormError("每个目标至少需要一个 API Key");
+          return;
+        }
       }
     }
 
@@ -379,17 +381,11 @@ export default function Routes({ embedded }: RoutesProps) {
     }));
   }
 
-  const containerClass = embedded ? "p-6" : "container mx-auto p-6";
+  const containerClass = embedded ? "" : "container mx-auto";
 
   return (
     <div className={containerClass}>
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">路由</h2>
-          <p className="text-muted-foreground text-sm">
-            配置格式转换路由，将客户端请求转发到上游供应商
-          </p>
-        </div>
+      <div className="mb-4 flex items-center justify-end">
         <Button onClick={openCreate} size="sm">
           <Plus className="mr-1 h-4 w-4" />
           新建路由
@@ -453,7 +449,7 @@ export default function Routes({ embedded }: RoutesProps) {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl flex flex-col">
+        <DialogContent className="max-h-[85vh] max-w-3xl flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>{editingRoute ? "编辑路由" : "新建路由"}</DialogTitle>
           </DialogHeader>
@@ -485,7 +481,7 @@ export default function Routes({ embedded }: RoutesProps) {
                   value={form.input_format}
                   onValueChange={(v) => setForm((p) => ({ ...p, input_format: v }))}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -569,7 +565,7 @@ export default function Routes({ embedded }: RoutesProps) {
                               value={target.upstream_format}
                               onValueChange={(v) => updateTarget(ti, { upstream_format: v })}
                             >
-                              <SelectTrigger className="h-8 text-xs">
+                              <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>

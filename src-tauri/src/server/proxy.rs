@@ -165,8 +165,9 @@ pub async fn handle_route_proxy(
 
     // Check if this path needs format conversion
     let path_format_hint = detect_chat_format_from_path(&sub_path);
+    let is_passthrough = route.input_format == "none" || route.input_format.is_empty();
 
-    if path_format_hint.is_some() {
+    if path_format_hint.is_some() && !is_passthrough {
         handle_format_conversion(
             &state, &route, &token.id, &headers, &body_bytes, &sub_path, &query,
         )

@@ -15,7 +15,7 @@ pub struct TargetInput {
 }
 
 fn validate_format(format: &str) -> Result<(), IpcError> {
-    let valid = ["openai-chat", "openai-responses", "anthropic", "gemini", "moonshot"];
+    let valid = ["none", "openai-chat", "openai-responses", "anthropic", "gemini", "moonshot"];
     if valid.contains(&format) {
         Ok(())
     } else {

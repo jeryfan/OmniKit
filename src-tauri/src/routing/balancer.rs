@@ -76,24 +76,19 @@ pub async fn select_target(
     .fetch_all(db)
     .await?;
 
-    if keys.is_empty() {
-        return Err(AppError::NoTarget(format!(
-            "No API keys for target '{}'",
-            target.id
-        )));
-    }
-
-    // Pick key
-    let key = if target.key_rotation {
+    // Pick key; allow empty keys for passthrough targets (upstream_format = "none")
+    let api_key = if keys.is_empty() {
+        String::new()
+    } else if target.key_rotation {
         let idx = rotation.next_index(&target.id, keys.len());
-        &keys[idx]
+        keys[idx].key_value.clone()
     } else {
-        &keys[0]
+        keys[0].key_value.clone()
     };
 
     Ok(SelectedTarget {
         target: target.clone(),
-        api_key: key.key_value.clone(),
+        api_key,
     })
 }
 

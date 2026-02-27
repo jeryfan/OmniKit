@@ -76,6 +76,7 @@ export interface TargetInput {
 }
 
 export const SUPPORTED_FORMATS = [
+  { value: "none", label: "None" },
   { value: "anthropic", label: "Anthropic" },
   { value: "openai-chat", label: "OpenAI Chat" },
   { value: "openai-responses", label: "OpenAI Responses" },
