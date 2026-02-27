@@ -658,8 +658,8 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                                   value={reqHeaders.text}
                                   readOnly
                                   language={reqHeaders.language}
-                                  minHeight="8rem"
-                                  maxHeight="20rem"
+                                  minHeight="20rem"
+                                  resizable
                                 />
                               ) : (
                                 <div className="flex h-20 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground/50">
@@ -703,8 +703,8 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                                   value={respHeaders.text}
                                   readOnly
                                   language={respHeaders.language}
-                                  minHeight="8rem"
-                                  maxHeight="20rem"
+                                  minHeight="20rem"
+                                  resizable
                                 />
                               ) : (
                                 <div className="flex h-20 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground/50">

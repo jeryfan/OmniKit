@@ -426,7 +426,7 @@ async fn handle_passthrough(
 
     if is_streaming {
         let latency = start.elapsed().as_millis() as i64;
-        log_request(
+        let log_id = log_request(
             &state.db, token_id, &route_id, &target_id, "", "passthrough",
             &route.input_format, &upstream_format_str, Some(status.as_u16() as i32),
             latency, None, None, Some(&request_body_str), None,
@@ -435,6 +435,34 @@ async fn handle_passthrough(
         ).await;
 
         let byte_stream = upstream_resp.bytes_stream();
+        let db_for_stream = state.db.clone();
+
+        let capturing_stream = async_stream::stream! {
+            let mut full_body: Vec<u8> = Vec::new();
+            let mut byte_stream = Box::pin(byte_stream);
+            loop {
+                match byte_stream.next().await {
+                    Some(Ok(chunk)) => {
+                        full_body.extend_from_slice(&chunk);
+                        yield Ok::<_, std::convert::Infallible>(chunk);
+                    }
+                    Some(Err(e)) => {
+                        log::error!("Passthrough stream error: {}", e);
+                        break;
+                    }
+                    None => break,
+                }
+            }
+            if !full_body.is_empty() {
+                let body_str = String::from_utf8_lossy(&full_body).to_string();
+                let _ = sqlx::query("UPDATE request_logs SET response_body = ? WHERE id = ?")
+                    .bind(&body_str)
+                    .bind(&log_id)
+                    .execute(&db_for_stream)
+                    .await;
+            }
+        };
+
         let mut resp = Response::builder().status(status);
         for (name, value) in resp_headers.iter() {
             if HOP_BY_HOP.contains(&name.as_str().to_lowercase().as_str()) {
@@ -447,7 +475,7 @@ async fn handle_passthrough(
                 resp = resp.header(hn, hv);
             }
         }
-        return Ok(resp.body(Body::from_stream(byte_stream)).unwrap());
+        return Ok(resp.body(Body::from_stream(capturing_stream)).unwrap());
     }
 
     let resp_bytes = upstream_resp.bytes().await.unwrap_or_default();
