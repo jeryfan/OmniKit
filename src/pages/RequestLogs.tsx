@@ -13,7 +13,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -28,12 +27,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   listRequestLogs,
   getRequestLog,
   clearRequestLogs,
   retryRequestLog,
+  getConfig,
+  listRoutes,
   type RequestLog,
 } from "@/lib/tauri";
 import { Pagination } from "@/components/ui/pagination";
@@ -42,6 +42,8 @@ import { PageHeader } from "@/components/page-header";
 import { HttpStatusBadge } from "@/components/status-badge";
 import { toast } from "sonner";
 import { parseIpcError } from "@/lib/tauri";
+import CodeEditor from "@/components/CodeEditor";
+import HttpTestPanel from "@/components/HttpTestPanel";
 
 const PAGE_SIZE = 20;
 
@@ -99,13 +101,17 @@ function formatConversion(
   return `${input ?? "?"} \u2192 ${output ?? "?"}`;
 }
 
-function prettyJson(raw: string | null): string {
-  if (!raw) return "";
-  try {
-    return JSON.stringify(JSON.parse(raw), null, 2);
-  } catch {
-    return raw;
+function detectBodyContent(raw: string | null): { text: string; language: "json" | "text" } {
+  if (!raw) return { text: "", language: "text" };
+  const trimmed = raw.trim();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      return { text: JSON.stringify(JSON.parse(trimmed), null, 2), language: "json" };
+    } catch {
+      // fall through to text
+    }
   }
+  return { text: raw, language: "text" };
 }
 
 export default function RequestLogs({ embedded = false }: { embedded?: boolean }) {
@@ -121,10 +127,30 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
   const [detailLoading, setDetailLoading] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [retrying, setRetrying] = useState<string | null>(null);
-  const [copiedTab, setCopiedTab] = useState<string | null>(null);
+  const [curlCopied, setCurlCopied] = useState(false);
+  const [editRetryOpen, setEditRetryOpen] = useState(false);
+  const [editRetryKey, setEditRetryKey] = useState(0);
+  const [editRetryDefaults, setEditRetryDefaults] = useState<{
+    url: string;
+    headers: Array<{ key: string; value: string }>;
+    body: string;
+  }>({ url: "", headers: [], body: "" });
   const [autoRefresh, setAutoRefresh] = useState(false);
   const autoRefreshRef = useRef(autoRefresh);
   autoRefreshRef.current = autoRefresh;
+  const [serverPort, setServerPort] = useState(9000);
+  const [routeMap, setRouteMap] = useState<Record<string, { name: string; path_prefix: string }>>({});
+
+  useEffect(() => {
+    getConfig().then((c) => setServerPort(c.server_port));
+    listRoutes()
+      .then((routes) => {
+        const map: Record<string, { name: string; path_prefix: string }> = {};
+        routes.forEach((r) => { map[r.id] = { name: r.name, path_prefix: r.path_prefix }; });
+        setRouteMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -191,7 +217,7 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
   async function handleViewDetails(id: string) {
     setDetailLoading(true);
     setDetailOpen(true);
-    setCopiedTab(null);
+    setCurlCopied(false);
     try {
       const log = await getRequestLog(id);
       setSelectedLog(log);
@@ -215,14 +241,91 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
     }
   }
 
-  async function handleCopy(text: string, tab: string) {
+  const FORMAT_SUB_PATH: Record<string, string> = {
+    anthropic: "/v1/messages",
+    "openai-chat": "/v1/chat/completions",
+    moonshot: "/v1/chat/completions",
+    "openai-responses": "/v1/responses",
+    gemini: "/v1beta/models/gemini-pro:generateContent",
+  };
+
+  const HOP_BY_HOP_HEADERS = new Set([
+    "host", "connection", "keep-alive", "proxy-authenticate",
+    "proxy-authorization", "te", "trailers", "transfer-encoding",
+    "upgrade", "content-length",
+  ]);
+
+  function buildLogUrl(log: RequestLog): string {
+    const subPath = log.input_format
+      ? (FORMAT_SUB_PATH[log.input_format] ?? "/v1/chat/completions")
+      : "/v1/chat/completions";
+    const prefix = log.route_id ? (routeMap[log.route_id]?.path_prefix ?? "") : "";
+    return `http://localhost:${serverPort}${prefix}${subPath}`;
+  }
+
+  function parseStoredHeaders(headersJson: string | null): Array<{ key: string; value: string }> {
+    const fallback = [
+      { key: "Authorization", value: "Bearer " },
+      { key: "Content-Type", value: "application/json" },
+    ];
+    if (!headersJson) return fallback;
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedTab(tab);
-      setTimeout(() => setCopiedTab(null), 2000);
-    } catch (err) {
-      toast.error("Failed to copy");
+      const stored = JSON.parse(headersJson) as Record<string, string>;
+      const result = Object.entries(stored)
+        .filter(([k]) => !HOP_BY_HOP_HEADERS.has(k.toLowerCase()))
+        .map(([key, value]) => ({ key, value }));
+      return result.length > 0 ? result : fallback;
+    } catch {
+      return fallback;
     }
+  }
+
+  function buildCurlFromLog(log: RequestLog): string {
+    const url = buildLogUrl(log);
+    const lines = [`curl -X POST '${url}'`];
+
+    if (log.request_headers) {
+      try {
+        const stored = JSON.parse(log.request_headers) as Record<string, string>;
+        for (const [k, v] of Object.entries(stored)) {
+          if (!HOP_BY_HOP_HEADERS.has(k.toLowerCase())) {
+            lines.push(`  -H '${k}: ${v}'`);
+          }
+        }
+      } catch {
+        lines.push(`  -H 'Authorization: Bearer <your-token>'`);
+        lines.push(`  -H 'Content-Type: application/json'`);
+      }
+    } else {
+      lines.push(`  -H 'Authorization: Bearer <your-token>'`);
+      lines.push(`  -H 'Content-Type: application/json'`);
+    }
+
+    if (log.request_body) {
+      try {
+        lines.push(`  -d '${JSON.stringify(JSON.parse(log.request_body))}'`);
+      } catch {
+        lines.push(`  -d '${log.request_body}'`);
+      }
+    }
+    return lines.join(" \\\n");
+  }
+
+  function openEditRetry(log: RequestLog) {
+    const url = buildLogUrl(log);
+    const headers = parseStoredHeaders(log.request_headers);
+    const { text: body } = detectBodyContent(log.request_body);
+    setEditRetryDefaults({ url, headers, body });
+    setEditRetryKey((k) => k + 1);
+    setEditRetryOpen(true);
+  }
+
+  async function handleCopyCurl() {
+    if (!selectedLog) return;
+    await navigator.clipboard.writeText(buildCurlFromLog(selectedLog));
+    setCurlCopied(true);
+    toast.success("cURL 命令已复制");
+    setTimeout(() => setCurlCopied(false), 1000);
   }
 
   const actionButtons = (
@@ -402,127 +505,193 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
 
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {selectedLog?.model ?? t.requestLogs.detailTitle}
-              {selectedLog && <HttpStatusBadge status={selectedLog.status} />}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedLog ? formatDatetimeFull(selectedLog.created_at) : t.requestLogs.detailDesc}
-            </DialogDescription>
+        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] max-h-[92vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <div className="flex items-center justify-between gap-3 pr-6">
+              <div className="flex items-center gap-2 min-w-0">
+                <DialogTitle className="truncate">
+                  {selectedLog?.model ?? t.requestLogs.detailTitle}
+                </DialogTitle>
+                {selectedLog && <HttpStatusBadge status={selectedLog.status} />}
+                {selectedLog && (
+                  <span className="text-xs text-muted-foreground shrink-0">
+                    {formatDatetimeFull(selectedLog.created_at)}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {selectedLog && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={handleCopyCurl}
+                    >
+                      {curlCopied ? (
+                        <Check className="mr-1 size-3 text-green-600" />
+                      ) : (
+                        <Copy className="mr-1 size-3" />
+                      )}
+                      {curlCopied ? "已复制" : "复制 cURL"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => openEditRetry(selectedLog)}
+                    >
+                      <RotateCcw className="mr-1 size-3" />
+                      编辑重试
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs"
+                      disabled={retrying === selectedLog.id}
+                      onClick={() => handleRetry(selectedLog.id)}
+                    >
+                      {retrying === selectedLog.id ? (
+                        <Loader2 className="mr-1 size-3 animate-spin" />
+                      ) : (
+                        <RotateCcw className="mr-1 size-3" />
+                      )}
+                      {t.requestLogs.retry}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
           </DialogHeader>
 
-          {detailLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="size-4 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">{t.common.loading}</span>
-            </div>
-          ) : selectedLog ? (
-            <div className="flex flex-col gap-3 overflow-hidden">
-              {/* Compact metadata */}
-              <div className="grid grid-cols-3 gap-x-4 gap-y-1.5 text-xs rounded-lg bg-muted/40 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t.requestLogs.latency}</span>
-                  <span className="font-medium tabular-nums">{formatLatency(selectedLog.latency_ms)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t.requestLogs.tokensCol}</span>
-                  <span className="font-medium tabular-nums">{formatTokens(selectedLog.prompt_tokens, selectedLog.completion_tokens)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t.requestLogs.conversion}</span>
-                  <span className="font-medium">{formatConversion(selectedLog.input_format, selectedLog.output_format)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t.requestLogs.channelId}</span>
-                  <span className="font-medium truncate ml-2">{selectedLog.channel_id ?? "-"}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t.requestLogs.tokenId}</span>
-                  <span className="font-medium truncate ml-2">{selectedLog.token_id ?? "-"}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">{t.requestLogs.modalityLabel}</span>
-                  <span className="font-medium">{selectedLog.modality ?? "-"}</span>
-                </div>
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 py-2">
+            {detailLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">{t.common.loading}</span>
               </div>
+            ) : selectedLog ? (
+              <>
+                {/* Metadata bar */}
+                {(() => {
+                  const routeInfo = selectedLog.route_id ? routeMap[selectedLog.route_id] : null;
+                  const routeName = routeInfo?.name ?? selectedLog.route_id ?? "-";
+                  const logUrl = buildLogUrl(selectedLog);
+                  return (
+                    <>
+                      <div className="flex divide-x divide-border rounded-lg border bg-muted/30 text-xs overflow-hidden">
+                        <div className="flex flex-col gap-0.5 px-3 py-2 min-w-0 flex-[2]">
+                          <span className="text-muted-foreground text-[10px] uppercase tracking-wide">路由</span>
+                          <span className="font-medium truncate">{routeName}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 px-3 py-2 min-w-0 flex-[2]">
+                          <span className="text-muted-foreground text-[10px] uppercase tracking-wide">格式</span>
+                          <span className="font-medium">{formatConversion(selectedLog.input_format, selectedLog.output_format)}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 px-3 py-2 shrink-0">
+                          <span className="text-muted-foreground text-[10px] uppercase tracking-wide">延迟</span>
+                          <span className="font-medium tabular-nums">{formatLatency(selectedLog.latency_ms)}</span>
+                        </div>
+                        <div className="flex flex-col gap-0.5 px-3 py-2 shrink-0">
+                          <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Token</span>
+                          <span className="font-medium tabular-nums">{formatTokens(selectedLog.prompt_tokens, selectedLog.completion_tokens)}</span>
+                        </div>
+                      </div>
+                      {/* URL row */}
+                      <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 text-xs font-mono">
+                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-muted-foreground">POST</span>
+                        <span className="flex-1 truncate select-all">{logUrl}</span>
+                      </div>
+                    </>
+                  );
+                })()}
 
-              {/* Request / Response tabs */}
-              <Tabs defaultValue="request" className="flex-1 overflow-hidden">
-                <div className="flex items-center justify-between">
-                  <TabsList>
-                    <TabsTrigger value="request">{t.requestLogs.requestBody}</TabsTrigger>
-                    <TabsTrigger value="response">{t.requestLogs.responseBody}</TabsTrigger>
-                  </TabsList>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                    disabled={retrying === selectedLog.id}
-                    onClick={() => handleRetry(selectedLog.id)}
-                  >
-                    {retrying === selectedLog.id ? (
-                      <Loader2 className="size-3 animate-spin" />
-                    ) : (
-                      <RotateCcw className="size-3" />
-                    )}
-                    {t.requestLogs.retry}
-                  </Button>
-                </div>
-                <TabsContent
-                  value="request"
-                  className="overflow-auto max-h-[40vh]"
-                >
-                  <div className="relative">
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="absolute right-2 top-2"
-                      onClick={() => handleCopy(prettyJson(selectedLog.request_body) || "", "request")}
-                    >
-                      {copiedTab === "request" ? (
-                        <Check className="size-3" />
-                      ) : (
-                        <Copy className="size-3" />
-                      )}
-                    </Button>
-                    <pre className="code-block text-[11px] leading-relaxed">
-                      {prettyJson(selectedLog.request_body) || "(empty)"}
-                    </pre>
-                  </div>
-                </TabsContent>
-                <TabsContent
-                  value="response"
-                  className="overflow-auto max-h-[40vh]"
-                >
-                  <div className="relative">
-                    {selectedLog.response_body && (
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        className="absolute right-2 top-2"
-                        onClick={() => handleCopy(prettyJson(selectedLog.response_body) || "", "response")}
-                      >
-                        {copiedTab === "response" ? (
-                          <Check className="size-3" />
-                        ) : (
-                          <Copy className="size-3" />
+                {/* Request / Response two-column */}
+                {(() => {
+                  const reqHeaders = detectBodyContent(selectedLog.request_headers);
+                  const reqBody = detectBodyContent(selectedLog.request_body);
+                  const respHeaders = detectBodyContent(selectedLog.response_headers);
+                  const respBody = detectBodyContent(selectedLog.response_body);
+                  return (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-3">
+                        {selectedLog.request_headers && (
+                          <div className="flex flex-col gap-1.5">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">请求头</p>
+                            <CodeEditor
+                              value={reqHeaders.text}
+                              readOnly
+                              language={reqHeaders.language}
+                              minHeight="5rem"
+                              maxHeight="20vh"
+                            />
+                          </div>
                         )}
-                      </Button>
-                    )}
-                    <pre className="code-block text-[11px] leading-relaxed">
-                      {prettyJson(selectedLog.response_body) || "(empty)"}
-                    </pre>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
-              {t.requestLogs.logNotFound}
-            </div>
-          )}
+                        <div className="flex flex-col gap-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.requestLogs.requestBody}</p>
+                          <CodeEditor
+                            value={reqBody.text}
+                            readOnly
+                            language={reqBody.language}
+                            minHeight="14rem"
+                            maxHeight="50vh"
+                            resizable
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        {selectedLog.response_headers && (
+                          <div className="flex flex-col gap-1.5">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">响应头</p>
+                            <CodeEditor
+                              value={respHeaders.text}
+                              readOnly
+                              language={respHeaders.language}
+                              minHeight="5rem"
+                              maxHeight="20vh"
+                            />
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.requestLogs.responseBody}</p>
+                          <CodeEditor
+                            value={respBody.text}
+                            readOnly
+                            language={respBody.language}
+                            minHeight="14rem"
+                            maxHeight="50vh"
+                            resizable
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            ) : (
+              <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                {t.requestLogs.logNotFound}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit & Retry Dialog */}
+      <Dialog open={editRetryOpen} onOpenChange={setEditRetryOpen}>
+        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] max-h-[92vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle>编辑重试</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <HttpTestPanel
+              key={editRetryKey}
+              defaultMethod="POST"
+              defaultUrl={editRetryDefaults.url}
+              defaultHeaders={editRetryDefaults.headers}
+              defaultBody={editRetryDefaults.body}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

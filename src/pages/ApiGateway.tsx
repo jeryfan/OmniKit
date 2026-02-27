@@ -2,19 +2,17 @@ import { useSearchParams } from "react-router";
 import {
   Network,
   FileCode2,
-  ArrowRightLeft,
   KeyRound,
   ScrollText,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/i18n";
-import Channels from "@/pages/Channels";
+import Routes from "@/pages/Routes";
 import Rules from "@/pages/Rules";
-import ModelMappings from "@/pages/ModelMappings";
 import Tokens from "@/pages/Tokens";
 import RequestLogs from "@/pages/RequestLogs";
 
-const TABS = ["channels", "rules", "model-mappings", "tokens", "request-logs"] as const;
+const TABS = ["routes", "rules", "tokens", "request-logs"] as const;
 type TabValue = (typeof TABS)[number];
 
 function isValidTab(value: string): value is TabValue {
@@ -26,18 +24,17 @@ export default function ApiGateway() {
   const { t } = useLanguage();
 
   const tabParam = searchParams.get("tab") ?? "";
-  const activeTab: TabValue = isValidTab(tabParam) ? tabParam : "channels";
+  const activeTab: TabValue = isValidTab(tabParam) ? tabParam : "routes";
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value }, { replace: true });
   };
 
-  const tabItems: { value: TabValue; icon: typeof Network; label: string }[] = [
-    { value: "channels", icon: Network, label: t.sidebar.channels },
-    { value: "rules", icon: FileCode2, label: t.sidebar.rules },
-    { value: "model-mappings", icon: ArrowRightLeft, label: t.sidebar.modelMappings },
-    { value: "tokens", icon: KeyRound, label: t.sidebar.tokens },
-    { value: "request-logs", icon: ScrollText, label: t.sidebar.requestLogs },
+  const tabItems = [
+    { value: "routes" as TabValue, icon: Network, label: "路由" },
+    { value: "rules" as TabValue, icon: FileCode2, label: t.sidebar.rules },
+    { value: "tokens" as TabValue, icon: KeyRound, label: t.sidebar.tokens },
+    { value: "request-logs" as TabValue, icon: ScrollText, label: t.sidebar.requestLogs },
   ];
 
   return (
@@ -50,14 +47,11 @@ export default function ApiGateway() {
           </TabsTrigger>
         ))}
       </TabsList>
-      <TabsContent value="channels" className="flex-1 overflow-auto">
-        <Channels embedded />
+      <TabsContent value="routes" className="flex-1 overflow-auto">
+        <Routes embedded />
       </TabsContent>
       <TabsContent value="rules" className="flex-1 overflow-auto">
         <Rules embedded />
-      </TabsContent>
-      <TabsContent value="model-mappings" className="flex-1 overflow-auto">
-        <ModelMappings embedded />
       </TabsContent>
       <TabsContent value="tokens" className="flex-1 overflow-auto">
         <Tokens embedded />

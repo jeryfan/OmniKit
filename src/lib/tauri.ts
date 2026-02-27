@@ -34,40 +34,108 @@ export interface ServerStatus {
   message?: string;
 }
 
-// === Channel types ===
+// === Route types ===
 
-export interface Channel {
+export interface RouteTargetKey {
   id: string;
-  name: string;
-  provider: string;
+  target_id: string;
+  key_value: string;
+  enabled: boolean;
+}
+
+export interface RouteTarget {
+  id: string;
+  route_id: string;
+  upstream_format: string;
   base_url: string;
-  priority: number;
   weight: number;
   enabled: boolean;
   key_rotation: boolean;
-  rate_limit: string | null;
-  test_url: string | null;
-  test_headers: string | null;
+  created_at: string;
+  keys: RouteTargetKey[];
+}
+
+export interface Route {
+  id: string;
+  name: string;
+  path_prefix: string;
+  input_format: string;
+  enabled: boolean;
   created_at: string;
   updated_at: string;
+  targets: RouteTarget[];
 }
 
-export interface ChannelApiKey {
-  id: string;
-  channel_id: string;
-  key_value: string;
+export interface TargetInput {
+  upstream_format: string;
+  base_url: string;
+  weight: number;
   enabled: boolean;
-  last_used: string | null;
+  key_rotation: boolean;
+  keys: string[];
 }
 
-// === Model Mapping types ===
+export const SUPPORTED_FORMATS = [
+  { value: "anthropic", label: "Anthropic" },
+  { value: "openai-chat", label: "OpenAI Chat" },
+  { value: "openai-responses", label: "OpenAI Responses" },
+  { value: "gemini", label: "Gemini" },
+  { value: "moonshot", label: "Moonshot" },
+] as const;
 
-export interface ModelMapping {
+// === Route commands ===
+
+export async function listRoutes(): Promise<Route[]> {
+  return invoke<Route[]>("list_routes");
+}
+
+export async function createRoute(data: {
+  name: string;
+  path_prefix: string;
+  input_format: string;
+  enabled: boolean;
+  targets: TargetInput[];
+}): Promise<Route> {
+  return invoke<Route>("create_route", {
+    name: data.name,
+    pathPrefix: data.path_prefix,
+    inputFormat: data.input_format,
+    enabled: data.enabled,
+    targets: data.targets,
+  });
+}
+
+export async function updateRoute(data: {
   id: string;
-  public_name: string;
-  channel_id: string;
-  actual_name: string;
-  modality: string;
+  name: string;
+  path_prefix: string;
+  input_format: string;
+  enabled: boolean;
+  targets: TargetInput[];
+}): Promise<Route> {
+  return invoke<Route>("update_route", {
+    id: data.id,
+    name: data.name,
+    pathPrefix: data.path_prefix,
+    inputFormat: data.input_format,
+    enabled: data.enabled,
+    targets: data.targets,
+  });
+}
+
+export async function deleteRoute(id: string): Promise<void> {
+  return invoke<void>("delete_route", { id });
+}
+
+export interface TestRouteResult {
+  status: number;
+  body: string;
+  latency_ms: number;
+  error: string | null;
+}
+
+export async function testRoute(routeId: string, tokenKey: string): Promise<TestRouteResult> {
+  return invoke<TestRouteResult>("test_route", { routeId, tokenKey });
 }
 
 // === Token types ===
@@ -89,7 +157,8 @@ export interface Token {
 export interface RequestLog {
   id: string;
   token_id: string | null;
-  channel_id: string | null;
+  route_id: string | null;
+  target_id: string | null;
   model: string | null;
   modality: string | null;
   input_format: string | null;
@@ -100,6 +169,8 @@ export interface RequestLog {
   completion_tokens: number | null;
   request_body: string | null;
   response_body: string | null;
+  request_headers: string | null;
+  response_headers: string | null;
   created_at: string;
 }
 
@@ -160,100 +231,6 @@ export async function updateConfig(data: {
   });
 }
 
-// === Channel commands ===
-
-export async function listChannels(): Promise<Channel[]> {
-  return invoke<Channel[]>("list_channels");
-}
-
-export async function createChannel(data: {
-  name: string;
-  provider: string;
-  base_url: string;
-  priority: number;
-  weight: number;
-}): Promise<Channel> {
-  return invoke<Channel>("create_channel", {
-    name: data.name,
-    provider: data.provider,
-    baseUrl: data.base_url,
-    priority: data.priority,
-    weight: data.weight,
-  });
-}
-
-export async function updateChannel(data: {
-  id: string;
-  name: string;
-  provider: string;
-  base_url: string;
-  priority: number;
-  weight: number;
-  enabled: boolean;
-  key_rotation: boolean;
-}): Promise<void> {
-  return invoke<void>("update_channel", {
-    id: data.id,
-    name: data.name,
-    provider: data.provider,
-    baseUrl: data.base_url,
-    priority: data.priority,
-    weight: data.weight,
-    enabled: data.enabled,
-    keyRotation: data.key_rotation,
-  });
-}
-
-export async function deleteChannel(id: string): Promise<void> {
-  return invoke<void>("delete_channel", { id });
-}
-
-export async function listChannelApiKeys(channelId: string): Promise<ChannelApiKey[]> {
-  return invoke<ChannelApiKey[]>("list_channel_api_keys", { channelId });
-}
-
-export async function addChannelApiKey(channelId: string, keyValue: string): Promise<ChannelApiKey> {
-  return invoke<ChannelApiKey>("add_channel_api_key", { channelId, keyValue });
-}
-
-export async function deleteChannelApiKey(id: string): Promise<void> {
-  return invoke<void>("delete_channel_api_key", { id });
-}
-
-export async function toggleChannelApiKey(id: string, enabled: boolean): Promise<void> {
-  return invoke<void>("toggle_channel_api_key", { id, enabled });
-}
-
-export async function testChannel(id: string): Promise<TestResult> {
-  return invoke<TestResult>("test_channel", { id });
-}
-
-export async function testChannelCustom(data: {
-  channelId?: string;
-  method: string;
-  url: string;
-  headers: Record<string, string>;
-}): Promise<TestResult> {
-  return invoke<TestResult>("test_channel_custom", {
-    channelId: data.channelId,
-    method: data.method,
-    url: data.url,
-    headers: data.headers,
-  });
-}
-
-export async function saveChannelTestConfig(data: {
-  id: string;
-  testUrl?: string | null;
-  testHeaders?: string | null;
-}): Promise<void> {
-  return invoke<void>("save_channel_test_config", {
-    id: data.id,
-    testUrl: data.testUrl,
-    testHeaders: data.testHeaders,
-  });
-}
-
 // === Token commands ===
 
 export async function listTokens(): Promise<Token[]> {
@@ -298,46 +275,6 @@ export async function deleteToken(id: string): Promise<void> {
 
 export async function resetTokenQuota(id: string): Promise<void> {
   return invoke<void>("reset_token_quota", { id });
-}
-
-// === Model Mapping commands ===
-
-export async function listModelMappings(): Promise<ModelMapping[]> {
-  return invoke<ModelMapping[]>("list_model_mappings");
-}
-
-export async function createModelMapping(data: {
-  public_name: string;
-  channel_id: string;
-  actual_name: string;
-  modality: string;
-}): Promise<ModelMapping> {
-  return invoke<ModelMapping>("create_model_mapping", {
-    publicName: data.public_name,
-    channelId: data.channel_id,
-    actualName: data.actual_name,
-    modality: data.modality,
-  });
-}
-
-export async function updateModelMapping(data: {
-  id: string;
-  public_name: string;
-  channel_id: string;
-  actual_name: string;
-  modality: string;
-}): Promise<void> {
-  return invoke<void>("update_model_mapping", {
-    id: data.id,
-    publicName: data.public_name,
-    channelId: data.channel_id,
-    actualName: data.actual_name,
-    modality: data.modality,
-  });
-}
-
-export async function deleteModelMapping(id: string): Promise<void> {
-  return invoke<void>("delete_model_mapping", { id });
 }
 
 // === Request Log commands ===

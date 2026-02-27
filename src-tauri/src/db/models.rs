@@ -1,38 +1,34 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct Channel {
+pub struct Route {
     pub id: String,
     pub name: String,
-    pub provider: String,
-    pub base_url: String,
-    pub priority: i32,
-    pub weight: i32,
+    pub path_prefix: String,
+    pub input_format: String,
     pub enabled: bool,
-    pub key_rotation: bool,
-    pub rate_limit: Option<String>,
-    pub test_url: Option<String>,
-    pub test_headers: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct ChannelApiKey {
+pub struct RouteTarget {
     pub id: String,
-    pub channel_id: String,
-    pub key_value: String,
+    pub route_id: String,
+    pub upstream_format: String,
+    pub base_url: String,
+    pub weight: i32,
     pub enabled: bool,
-    pub last_used: Option<String>,
+    pub key_rotation: bool,
+    pub created_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct ModelMapping {
+pub struct RouteTargetKey {
     pub id: String,
-    pub public_name: String,
-    pub channel_id: String,
-    pub actual_name: String,
-    pub modality: String,
+    pub target_id: String,
+    pub key_value: String,
+    pub enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -52,7 +48,8 @@ pub struct Token {
 pub struct RequestLog {
     pub id: String,
     pub token_id: Option<String>,
-    pub channel_id: Option<String>,
+    pub route_id: Option<String>,
+    pub target_id: Option<String>,
     pub model: Option<String>,
     pub modality: Option<String>,
     pub input_format: Option<String>,
@@ -63,6 +60,8 @@ pub struct RequestLog {
     pub completion_tokens: Option<i64>,
     pub request_body: Option<String>,
     pub response_body: Option<String>,
+    pub request_headers: Option<String>,
+    pub response_headers: Option<String>,
     pub created_at: String,
 }
 

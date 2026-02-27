@@ -59,11 +59,11 @@ pub enum AppError {
     #[error("Authentication failed: {0}")]
     Unauthorized(String),
 
-    #[error("Channel not found for model: {0}")]
-    NoChannel(String),
+    #[error("No route found for path: {0}")]
+    NoRoute(String),
 
-    #[error("All channels failed for model: {0}")]
-    AllChannelsFailed(String),
+    #[error("No available targets for route: {0}")]
+    NoTarget(String),
 
     #[error("Upstream error: {status} {body}")]
     Upstream { status: u16, body: String },
@@ -89,8 +89,8 @@ impl IntoResponse for AppError {
         let (status, message) = match &self {
             AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, self.to_string()),
             AppError::Unauthorized(_) => (StatusCode::UNAUTHORIZED, self.to_string()),
-            AppError::NoChannel(_) => (StatusCode::NOT_FOUND, self.to_string()),
-            AppError::AllChannelsFailed(_) => (StatusCode::BAD_GATEWAY, self.to_string()),
+            AppError::NoRoute(_) => (StatusCode::NOT_FOUND, self.to_string()),
+            AppError::NoTarget(_) => (StatusCode::BAD_GATEWAY, self.to_string()),
             AppError::Upstream { status, .. } => (
                 StatusCode::from_u16(*status).unwrap_or(StatusCode::BAD_GATEWAY),
                 self.to_string(),

@@ -1,7 +1,6 @@
 pub mod config;
-pub mod channels;
+pub mod routes;
 pub mod tokens;
-pub mod model_mappings;
 pub mod request_logs;
 pub mod proxy;
 pub mod rules;
