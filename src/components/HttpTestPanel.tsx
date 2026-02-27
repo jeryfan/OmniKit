@@ -385,7 +385,7 @@ export default function HttpTestPanel({
               {headers.length === 0 ? (
                 <p className="text-xs text-muted-foreground">暂无请求头</p>
               ) : (
-                <div className="space-y-1.5">
+                <div className="max-h-52 overflow-y-auto space-y-1.5 pr-0.5">
                   {headers.map((h) => (
                     <div key={h.id} className="flex gap-1.5">
                       <Input
