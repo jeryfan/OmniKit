@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS proxy_logs;
+DROP TABLE IF EXISTS proxy_rules;

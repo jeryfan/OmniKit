@@ -46,71 +46,8 @@ export interface Translations {
     collapse: string;
     expand: string;
     language: string;
-    proxy: string;
-    rules: string;
     videoDownload: string;
     videoRecords: string;
-  };
-  rules: {
-    title: string;
-    subtitle: string;
-    myRules: string;
-    ruleStore: string;
-    createRule: string;
-    editRule: string;
-    duplicateRule: string;
-    deleteRule: string;
-    importRule: string;
-    exportRule: string;
-    exportAll: string;
-    slug: string;
-    ruleType: string;
-    system: string;
-    user: string;
-    modality: string;
-    version: string;
-    author: string;
-    tags: string;
-    basicInfo: string;
-    templates: string;
-    decodeRequest: string;
-    encodeRequest: string;
-    decodeResponse: string;
-    encodeResponse: string;
-    decodeStreamChunk: string;
-    encodeStreamChunk: string;
-    httpConfig: string;
-    testPanel: string;
-    testInput: string;
-    testOutput: string;
-    runTest: string;
-    validate: string;
-    validationSuccess: string;
-    optional: string;
-    required: string;
-    systemRuleReadonly: string;
-    confirmDelete: string;
-    importSuccess: string;
-    exportSuccess: string;
-    slugConflict: string;
-    overwrite: string;
-    skip: string;
-    importAsNew: string;
-    install: string;
-    update: string;
-    installed: string;
-    storeTab: string;
-    storeEmpty: string;
-    storeLoading: string;
-    storeFetchError: string;
-    installing: string;
-    aiGenerate: string;
-    aiGenerateDesc: string;
-    aiPromptPlaceholder: string;
-    generating: string;
-    modelName: string;
-    selectChannel: string;
-    aiGenerateSuccess: string;
   };
   channels: {
     title: string;
@@ -332,49 +269,6 @@ export interface Translations {
     updateFailed: string;
     retry: string;
   };
-  proxy: {
-    title: string;
-    subtitle: string;
-    rules: string;
-    logs: string;
-    addRule: string;
-    editRule: string;
-    noRules: string;
-    noRulesHint: string;
-    pathPrefix: string;
-    targetBaseUrl: string;
-    pathPrefixPlaceholder: string;
-    targetBaseUrlPlaceholder: string;
-    namePlaceholder: string;
-    deleteRule: string;
-    deleteRuleConfirm: (name: string) => string;
-    createRule: string;
-    updateRule: string;
-    saveChanges: string;
-    usage: string;
-    logsTitle: string;
-    logsSubtitle: string;
-    clearLogs: string;
-    clearLogsTitle: string;
-    clearLogsDesc: string;
-    clearAll: string;
-    noLogs: string;
-    noLogsHint: string;
-    time: string;
-    method: string;
-    url: string;
-    latency: string;
-    requestHeaders: string;
-    requestBody: string;
-    responseHeaders: string;
-    responseBody: string;
-    viewDetails: string;
-    detailTitle: string;
-    allRules: string;
-    filterByRule: string;
-    streaming: string;
-    autoRefresh: string;
-  };
   videoDownload: {
     title: string;
     subtitle: string;
@@ -486,8 +380,6 @@ const en: Translations = {
     collapse: "Collapse sidebar",
     expand: "Expand sidebar",
     language: "Language",
-    proxy: "Proxy",
-    rules: "Rules",
     videoDownload: "Video Download",
     videoRecords: "Video Records",
   },
@@ -769,49 +661,6 @@ const en: Translations = {
     updateFailed: "Update failed",
     retry: "Retry",
   },
-  proxy: {
-    title: "Proxy",
-    subtitle: "Generic HTTP proxy for debugging and request inspection.",
-    rules: "Rules",
-    logs: "Logs",
-    addRule: "Add Rule",
-    editRule: "Edit Rule",
-    noRules: "No proxy rules configured",
-    noRulesHint: "Create a proxy rule to start forwarding requests.",
-    pathPrefix: "Path Prefix",
-    targetBaseUrl: "Target Base URL",
-    pathPrefixPlaceholder: "e.g. /proxy",
-    targetBaseUrlPlaceholder: "e.g. https://api.example.com",
-    namePlaceholder: "e.g. My API Proxy",
-    deleteRule: "Delete Rule",
-    deleteRuleConfirm: (name: string) => `Are you sure you want to delete "${name}"? All associated logs will also be removed.`,
-    createRule: "Create Rule",
-    updateRule: "Update Rule",
-    saveChanges: "Save Changes",
-    usage: "Usage",
-    logsTitle: "Proxy Logs",
-    logsSubtitle: "Inspect proxied request and response details.",
-    clearLogs: "Clear Logs",
-    clearLogsTitle: "Clear proxy logs?",
-    clearLogsDesc: "This action cannot be undone. All proxy log entries will be permanently deleted.",
-    clearAll: "Clear All",
-    noLogs: "No proxy logs found",
-    noLogsHint: "Logs will appear here once proxy rules handle requests.",
-    time: "Time",
-    method: "Method",
-    url: "URL",
-    latency: "Latency",
-    requestHeaders: "Request Headers",
-    requestBody: "Request Body",
-    responseHeaders: "Response Headers",
-    responseBody: "Response Body",
-    viewDetails: "View Details",
-    detailTitle: "Proxy Log Details",
-    allRules: "All Rules",
-    filterByRule: "Filter by rule",
-    streaming: "Streaming",
-    autoRefresh: "Auto Refresh",
-  },
   videoDownload: {
     title: "Video Download",
     subtitle: "Download videos from Douyin, Bilibili and more.",
@@ -923,8 +772,6 @@ const zh: Translations = {
     collapse: "收起侧边栏",
     expand: "展开侧边栏",
     language: "语言",
-    proxy: "代理",
-    rules: "转换规则",
     videoDownload: "视频下载",
     videoRecords: "解析记录",
   },
@@ -1205,49 +1052,6 @@ const zh: Translations = {
     installing: "正在安装...",
     updateFailed: "更新失败",
     retry: "重试",
-  },
-  proxy: {
-    title: "代理",
-    subtitle: "通用 HTTP 代理，用于调试和请求检查。",
-    rules: "规则",
-    logs: "日志",
-    addRule: "添加规则",
-    editRule: "编辑规则",
-    noRules: "尚未配置代理规则",
-    noRulesHint: "创建代理规则以开始转发请求。",
-    pathPrefix: "路径前缀",
-    targetBaseUrl: "目标地址",
-    pathPrefixPlaceholder: "例如 /proxy",
-    targetBaseUrlPlaceholder: "例如 https://api.example.com",
-    namePlaceholder: "例如 我的API代理",
-    deleteRule: "删除规则",
-    deleteRuleConfirm: (name: string) => `确定要删除 "${name}" 吗？所有关联的日志也将被移除。`,
-    createRule: "创建规则",
-    updateRule: "更新规则",
-    saveChanges: "保存更改",
-    usage: "使用方法",
-    logsTitle: "代理日志",
-    logsSubtitle: "检查代理的请求和响应详情。",
-    clearLogs: "清空日志",
-    clearLogsTitle: "清空代理日志？",
-    clearLogsDesc: "此操作无法撤销。所有代理日志将被永久删除。",
-    clearAll: "全部清空",
-    noLogs: "未找到代理日志",
-    noLogsHint: "代理规则处理请求后，日志将显示在此处。",
-    time: "时间",
-    method: "方法",
-    url: "URL",
-    latency: "延迟",
-    requestHeaders: "请求头",
-    requestBody: "请求体",
-    responseHeaders: "响应头",
-    responseBody: "响应体",
-    viewDetails: "查看详情",
-    detailTitle: "代理日志详情",
-    allRules: "全部规则",
-    filterByRule: "按规则筛选",
-    streaming: "流式传输",
-    autoRefresh: "自动刷新",
   },
   videoDownload: {
     title: "视频下载",

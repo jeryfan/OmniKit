@@ -1,18 +1,16 @@
 import { useSearchParams } from "react-router";
 import {
   Network,
-  FileCode2,
   KeyRound,
   ScrollText,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/i18n";
 import Routes from "@/pages/Routes";
-import Rules from "@/pages/Rules";
 import Tokens from "@/pages/Tokens";
 import RequestLogs from "@/pages/RequestLogs";
 
-const TABS = ["routes", "rules", "tokens", "request-logs"] as const;
+const TABS = ["routes", "tokens", "request-logs"] as const;
 type TabValue = (typeof TABS)[number];
 
 function isValidTab(value: string): value is TabValue {
@@ -32,7 +30,6 @@ export default function ApiGateway() {
 
   const tabItems = [
     { value: "routes" as TabValue, icon: Network, label: "路由" },
-    { value: "rules" as TabValue, icon: FileCode2, label: t.sidebar.rules },
     { value: "tokens" as TabValue, icon: KeyRound, label: t.sidebar.tokens },
     { value: "request-logs" as TabValue, icon: ScrollText, label: t.sidebar.requestLogs },
   ];
@@ -49,9 +46,6 @@ export default function ApiGateway() {
       </TabsList>
       <TabsContent value="routes" className="flex-1 overflow-auto">
         <Routes embedded />
-      </TabsContent>
-      <TabsContent value="rules" className="flex-1 overflow-auto">
-        <Rules embedded />
       </TabsContent>
       <TabsContent value="tokens" className="flex-1 overflow-auto">
         <Tokens embedded />

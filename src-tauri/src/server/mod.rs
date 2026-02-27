@@ -1,4 +1,3 @@
-pub mod generic_proxy;
 pub mod middleware;
 pub mod proxy;
 pub mod router;

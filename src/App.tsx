@@ -3,7 +3,6 @@ import { Layout } from "@/components/layout/Layout";
 import ApiGateway from "@/pages/ApiGateway";
 import UsageStats from "@/pages/UsageStats";
 import Settings from "@/pages/Settings";
-import Proxy from "@/pages/Proxy";
 import VideoDownload from "@/pages/VideoDownload";
 import VideoRecords from "@/pages/VideoRecords";
 
@@ -16,7 +15,6 @@ function App() {
           <Route path="api-gateway" element={<ApiGateway />} />
           <Route path="usage-stats" element={<UsageStats />} />
           <Route path="settings" element={<Settings />} />
-          <Route path="proxy" element={<Proxy />} />
           <Route path="video-download" element={<VideoDownload />} />
           <Route path="video-records" element={<VideoRecords />} />
         </Route>

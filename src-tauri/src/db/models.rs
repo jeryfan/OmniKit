@@ -66,55 +66,6 @@ pub struct RequestLog {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct ProxyRule {
-    pub id: String,
-    pub name: String,
-    pub path_prefix: String,
-    pub target_base_url: String,
-    pub enabled: bool,
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct ProxyLog {
-    pub id: String,
-    pub rule_id: String,
-    pub method: String,
-    pub url: String,
-    pub request_headers: Option<String>,
-    pub request_body: Option<String>,
-    pub status: Option<i32>,
-    pub response_headers: Option<String>,
-    pub response_body: Option<String>,
-    pub latency_ms: Option<i64>,
-    pub created_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct ConversionRule {
-    pub id: String,
-    pub slug: String,
-    pub name: String,
-    pub description: Option<String>,
-    pub author: Option<String>,
-    pub version: String,
-    pub tags: Option<String>,
-    pub rule_type: String,
-    pub modality: String,
-    pub decode_request: String,
-    pub encode_request: String,
-    pub decode_response: String,
-    pub encode_response: String,
-    pub decode_stream_chunk: Option<String>,
-    pub encode_stream_chunk: Option<String>,
-    pub http_config: Option<String>,
-    pub enabled: bool,
-    pub created_at: String,
-    pub updated_at: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct VideoRecord {
     pub id: String,
     pub url: String,

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { NavLink } from "react-router";
 import {
   Network,
-  Waypoints,
   Settings,
   Sun,
   Moon,
@@ -47,7 +46,6 @@ export function Sidebar() {
 
   const navItems = [
     { to: "/api-gateway", icon: Network, label: t.sidebar.apiGateway },
-    { to: "/proxy", icon: Waypoints, label: t.sidebar.proxy },
     { to: "/video-download", icon: Download, label: t.sidebar.videoDownload },
   ];
 
