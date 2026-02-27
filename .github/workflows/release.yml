@@ -11,22 +11,25 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     outputs:
-      release_id: ${{ steps.create-release.outputs.releaseId }}
+      release_id: ${{ steps.create.outputs.release_id }}
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Create draft release
-        id: create-release
-        uses: tauri-apps/tauri-action@v0
+        id: create
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: v__VERSION__
-          releaseName: 'OmniKit v__VERSION__'
-          releaseBody: 'See the assets to download and install this version.'
-          releaseDraft: true
-          prerelease: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          RELEASE_ID=$(gh api repos/${{ github.repository }}/releases \
+            -X POST \
+            -f tag_name="v${VERSION}" \
+            -f name="OmniKit v${VERSION}" \
+            -f body="See the assets to download and install this version." \
+            -F draft=true \
+            -F prerelease=false \
+            --jq '.id')
+          echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
+          echo "Created draft release ID: $RELEASE_ID"
 
   release:
     needs: create-release
