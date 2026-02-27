@@ -13,7 +13,7 @@ pub struct AnthropicRequest {
     pub messages: Vec<AnthropicMessage>,
     pub max_tokens: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub system: Option<String>,
+    pub system: Option<serde_json::Value>, // string or array of content blocks (for prompt caching)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -389,10 +389,27 @@ impl Decoder for AnthropicCodec {
             _ => IrToolChoice::Auto,
         });
 
+        // system can be a plain string or an array of content blocks (prompt caching)
+        let system = req.system.map(|s| match s {
+            serde_json::Value::String(text) => text,
+            serde_json::Value::Array(blocks) => blocks
+                .iter()
+                .filter_map(|b| {
+                    if b.get("type").and_then(|t| t.as_str()) == Some("text") {
+                        b.get("text").and_then(|t| t.as_str()).map(String::from)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(""),
+            other => other.to_string(),
+        });
+
         Ok(IrChatRequest {
             model: req.model,
             messages,
-            system: req.system,
+            system,
             temperature: req.temperature,
             top_p: req.top_p,
             max_tokens: Some(req.max_tokens),
@@ -686,7 +703,7 @@ impl Encoder for AnthropicCodec {
             model: model.to_string(),
             messages,
             max_tokens: ir.max_tokens.unwrap_or(4096),
-            system: ir.system.clone(),
+            system: ir.system.as_deref().map(|s| serde_json::Value::String(s.to_string())),
             temperature: ir.temperature,
             top_p: ir.top_p,
             stop_sequences: ir.stop.clone(),
