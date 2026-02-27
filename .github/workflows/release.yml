@@ -6,7 +6,30 @@ on:
       - 'v*'
 
 jobs:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.releaseId }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create draft release
+        id: create-release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'OmniKit v__VERSION__'
+          releaseBody: 'See the assets to download and install this version.'
+          releaseDraft: true
+          prerelease: false
+
   release:
+    needs: create-release
     permissions:
       contents: write
     strategy:
@@ -57,7 +80,7 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install
 
-      - name: Build and release
+      - name: Build and upload
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -71,18 +94,11 @@ jobs:
           # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           # APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          tagName: v__VERSION__
-          releaseName: 'OmniKit v__VERSION__'
-          releaseBody: 'See the assets to download and install this version.'
-          releaseDraft: true
-          prerelease: false
+          releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
 
-      # Note: We need to wait for all platform builds to complete before generating latest.json
-      # This job only runs after the release job completes (see job dependencies)
-
   publish-and-update-homebrew:
-    needs: release
+    needs: [create-release, release]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -96,16 +112,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Check if release exists and is a draft
-          IS_DRAFT=$(gh release view ${{ github.ref_name }} --repo ${{ github.repository }} --json isDraft --jq '.isDraft' 2>/dev/null || echo "not_found")
-          if [ "$IS_DRAFT" = "true" ]; then
-            gh release edit ${{ github.ref_name }} --repo ${{ github.repository }} --draft=false
-          elif [ "$IS_DRAFT" = "not_found" ]; then
-            echo "::error::Release ${{ github.ref_name }} not found"
-            exit 1
-          else
-            echo "Release is already published, skipping"
-          fi
+          gh release edit ${{ github.ref_name }} --repo ${{ github.repository }} --draft=false
 
       - name: Download signatures and generate latest.json
         env:
@@ -114,13 +121,9 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-          # Download signature files
           echo "Downloading signature files..."
 
-          # Wait a bit for all assets to be available
-          sleep 5
-
-          # macOS ARM64 (.app.tar.gz.sig - updater format, NOT .dmg.sig)
+          # macOS ARM64
           if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
             --pattern "OmniKit_aarch64.app.tar.gz.sig" --output arm64.sig 2>/dev/null; then
             echo "Downloaded ARM64 signature"
@@ -128,7 +131,7 @@ jobs:
             echo "::warning::ARM64 .app.tar.gz.sig not found — check TAURI_SIGNING_PRIVATE_KEY secret"
           fi
 
-          # macOS x64 (.app.tar.gz.sig - updater format, NOT .dmg.sig)
+          # macOS x64
           if gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
             --pattern "OmniKit_x64.app.tar.gz.sig" --output x64.sig 2>/dev/null; then
             echo "Downloaded x64 signature"
@@ -152,34 +155,16 @@ jobs:
             echo "::warning::Windows exe.sig not found — check TAURI_SIGNING_PRIVATE_KEY secret"
           fi
 
-          # Read signature files if they exist
           ARM64_SIG=""
           X64_SIG=""
           LINUX_SIG=""
           WINDOWS_SIG=""
 
-          if [ -f "arm64.sig" ]; then
-            ARM64_SIG=$(cat arm64.sig | tr -d '\n')
-            echo "Found ARM64 signature"
-          fi
+          [ -f "arm64.sig" ] && ARM64_SIG=$(cat arm64.sig | tr -d '\n') && echo "Found ARM64 signature"
+          [ -f "x64.sig" ]   && X64_SIG=$(cat x64.sig | tr -d '\n')     && echo "Found x64 signature"
+          [ -f "linux.sig" ] && LINUX_SIG=$(cat linux.sig | tr -d '\n') && echo "Found Linux signature"
+          [ -f "windows.sig" ] && WINDOWS_SIG=$(cat windows.sig | tr -d '\n') && echo "Found Windows signature"
 
-          if [ -f "x64.sig" ]; then
-            X64_SIG=$(cat x64.sig | tr -d '\n')
-            echo "Found x64 signature"
-          fi
-
-          if [ -f "linux.sig" ]; then
-            LINUX_SIG=$(cat linux.sig | tr -d '\n')
-            echo "Found Linux signature"
-          fi
-
-          if [ -f "windows.sig" ]; then
-            WINDOWS_SIG=$(cat windows.sig | tr -d '\n')
-            echo "Found Windows signature"
-          fi
-
-          # Create latest.json with signatures
-          # macOS URLs must point to .app.tar.gz (updater format), NOT .dmg
           cat > latest.json << EOF
           {
             "version": "$VERSION",
@@ -209,7 +194,6 @@ jobs:
           echo "Generated latest.json:"
           cat latest.json
 
-          # Upload to release
           gh release upload ${{ github.ref_name }} latest.json --repo ${{ github.repository }} --clobber
 
       - name: Download DMGs and compute SHA-256
@@ -219,10 +203,6 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.version }}
 
-          # Wait for release assets to be available
-          sleep 10
-
-          # Download using gh release download
           gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
             --pattern "OmniKit_${VERSION}_aarch64.dmg" --output arm.dmg
           gh release download ${{ github.ref_name }} --repo ${{ github.repository }} \
