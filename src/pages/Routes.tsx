@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +32,7 @@ import HttpTestPanel from "@/components/HttpTestPanel";
 import {
   Route,
   TargetInput,
+  OverrideInput,
   SUPPORTED_FORMATS,
   listRoutes,
   createRoute,
@@ -42,6 +42,12 @@ import {
   getConfig,
 } from "@/lib/tauri";
 
+interface OverrideRow {
+  scope: 'body' | 'header' | 'query';
+  key: string;
+  value: string;
+}
+
 interface TargetFormState {
   upstream_format: string;
   base_url: string;
@@ -49,6 +55,7 @@ interface TargetFormState {
   enabled: boolean;
   key_rotation: boolean;
   keys: string[];
+  overrides: OverrideRow[];
   expanded: boolean;
 }
 
@@ -67,6 +74,7 @@ const defaultTarget = (): TargetFormState => ({
   enabled: true,
   key_rotation: true,
   keys: [""],
+  overrides: [],
   expanded: true,
 });
 
@@ -96,12 +104,10 @@ export default function Routes({ embedded }: RoutesProps) {
   const [form, setForm] = useState<RouteFormState>(defaultForm());
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  // Set of "ti-ki" keys that are currently visible (not masked)
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // Route test dialog
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testDialogTitle, setTestDialogTitle] = useState("");
   const [testPanelInfo, setTestPanelInfo] = useState<{
@@ -111,7 +117,6 @@ export default function Routes({ embedded }: RoutesProps) {
   } | null>(null);
   const [testPanelKey, setTestPanelKey] = useState(0);
 
-  // Upstream target test dialog
   const [upstreamTestOpen, setUpstreamTestOpen] = useState(false);
   const [upstreamTestTitle, setUpstreamTestTitle] = useState("");
   const [upstreamTestInfo, setUpstreamTestInfo] = useState<{
@@ -161,6 +166,7 @@ export default function Routes({ embedded }: RoutesProps) {
         enabled: t.enabled,
         key_rotation: t.key_rotation,
         keys: t.keys.length > 0 ? t.keys.map((k) => k.key_value) : [""],
+        overrides: t.overrides.map((o) => ({ scope: o.scope as 'body' | 'header' | 'query', key: o.key, value: o.value })),
         expanded: true,
       })),
     });
@@ -208,6 +214,7 @@ export default function Routes({ embedded }: RoutesProps) {
       enabled: t.enabled,
       key_rotation: t.key_rotation,
       keys: t.keys.filter((k) => k.trim()),
+      overrides: t.overrides.filter((o) => o.key.trim()).map((o): OverrideInput => ({ scope: o.scope, key: o.key.trim(), value: o.value })),
     }));
 
     setSaving(true);
@@ -232,6 +239,7 @@ export default function Routes({ embedded }: RoutesProps) {
       }
       setDialogOpen(false);
       setVisibleKeys(new Set());
+      await load();
     } catch (e) {
       setFormError(parseIpcError(e).message);
     } finally {
@@ -383,6 +391,35 @@ export default function Routes({ embedded }: RoutesProps) {
     }));
   }
 
+  function addOverride(targetIdx: number) {
+    setForm((prev) => ({
+      ...prev,
+      targets: prev.targets.map((t, i) =>
+        i === targetIdx ? { ...t, overrides: [...t.overrides, { scope: 'body' as const, key: '', value: '' }] } : t
+      ),
+    }));
+  }
+
+  function removeOverride(targetIdx: number, ovIdx: number) {
+    setForm((prev) => ({
+      ...prev,
+      targets: prev.targets.map((t, i) =>
+        i === targetIdx ? { ...t, overrides: t.overrides.filter((_, j) => j !== ovIdx) } : t
+      ),
+    }));
+  }
+
+  function updateOverride(targetIdx: number, ovIdx: number, patch: Partial<OverrideRow>) {
+    setForm((prev) => ({
+      ...prev,
+      targets: prev.targets.map((t, i) =>
+        i === targetIdx
+          ? { ...t, overrides: t.overrides.map((o, j) => (j === ovIdx ? { ...o, ...patch } : o)) }
+          : t
+      ),
+    }));
+  }
+
   const containerClass = embedded ? "" : "container mx-auto";
 
   return (
@@ -451,15 +488,23 @@ export default function Routes({ embedded }: RoutesProps) {
 
       {/* Create / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setVisibleKeys(new Set()); }}>
-        <DialogContent className="max-h-[85vh] max-w-3xl flex flex-col">
-          <DialogHeader className="shrink-0">
-            <DialogTitle>{editingRoute ? "编辑路由" : "新建路由"}</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-[960px] max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
 
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
+          {/* Fixed header */}
+          <div className="px-6 py-4 border-b shrink-0">
+            <DialogTitle className="text-[15px] font-semibold tracking-tight">
+              {editingRoute ? "编辑路由" : "新建路由"}
+            </DialogTitle>
+          </div>
+
+          {/* Route basics — fixed, does not scroll */}
+          <div className="px-6 py-5 border-b shrink-0 bg-muted/20">
+            <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground mb-4">
+              基本信息
+            </p>
+            <div className="grid grid-cols-[1fr_180px_1fr] gap-4">
               <div className="space-y-1.5">
-                <Label>名称</Label>
+                <Label className="text-xs text-muted-foreground">名称</Label>
                 <Input
                   placeholder="我的 Anthropic 路由"
                   value={form.name}
@@ -467,18 +512,15 @@ export default function Routes({ embedded }: RoutesProps) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>路径前缀</Label>
+                <Label className="text-xs text-muted-foreground">路径前缀</Label>
                 <Input
                   placeholder="/anthropic"
                   value={form.path_prefix}
                   onChange={(e) => setForm((p) => ({ ...p, path_prefix: e.target.value }))}
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>输入格式（客户端使用的格式）</Label>
+                <Label className="text-xs text-muted-foreground">输入格式（客户端）</Label>
                 <Select
                   value={form.input_format}
                   onValueChange={(v) => setForm((p) => ({ ...p, input_format: v }))}
@@ -488,148 +530,174 @@ export default function Routes({ embedded }: RoutesProps) {
                   </SelectTrigger>
                   <SelectContent>
                     {SUPPORTED_FORMATS.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>
-                        {f.label}
-                      </SelectItem>
+                      <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-end gap-2 pb-0.5">
-                <Switch
-                  checked={form.enabled}
-                  onCheckedChange={(v) => setForm((p) => ({ ...p, enabled: v }))}
-                />
-                <Label>启用</Label>
+            </div>
+            <div className="mt-3.5 flex items-center gap-2">
+              <Switch
+                checked={form.enabled}
+                onCheckedChange={(v) => setForm((p) => ({ ...p, enabled: v }))}
+              />
+              <Label className="text-xs text-muted-foreground cursor-pointer select-none">
+                启用此路由
+              </Label>
+            </div>
+          </div>
+
+          {/* Targets — scrollable with custom thin scrollbar */}
+          <div
+            className="flex-1 min-h-0 overflow-y-auto px-6 py-5
+              [&::-webkit-scrollbar]:w-[3px]
+              [&::-webkit-scrollbar-track]:bg-transparent
+              [&::-webkit-scrollbar-thumb]:bg-border
+              [&::-webkit-scrollbar-thumb]:rounded-full"
+            style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
+                  上游目标
+                </p>
+                <div className="h-px w-8 bg-border/50" />
               </div>
+              <Button variant="outline" size="sm" onClick={addTarget} className="h-7 text-xs">
+                <Plus className="mr-1 h-3 w-3" />
+                添加目标
+              </Button>
             </div>
 
-            {/* Targets */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <Label className="text-base">上游目标</Label>
-                <Button variant="outline" size="sm" onClick={addTarget}>
-                  <Plus className="mr-1 h-3 w-3" />
-                  添加目标
-                </Button>
-              </div>
+            <div className="space-y-3">
+              {form.targets.map((target, ti) => (
+                <div key={ti} className="rounded-xl border overflow-hidden bg-card">
 
-              <div className="space-y-3">
-                {form.targets.map((target, ti) => (
-                  <div key={ti} className="rounded-md border p-3">
-                    <div className="flex items-center justify-between">
-                      <button
-                        type="button"
-                        className="flex items-center gap-1 text-sm font-medium"
-                        onClick={() => updateTarget(ti, { expanded: !target.expanded })}
-                      >
-                        {target.expanded ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
+                  {/* Target card header */}
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-muted/30 border-b">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 min-w-0 hover:opacity-75 transition-opacity"
+                      onClick={() => updateTarget(ti, { expanded: !target.expanded })}
+                    >
+                      {target.expanded
+                        ? <ChevronUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        : <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      }
+                      <span className="text-[11px] font-semibold text-muted-foreground bg-background border px-2 py-0.5 rounded-md">
                         目标 {ti + 1}
-                        {target.base_url && (
-                          <span className="text-muted-foreground ml-1 font-normal">
-                            · {target.base_url}
-                          </span>
-                        )}
-                      </button>
-                      <div className="flex items-center gap-2">
+                      </span>
+                      {target.base_url && (
+                        <span className="text-xs text-muted-foreground truncate max-w-[320px]">
+                          {target.base_url}
+                        </span>
+                      )}
+                    </button>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs gap-1"
+                        onClick={() => openUpstreamTest(target, ti)}
+                      >
+                        <FlaskConical className="h-3 w-3" />
+                        测试
+                      </Button>
+                      <Switch
+                        checked={target.enabled}
+                        onCheckedChange={(v) => updateTarget(ti, { enabled: v })}
+                      />
+                      {form.targets.length > 1 && (
                         <Button
-                          type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => openUpstreamTest(target, ti)}
+                          className="h-7 w-7 p-0"
+                          onClick={() => removeTarget(ti)}
                         >
-                          <FlaskConical className="mr-1 h-3 w-3" />
-                          测试
+                          <Trash2 className="text-destructive h-3 w-3" />
                         </Button>
-                        <Switch
-                          checked={target.enabled}
-                          onCheckedChange={(v) => updateTarget(ti, { enabled: v })}
-                        />
-                        {form.targets.length > 1 && (
-                          <Button variant="ghost" size="sm" onClick={() => removeTarget(ti)}>
-                            <Trash2 className="text-destructive h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
+                  </div>
 
-                    {target.expanded && (
-                      <div className="mt-3 space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">上游格式</Label>
-                            <Select
-                              value={target.upstream_format}
-                              onValueChange={(v) => updateTarget(ti, { upstream_format: v })}
-                            >
-                              <SelectTrigger className="w-full h-8 text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {SUPPORTED_FORMATS.map((f) => (
-                                  <SelectItem key={f.value} value={f.value}>
-                                    {f.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label className="text-xs">权重</Label>
-                            <Input
-                              type="number"
-                              min={1}
-                              className="h-8 text-xs"
-                              value={target.weight}
-                              onChange={(e) =>
-                                updateTarget(ti, { weight: parseInt(e.target.value) || 1 })
-                              }
-                            />
-                          </div>
-                        </div>
+                  {/* Target card body */}
+                  {target.expanded && (
+                    <div className="px-4 py-4 space-y-4">
 
+                      {/* Base URL — full row */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">Base URL</Label>
+                        <Input
+                          className="h-8 text-sm"
+                          placeholder="https://api.openai.com"
+                          value={target.base_url}
+                          onChange={(e) => updateTarget(ti, { base_url: e.target.value })}
+                        />
+                      </div>
+
+                      {/* Format + Weight + Key Rotation — one row */}
+                      <div className="grid grid-cols-3 gap-3 items-end">
                         <div className="space-y-1.5">
-                          <Label className="text-xs">Base URL</Label>
+                          <Label className="text-xs text-muted-foreground">上游格式</Label>
+                          <Select
+                            value={target.upstream_format}
+                            onValueChange={(v) => updateTarget(ti, { upstream_format: v })}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SUPPORTED_FORMATS.map((f) => (
+                                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">权重</Label>
                           <Input
-                            className="h-8 text-xs"
-                            placeholder="https://api.openai.com"
-                            value={target.base_url}
-                            onChange={(e) => updateTarget(ti, { base_url: e.target.value })}
+                            type="number"
+                            min={1}
+                            className="h-8 text-sm"
+                            value={target.weight}
+                            onChange={(e) => updateTarget(ti, { weight: parseInt(e.target.value) || 1 })}
                           />
                         </div>
-
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 pb-1">
                           <Switch
                             checked={target.key_rotation}
                             onCheckedChange={(v) => updateTarget(ti, { key_rotation: v })}
                           />
-                          <Label className="text-xs">Key 轮询</Label>
+                          <Label className="text-xs text-muted-foreground">Key 轮询</Label>
                         </div>
+                      </div>
 
+                      {/* API Keys */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
+                            API Keys
+                          </span>
+                          <div className="flex-1 h-px bg-border/40" />
+                        </div>
                         <div className="space-y-1.5">
-                          <Label className="text-xs">API Keys</Label>
-                          <div className="space-y-1.5">
-                            {target.keys.map((key, ki) => {
-                              const keyId = `${ti}-${ki}`;
-                              const visible = visibleKeys.has(keyId);
-                              return (
-                                <div key={ki} className="flex gap-1.5">
+                          {target.keys.map((key, ki) => {
+                            const keyId = `${ti}-${ki}`;
+                            const visible = visibleKeys.has(keyId);
+                            return (
+                              <div key={ki} className="flex gap-1.5">
+                                <div className="relative flex-1">
                                   <Input
-                                    className="h-7 flex-1 font-mono text-xs"
+                                    className="h-8 font-mono text-xs pr-8"
                                     placeholder="sk-..."
                                     type={visible ? "text" : "password"}
                                     value={key}
                                     onChange={(e) => updateKey(ti, ki, e.target.value)}
                                   />
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 w-7 p-0"
+                                  <button
+                                    type="button"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                                     onClick={() =>
                                       setVisibleKeys((prev) => {
                                         const next = new Set(prev);
@@ -638,51 +706,111 @@ export default function Routes({ embedded }: RoutesProps) {
                                       })
                                     }
                                   >
-                                    {visible ? (
-                                      <EyeOff className="h-3 w-3" />
-                                    ) : (
-                                      <Eye className="h-3 w-3" />
-                                    )}
-                                  </Button>
-                                  {target.keys.length > 1 && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-7 w-7 p-0"
-                                      onClick={() => removeKey(ti, ki)}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  )}
+                                    {visible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                  </button>
                                 </div>
-                              );
-                            })}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs"
-                            onClick={() => addKey(ti)}
-                          >
-                            <Plus className="mr-1 h-3 w-3" />
-                            添加 Key
-                          </Button>
+                                {target.keys.length > 1 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 shrink-0"
+                                    onClick={() => removeKey(ti, ki)}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-1.5 h-7 text-xs text-muted-foreground"
+                          onClick={() => addKey(ti)}
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          添加 Key
+                        </Button>
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {formError && <p className="text-destructive text-sm">{formError}</p>}
+                      {/* Parameter overrides */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-2.5">
+                          <span className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground">
+                            参数覆盖
+                          </span>
+                          <div className="flex-1 h-px bg-border/40" />
+                        </div>
+                        {target.overrides.length > 0 && (
+                          <div className="space-y-1.5 mb-1.5">
+                            {target.overrides.map((ovr, oi) => (
+                              <div key={oi} className="flex gap-1.5">
+                                <Select
+                                  value={ovr.scope}
+                                  onValueChange={(v) => updateOverride(ti, oi, { scope: v as 'body' | 'header' | 'query' })}
+                                >
+                                  <SelectTrigger className="h-8 w-[90px] text-xs shrink-0">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="body">body</SelectItem>
+                                    <SelectItem value="header">header</SelectItem>
+                                    <SelectItem value="query">query</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Input
+                                  className="h-8 flex-1 text-xs"
+                                  placeholder="key"
+                                  value={ovr.key}
+                                  onChange={(e) => updateOverride(ti, oi, { key: e.target.value })}
+                                />
+                                <Input
+                                  className="h-8 flex-1 text-xs"
+                                  placeholder="value"
+                                  value={ovr.value}
+                                  onChange={(e) => updateOverride(ti, oi, { value: e.target.value })}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 shrink-0"
+                                  onClick={() => removeOverride(ti, oi)}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-muted-foreground"
+                          onClick={() => addOverride(ti)}
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          添加覆盖规则
+                        </Button>
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
-          <DialogFooter className="shrink-0">
+          {/* Fixed footer */}
+          <div className="px-6 py-3.5 border-t shrink-0 flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              {formError && <p className="text-destructive text-sm truncate">{formError}</p>}
+            </div>
             <Button onClick={handleSave} disabled={saving}>
               {saving ? "保存中..." : "保存"}
             </Button>
-          </DialogFooter>
+          </div>
+
         </DialogContent>
       </Dialog>
 

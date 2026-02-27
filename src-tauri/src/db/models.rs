@@ -32,6 +32,15 @@ pub struct RouteTargetKey {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct RouteTargetOverride {
+    pub id: String,
+    pub target_id: String,
+    pub scope: String,   // "body" | "header" | "query"
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Token {
     pub id: String,
     pub name: Option<String>,

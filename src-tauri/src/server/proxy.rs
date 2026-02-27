@@ -84,6 +84,53 @@ fn apply_auth(
     }
 }
 
+/// 将覆盖规则应用到上游请求。
+/// 返回 (修改后的请求体, 额外请求头列表, 修改后的URL)。
+fn apply_overrides(
+    body_bytes: &[u8],
+    upstream_url: &str,
+    overrides: &[crate::db::models::RouteTargetOverride],
+) -> (Vec<u8>, Vec<(String, String)>, String) {
+    if overrides.is_empty() {
+        return (body_bytes.to_vec(), vec![], upstream_url.to_string());
+    }
+
+    let mut body_json: Option<serde_json::Value> = if !body_bytes.is_empty() {
+        serde_json::from_slice(body_bytes).ok()
+    } else {
+        None
+    };
+    let mut extra_headers: Vec<(String, String)> = Vec::new();
+    let mut modified_url = upstream_url.to_string();
+
+    for ovr in overrides {
+        match ovr.scope.as_str() {
+            "body" => {
+                if let Some(serde_json::Value::Object(ref mut map)) = body_json {
+                    map.insert(ovr.key.clone(), serde_json::Value::String(ovr.value.clone()));
+                }
+            }
+            "header" => {
+                extra_headers.push((ovr.key.clone(), ovr.value.clone()));
+            }
+            "query" => {
+                let sep = if modified_url.contains('?') { "&" } else { "?" };
+                let k = urlencoding::encode(&ovr.key);
+                let v = urlencoding::encode(&ovr.value);
+                modified_url = format!("{}{}{}={}", modified_url, sep, k, v);
+            }
+            _ => {}
+        }
+    }
+
+    let new_body = match body_json {
+        Some(ref v) => serde_json::to_vec(v).unwrap_or_else(|_| body_bytes.to_vec()),
+        None => body_bytes.to_vec(),
+    };
+
+    (new_body, extra_headers, modified_url)
+}
+
 const HOP_BY_HOP: &[&str] = &[
     "host",
     "connection",
@@ -221,12 +268,18 @@ async fn handle_format_conversion(
         .ok_or_else(|| AppError::Codec(format!("Unknown upstream format: {}", upstream_slug)))?;
     let upstream_url = build_upstream_url(&target.base_url, upstream_format, &ir.model, ir.stream);
 
+    let (upstream_body, override_headers, upstream_url) =
+        apply_overrides(&upstream_body, &upstream_url, &selected.overrides);
+
     let mut req_builder = state
         .http_client
         .post(&upstream_url)
         .header("Content-Type", "application/json")
         .body(upstream_body);
     req_builder = apply_auth(req_builder, upstream_format, api_key);
+    for (k, v) in &override_headers {
+        req_builder = req_builder.header(k.as_str(), v.as_str());
+    }
 
     let request_body_str = String::from_utf8_lossy(body_bytes).to_string();
     let req_headers_json = headers_to_json(headers);
@@ -354,6 +407,10 @@ async fn handle_passthrough(
         None => format!("{}{}", base, sub_path),
     };
 
+    let (body_owned, override_headers, target_url) =
+        apply_overrides(body_bytes, &target_url, &selected.overrides);
+    let body_bytes = body_owned.as_slice();
+
     let upstream_format = ChatFormat::from_str_loose(&target.upstream_format);
 
     let reqwest_method = reqwest::Method::from_bytes(method.as_str().as_bytes())
@@ -386,6 +443,9 @@ async fn handle_passthrough(
                 .unwrap_or("Bearer");
             req_builder = req_builder.header("authorization", format!("{} {}", scheme, api_key));
         }
+    }
+    for (k, v) in &override_headers {
+        req_builder = req_builder.header(k.as_str(), v.as_str());
     }
 
     if !body_bytes.is_empty() {

@@ -1,4 +1,4 @@
-use crate::db::models::{RouteTarget, RouteTargetKey};
+use crate::db::models::{RouteTarget, RouteTargetKey, RouteTargetOverride};
 use crate::error::AppError;
 use crate::routing::circuit::CircuitBreaker;
 use rand::Rng;
@@ -35,6 +35,7 @@ impl KeyRotationState {
 pub struct SelectedTarget {
     pub target: RouteTarget,
     pub api_key: String,
+    pub overrides: Vec<RouteTargetOverride>,
 }
 
 /// Select the best available target for a route.
@@ -89,6 +90,12 @@ pub async fn select_target(
     Ok(SelectedTarget {
         target: target.clone(),
         api_key,
+        overrides: sqlx::query_as::<_, RouteTargetOverride>(
+            "SELECT * FROM route_target_overrides WHERE target_id = ? ORDER BY id ASC",
+        )
+        .bind(&target.id)
+        .fetch_all(db)
+        .await?,
     })
 }
 

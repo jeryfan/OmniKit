@@ -1,8 +1,15 @@
-use crate::db::models::{Route, RouteTarget, RouteTargetKey};
+use crate::db::models::{Route, RouteTarget, RouteTargetKey, RouteTargetOverride};
 use crate::error::IpcError;
 use crate::AppState;
 use serde::{Deserialize, Serialize};
 use tauri::State;
+
+#[derive(Debug, Deserialize)]
+pub struct OverrideInput {
+    pub scope: String,
+    pub key: String,
+    pub value: String,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct TargetInput {
@@ -12,6 +19,7 @@ pub struct TargetInput {
     pub enabled: bool,
     pub key_rotation: bool,
     pub keys: Vec<String>,
+    pub overrides: Vec<OverrideInput>,
 }
 
 fn validate_format(format: &str) -> Result<(), IpcError> {
@@ -48,6 +56,7 @@ pub struct TargetWithKeys {
     #[serde(flatten)]
     pub target: RouteTarget,
     pub keys: Vec<RouteTargetKey>,
+    pub overrides: Vec<RouteTargetOverride>,
 }
 
 #[tauri::command]
@@ -75,7 +84,13 @@ pub async fn list_routes(state: State<'_, AppState>) -> Result<Vec<RouteWithTarg
             .bind(&target.id)
             .fetch_all(&state.db)
             .await?;
-            targets_with_keys.push(TargetWithKeys { target, keys });
+            let overrides = sqlx::query_as::<_, RouteTargetOverride>(
+                "SELECT * FROM route_target_overrides WHERE target_id = ? ORDER BY id ASC"
+            )
+            .bind(&target.id)
+            .fetch_all(&state.db)
+            .await?;
+            targets_with_keys.push(TargetWithKeys { target, keys, overrides });
         }
 
         result.push(RouteWithTargets { route, targets: targets_with_keys });
@@ -179,6 +194,23 @@ async fn save_targets(
             .bind(&key_id).bind(&target_id).bind(key_value.trim())
             .execute(db).await?;
         }
+
+        for ovr in &target_input.overrides {
+            if ovr.key.trim().is_empty() {
+                continue;
+            }
+            let valid_scopes = ["body", "header", "query"];
+            if !valid_scopes.contains(&ovr.scope.as_str()) {
+                return Err(IpcError::validation(format!("Invalid scope: {}", ovr.scope)));
+            }
+            let ovr_id = uuid::Uuid::new_v4().to_string();
+            sqlx::query(
+                "INSERT INTO route_target_overrides (id, target_id, scope, key, value) VALUES (?, ?, ?, ?, ?)"
+            )
+            .bind(&ovr_id).bind(&target_id)
+            .bind(ovr.scope.trim()).bind(ovr.key.trim()).bind(&ovr.value)
+            .execute(db).await?;
+        }
     }
     Ok(())
 }
@@ -207,7 +239,13 @@ async fn get_route_with_targets(
         .bind(&target.id)
         .fetch_all(db)
         .await?;
-        targets_with_keys.push(TargetWithKeys { target, keys });
+        let overrides = sqlx::query_as::<_, RouteTargetOverride>(
+            "SELECT * FROM route_target_overrides WHERE target_id = ? ORDER BY id ASC"
+        )
+        .bind(&target.id)
+        .fetch_all(db)
+        .await?;
+        targets_with_keys.push(TargetWithKeys { target, keys, overrides });
     }
 
     Ok(RouteWithTargets { route, targets: targets_with_keys })

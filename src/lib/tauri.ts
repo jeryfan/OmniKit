@@ -43,6 +43,14 @@ export interface RouteTargetKey {
   enabled: boolean;
 }
 
+export interface RouteTargetOverride {
+  id: string;
+  target_id: string;
+  scope: 'body' | 'header' | 'query';
+  key: string;
+  value: string;
+}
+
 export interface RouteTarget {
   id: string;
   route_id: string;
@@ -53,6 +61,7 @@ export interface RouteTarget {
   key_rotation: boolean;
   created_at: string;
   keys: RouteTargetKey[];
+  overrides: RouteTargetOverride[];
 }
 
 export interface Route {
@@ -66,6 +75,12 @@ export interface Route {
   targets: RouteTarget[];
 }
 
+export interface OverrideInput {
+  scope: 'body' | 'header' | 'query';
+  key: string;
+  value: string;
+}
+
 export interface TargetInput {
   upstream_format: string;
   base_url: string;
@@ -73,6 +88,7 @@ export interface TargetInput {
   enabled: boolean;
   key_rotation: boolean;
   keys: string[];
+  overrides: OverrideInput[];
 }
 
 export const SUPPORTED_FORMATS = [
