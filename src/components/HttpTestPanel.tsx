@@ -307,9 +307,9 @@ export default function HttpTestPanel({
 
   return (
     <>
-      <div className="flex flex-col gap-4">
+      <div className="flex-1 min-h-0 flex flex-col gap-4">
         {/* URL bar */}
-        <div className="flex gap-2">
+        <div className="shrink-0 flex gap-2">
           <Select value={method} onValueChange={(v) => setMethod(v as HttpMethod)}>
             <SelectTrigger className="w-28 shrink-0">
               <SelectValue />
@@ -363,11 +363,11 @@ export default function HttpTestPanel({
         </div>
 
         {/* Two-column layout */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="flex-1 min-h-0 flex gap-4">
           {/* Request panel */}
-          <div className="flex flex-col gap-3">
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-3">
             {/* Headers */}
-            <div className="flex flex-col gap-2">
+            <div className="shrink-0 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   请求头
@@ -377,16 +377,17 @@ export default function HttpTestPanel({
                   size="sm"
                   className="h-6 px-2 text-xs"
                   onClick={addHeader}
+                  disabled={headers.some((h) => !h.key.trim())}
                 >
                   <Plus className="mr-1 h-3 w-3" />
                   添加
                 </Button>
               </div>
-              {headers.length === 0 ? (
-                <p className="text-xs text-muted-foreground">暂无请求头</p>
-              ) : (
-                <div className="max-h-52 overflow-y-auto space-y-1.5 pr-0.5">
-                  {headers.map((h) => (
+              <div className="h-52 overflow-y-auto space-y-1.5 pr-0.5">
+                {headers.length === 0 ? (
+                  <p className="pt-1 text-xs text-muted-foreground">暂无请求头</p>
+                ) : (
+                  headers.map((h) => (
                     <div key={h.id} className="flex gap-1.5">
                       <Input
                         className="h-7 flex-1 font-mono text-xs"
@@ -409,70 +410,70 @@ export default function HttpTestPanel({
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
 
             {/* Body */}
             {hasBody && (
-              <div className="flex flex-col gap-1">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div className="flex-1 min-h-0 flex flex-col gap-1">
+                <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   请求体
                 </p>
                 <CodeEditor
                   value={body}
                   onChange={setBody}
                   language="json"
-                  minHeight="14rem"
-                  resizable
+                  fill
                 />
               </div>
             )}
           </div>
 
           {/* Response panel */}
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-2">
+            <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               响应
             </p>
-            {!result && !testing && (
-              <div className="flex min-h-40 flex-1 items-center justify-center rounded-md border bg-muted/30 text-sm text-muted-foreground">
-                点击"发送"查看响应
-              </div>
-            )}
-            {testing && (
-              <div className="flex min-h-40 flex-1 items-center justify-center rounded-md border bg-muted/30 text-sm text-muted-foreground">
-                请求中，点击"取消"可中断…
-              </div>
-            )}
-            {result && !testing && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3 text-xs">
-                  <span
-                    className={
-                      result.error
-                        ? "rounded px-1.5 py-0.5 bg-red-100 text-red-700 font-semibold"
-                        : result.status >= 200 && result.status < 300
-                        ? "rounded px-1.5 py-0.5 bg-green-100 text-green-700 font-semibold"
-                        : "rounded px-1.5 py-0.5 bg-red-100 text-red-700 font-semibold"
-                    }
-                  >
-                    {result.error ? "ERROR" : result.status}
-                  </span>
-                  {!result.error && (
-                    <span className="text-muted-foreground">{result.latency_ms} ms</span>
-                  )}
+            <div className="flex-1 min-h-0 flex flex-col">
+              {!result && !testing && (
+                <div className="flex flex-1 items-center justify-center rounded-md border bg-muted/30 text-sm text-muted-foreground">
+                  点击"发送"查看响应
                 </div>
-                <CodeEditor
-                  value={responseValue}
-                  readOnly
-                  language={responseLanguage}
-                  minHeight="14rem"
-                  resizable
-                />
-              </div>
-            )}
+              )}
+              {testing && (
+                <div className="flex flex-1 items-center justify-center rounded-md border bg-muted/30 text-sm text-muted-foreground">
+                  请求中，点击"取消"可中断…
+                </div>
+              )}
+              {result && !testing && (
+                <div className="flex-1 min-h-0 flex flex-col gap-2">
+                  <div className="shrink-0 flex items-center gap-3 text-xs">
+                    <span
+                      className={
+                        result.error
+                          ? "rounded px-1.5 py-0.5 bg-red-100 text-red-700 font-semibold"
+                          : result.status >= 200 && result.status < 300
+                          ? "rounded px-1.5 py-0.5 bg-green-100 text-green-700 font-semibold"
+                          : "rounded px-1.5 py-0.5 bg-red-100 text-red-700 font-semibold"
+                      }
+                    >
+                      {result.error ? "ERROR" : result.status}
+                    </span>
+                    {!result.error && (
+                      <span className="text-muted-foreground">{result.latency_ms} ms</span>
+                    )}
+                  </div>
+                  <CodeEditor
+                    value={responseValue}
+                    readOnly
+                    language={responseLanguage}
+                    fill
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

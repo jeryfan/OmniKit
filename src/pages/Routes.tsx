@@ -684,11 +684,11 @@ export default function Routes({ embedded }: RoutesProps) {
 
       {/* Route Test Dialog */}
       <Dialog open={testDialogOpen} onOpenChange={setTestDialogOpen}>
-        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] max-h-[92vh] flex flex-col">
+        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] h-[88vh] flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>{testDialogTitle}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto py-2">
+          <div className="flex-1 min-h-0 flex flex-col py-2">
             {testPanelInfo && (
               <HttpTestPanel
                 key={testPanelKey}
@@ -703,11 +703,11 @@ export default function Routes({ embedded }: RoutesProps) {
 
       {/* Upstream Target Test Dialog */}
       <Dialog open={upstreamTestOpen} onOpenChange={setUpstreamTestOpen}>
-        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] max-h-[92vh] flex flex-col">
+        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] h-[88vh] flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>{upstreamTestTitle}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto py-2">
+          <div className="flex-1 min-h-0 flex flex-col py-2">
             {upstreamTestInfo && (
               <HttpTestPanel
                 key={upstreamTestKey}

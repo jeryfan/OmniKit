@@ -15,6 +15,8 @@ export interface CodeEditorProps {
   maxHeight?: string;
   className?: string;
   resizable?: boolean;
+  /** Fill parent flex container (flex-1 min-h-0). Parent must be flex-col. */
+  fill?: boolean;
 }
 
 const jsonExtensions = [json()];
@@ -29,6 +31,7 @@ export default function CodeEditor({
   maxHeight,
   className,
   resizable = false,
+  fill = false,
 }: CodeEditorProps) {
   const [copied, setCopied] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -36,7 +39,7 @@ export default function CodeEditor({
   const TOOLBAR_H = 33;
 
   useEffect(() => {
-    if (!resizable) return;
+    if (!resizable && !fill) return;
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
     const ro = new ResizeObserver(([entry]) => {
@@ -44,14 +47,16 @@ export default function CodeEditor({
     });
     ro.observe(wrapper);
     return () => ro.disconnect();
-  }, [resizable]);
+  }, [resizable, fill]);
 
   const cmProps =
     resizeH != null
       ? { height: `${Math.max(resizeH - TOOLBAR_H, 40)}px` }
       : resizable
         ? { minHeight, maxHeight: minHeight }
-        : { minHeight, maxHeight };
+        : fill
+          ? { minHeight: "4rem" }
+          : { minHeight, maxHeight };
 
   async function handleCopy() {
     await navigator.clipboard.writeText(value);
@@ -75,7 +80,11 @@ export default function CodeEditor({
   return (
     <div
       ref={wrapperRef}
-      className={cn("flex flex-col overflow-hidden rounded-md border", className)}
+      className={cn(
+        "flex flex-col overflow-hidden rounded-md border",
+        fill && "flex-1 min-h-0",
+        className,
+      )}
       style={resizable ? { resize: "vertical" } : undefined}
     >
       {/* Toolbar */}

@@ -727,11 +727,11 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
 
       {/* Edit & Retry Dialog */}
       <Dialog open={editRetryOpen} onOpenChange={setEditRetryOpen}>
-        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] max-h-[92vh] flex flex-col">
+        <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] h-[88vh] flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>编辑重试</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-h-0 flex flex-col py-2">
             <HttpTestPanel
               key={editRetryKey}
               defaultMethod="POST"
