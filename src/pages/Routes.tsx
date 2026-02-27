@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, FlaskConical } from "lucide-react";
+import { Plus, Pencil, Trash2, ChevronDown, ChevronUp, FlaskConical, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -96,6 +96,8 @@ export default function Routes({ embedded }: RoutesProps) {
   const [form, setForm] = useState<RouteFormState>(defaultForm());
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  // Set of "ti-ki" keys that are currently visible (not masked)
+  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set());
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -229,7 +231,7 @@ export default function Routes({ embedded }: RoutesProps) {
         });
       }
       setDialogOpen(false);
-      await load();
+      setVisibleKeys(new Set());
     } catch (e) {
       setFormError(parseIpcError(e).message);
     } finally {
@@ -448,7 +450,7 @@ export default function Routes({ embedded }: RoutesProps) {
       )}
 
       {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setVisibleKeys(new Set()); }}>
         <DialogContent className="max-h-[85vh] max-w-3xl flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>{editingRoute ? "编辑路由" : "新建路由"}</DialogTitle>
@@ -612,27 +614,49 @@ export default function Routes({ embedded }: RoutesProps) {
                         <div className="space-y-1.5">
                           <Label className="text-xs">API Keys</Label>
                           <div className="space-y-1.5">
-                            {target.keys.map((key, ki) => (
-                              <div key={ki} className="flex gap-1.5">
-                                <Input
-                                  className="h-7 flex-1 font-mono text-xs"
-                                  placeholder="sk-..."
-                                  type="password"
-                                  value={key}
-                                  onChange={(e) => updateKey(ti, ki, e.target.value)}
-                                />
-                                {target.keys.length > 1 && (
+                            {target.keys.map((key, ki) => {
+                              const keyId = `${ti}-${ki}`;
+                              const visible = visibleKeys.has(keyId);
+                              return (
+                                <div key={ki} className="flex gap-1.5">
+                                  <Input
+                                    className="h-7 flex-1 font-mono text-xs"
+                                    placeholder="sk-..."
+                                    type={visible ? "text" : "password"}
+                                    value={key}
+                                    onChange={(e) => updateKey(ti, ki, e.target.value)}
+                                  />
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     className="h-7 w-7 p-0"
-                                    onClick={() => removeKey(ti, ki)}
+                                    onClick={() =>
+                                      setVisibleKeys((prev) => {
+                                        const next = new Set(prev);
+                                        next.has(keyId) ? next.delete(keyId) : next.add(keyId);
+                                        return next;
+                                      })
+                                    }
                                   >
-                                    <Trash2 className="h-3 w-3" />
+                                    {visible ? (
+                                      <EyeOff className="h-3 w-3" />
+                                    ) : (
+                                      <Eye className="h-3 w-3" />
+                                    )}
                                   </Button>
-                                )}
-                              </div>
-                            ))}
+                                  {target.keys.length > 1 && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 w-7 p-0"
+                                      onClick={() => removeKey(ti, ki)}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                           <Button
                             variant="ghost"
