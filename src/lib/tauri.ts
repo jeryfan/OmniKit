@@ -172,6 +172,8 @@ export interface RequestLog {
   response_body: string | null;
   request_headers: string | null;
   response_headers: string | null;
+  request_url: string | null;
+  upstream_url: string | null;
   created_at: string;
 }
 

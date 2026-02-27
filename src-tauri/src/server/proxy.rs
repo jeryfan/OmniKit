@@ -167,13 +167,18 @@ pub async fn handle_route_proxy(
     let path_format_hint = detect_chat_format_from_path(&sub_path);
     let is_passthrough = route.input_format == "none" || route.input_format.is_empty();
 
+    let request_url = match &query {
+        Some(q) => format!("{}?{}", full_path, q),
+        None => full_path.clone(),
+    };
+
     if path_format_hint.is_some() && !is_passthrough {
         handle_format_conversion(
-            &state, &route, &token.id, &headers, &body_bytes, &sub_path, &query,
+            &state, &route, &token.id, &headers, &body_bytes, &sub_path, &query, &request_url,
         )
         .await
     } else {
-        handle_passthrough(&state, &route, &headers, &body_bytes, &sub_path, &query, method)
+        handle_passthrough(&state, &route, &token.id, &headers, &body_bytes, &sub_path, &query, method, &request_url)
             .await
     }
 }
@@ -187,6 +192,7 @@ async fn handle_format_conversion(
     body_bytes: &[u8],
     _sub_path: &str,
     _query: &Option<String>,
+    request_url: &str,
 ) -> Result<Response, AppError> {
     let start = std::time::Instant::now();
 
@@ -239,6 +245,7 @@ async fn handle_format_conversion(
                 &input_fmt_str, &output_fmt_str, None, latency, None, None,
                 Some(&request_body_str), Some(&e.to_string()),
                 req_headers_json.as_deref(), None,
+                Some(request_url), Some(&upstream_url),
             ).await;
             return Err(AppError::HttpClient(e));
         }
@@ -255,6 +262,7 @@ async fn handle_format_conversion(
             &input_fmt_str, &output_fmt_str, Some(status.as_u16() as i32),
             latency, None, None, Some(&request_body_str), Some(&error_body),
             req_headers_json.as_deref(), resp_headers_json.as_deref(),
+            Some(request_url), Some(&upstream_url),
         ).await;
         return Err(AppError::Upstream { status: status.as_u16(), body: error_body });
     }
@@ -269,6 +277,7 @@ async fn handle_format_conversion(
             &input_fmt_str, &output_fmt_str, Some(200), latency, None, None,
             Some(&request_body_str), None,
             req_headers_json.as_deref(), resp_headers_json.as_deref(),
+            Some(request_url), Some(&upstream_url),
         ).await;
         return proxy_stream(
             upstream_resp,
@@ -297,6 +306,7 @@ async fn handle_format_conversion(
         prompt_tokens, completion_tokens,
         Some(&request_body_str), Some(&resp_body_str),
         req_headers_json.as_deref(), resp_headers_json.as_deref(),
+        Some(request_url), Some(&upstream_url),
     ).await;
 
     if let (Some(pt), Some(ct)) = (prompt_tokens, completion_tokens) {
@@ -318,12 +328,16 @@ async fn handle_format_conversion(
 async fn handle_passthrough(
     state: &ProxyState,
     route: &Route,
+    token_id: &str,
     headers: &HeaderMap,
     body_bytes: &[u8],
     sub_path: &str,
     query: &Option<String>,
     method: axum::http::Method,
+    request_url: &str,
 ) -> Result<Response, AppError> {
+    let start = std::time::Instant::now();
+
     let selected = balancer::select_target(
         &route.id,
         &state.db,
@@ -360,16 +374,49 @@ async fn handle_passthrough(
 
     if let Some(format) = upstream_format {
         req_builder = apply_auth(req_builder, format, api_key);
+    } else if !api_key.is_empty() {
+        // 透传模式但配置了上游 key：将原始请求中的 x-api-key 和 authorization 替换为配置的 key
+        if headers.contains_key("x-api-key") {
+            req_builder = req_builder.header("x-api-key", api_key.as_str());
+        }
+        if headers.contains_key("authorization") {
+            let scheme = headers
+                .get("authorization")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| s.splitn(2, ' ').next().filter(|p| p.len() < 20))
+                .unwrap_or("Bearer");
+            req_builder = req_builder.header("authorization", format!("{} {}", scheme, api_key));
+        }
     }
 
     if !body_bytes.is_empty() {
         req_builder = req_builder.body(body_bytes.to_vec());
     }
 
-    let upstream_resp = req_builder.send().await.map_err(AppError::HttpClient)?;
+    let request_body_str = String::from_utf8_lossy(body_bytes).to_string();
+    let req_headers_json = headers_to_json(headers);
+    let target_id = target.id.clone();
+    let route_id = route.id.clone();
+    let upstream_format_str = target.upstream_format.clone();
+
+    let upstream_resp = match req_builder.send().await {
+        Ok(r) => r,
+        Err(e) => {
+            let latency = start.elapsed().as_millis() as i64;
+            log_request(
+                &state.db, token_id, &route_id, &target_id, "", "passthrough",
+                &route.input_format, &upstream_format_str, None, latency, None, None,
+                Some(&request_body_str), Some(&e.to_string()),
+                req_headers_json.as_deref(), None,
+                Some(request_url), Some(&target_url),
+            ).await;
+            return Err(AppError::HttpClient(e));
+        }
+    };
 
     let status = upstream_resp.status();
     let resp_headers = upstream_resp.headers().clone();
+    let resp_headers_json = headers_to_json(&resp_headers);
 
     let content_type = resp_headers
         .get("content-type")
@@ -378,6 +425,15 @@ async fn handle_passthrough(
     let is_streaming = content_type.contains("text/event-stream");
 
     if is_streaming {
+        let latency = start.elapsed().as_millis() as i64;
+        log_request(
+            &state.db, token_id, &route_id, &target_id, "", "passthrough",
+            &route.input_format, &upstream_format_str, Some(status.as_u16() as i32),
+            latency, None, None, Some(&request_body_str), None,
+            req_headers_json.as_deref(), resp_headers_json.as_deref(),
+            Some(request_url), Some(&target_url),
+        ).await;
+
         let byte_stream = upstream_resp.bytes_stream();
         let mut resp = Response::builder().status(status);
         for (name, value) in resp_headers.iter() {
@@ -395,6 +451,16 @@ async fn handle_passthrough(
     }
 
     let resp_bytes = upstream_resp.bytes().await.unwrap_or_default();
+    let latency = start.elapsed().as_millis() as i64;
+    let resp_body_str = String::from_utf8_lossy(&resp_bytes).to_string();
+    log_request(
+        &state.db, token_id, &route_id, &target_id, "", "passthrough",
+        &route.input_format, &upstream_format_str, Some(status.as_u16() as i32),
+        latency, None, None, Some(&request_body_str), Some(&resp_body_str),
+        req_headers_json.as_deref(), resp_headers_json.as_deref(),
+        Some(request_url), Some(&target_url),
+    ).await;
+
     let mut resp = Response::builder().status(status);
     for (name, value) in resp_headers.iter() {
         if HOP_BY_HOP.contains(&name.as_str().to_lowercase().as_str()) {
@@ -547,17 +613,20 @@ async fn log_request(
     response_body: Option<&str>,
     request_headers: Option<&str>,
     response_headers: Option<&str>,
+    request_url: Option<&str>,
+    upstream_url: Option<&str>,
 ) -> String {
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
     let result = sqlx::query(
-        "INSERT INTO request_logs (id, token_id, route_id, target_id, model, modality, input_format, output_format, status, latency_ms, prompt_tokens, completion_tokens, request_body, response_body, request_headers, response_headers, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO request_logs (id, token_id, route_id, target_id, model, modality, input_format, output_format, status, latency_ms, prompt_tokens, completion_tokens, request_body, response_body, request_headers, response_headers, request_url, upstream_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&id).bind(token_id).bind(route_id).bind(target_id)
     .bind(model).bind(modality).bind(input_format).bind(output_format)
     .bind(status).bind(latency_ms).bind(prompt_tokens).bind(completion_tokens)
     .bind(request_body).bind(response_body)
     .bind(request_headers).bind(response_headers)
+    .bind(request_url).bind(upstream_url)
     .bind(&now)
     .execute(db).await;
 

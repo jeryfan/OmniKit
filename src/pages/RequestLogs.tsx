@@ -603,10 +603,22 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                           <span className="font-medium tabular-nums">{formatTokens(selectedLog.prompt_tokens, selectedLog.completion_tokens)}</span>
                         </div>
                       </div>
-                      {/* URL row */}
-                      <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 text-xs font-mono">
-                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-muted-foreground">POST</span>
-                        <span className="flex-1 truncate select-all">{logUrl}</span>
+                      {/* URL rows */}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 text-xs font-mono">
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-muted-foreground">IN</span>
+                          <span className="flex-1 truncate select-all">
+                            {selectedLog.request_url
+                              ? `http://localhost:${serverPort}${selectedLog.request_url}`
+                              : logUrl}
+                          </span>
+                        </div>
+                        {selectedLog.upstream_url && (
+                          <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-1.5 text-xs font-mono">
+                            <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] font-sans font-medium text-muted-foreground">UP</span>
+                            <span className="flex-1 truncate select-all">{selectedLog.upstream_url}</span>
+                          </div>
+                        )}
                       </div>
                     </>
                   );

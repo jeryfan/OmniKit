@@ -62,6 +62,8 @@ pub struct RequestLog {
     pub response_body: Option<String>,
     pub request_headers: Option<String>,
     pub response_headers: Option<String>,
+    pub request_url: Option<String>,
+    pub upstream_url: Option<String>,
     pub created_at: String,
 }
 
