@@ -222,11 +222,31 @@ export default function HttpTestPanel({
         signal: controller.signal,
       });
       const latency_ms = Date.now() - start;
-      const respBody = await resp.text();
-      setResult({ status: resp.status, body: respBody, latency_ms, error: null });
+      const contentType = resp.headers.get("content-type") ?? "";
+      if (contentType.includes("text/event-stream") && resp.body) {
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulated = "";
+        setResult({ status: resp.status, body: "", latency_ms, error: null });
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            accumulated += decoder.decode(value, { stream: true });
+            setResult({ status: resp.status, body: accumulated, latency_ms, error: null });
+          }
+        } catch (streamErr) {
+          if (!(streamErr instanceof DOMException && streamErr.name === "AbortError")) {
+            throw streamErr;
+          }
+        }
+      } else {
+        const respBody = await resp.text();
+        setResult({ status: resp.status, body: respBody, latency_ms, error: null });
+      }
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") {
-        setResult({ status: 0, body: "", latency_ms: 0, error: "请求已取消" });
+        setResult((prev) => prev ?? { status: 0, body: "", latency_ms: 0, error: "请求已取消" });
       } else {
         setResult({ status: 0, body: "", latency_ms: 0, error: String(e) });
       }
@@ -442,12 +462,12 @@ export default function HttpTestPanel({
                   点击"发送"查看响应
                 </div>
               )}
-              {testing && (
+              {!result && testing && (
                 <div className="flex flex-1 items-center justify-center rounded-md border bg-muted/30 text-sm text-muted-foreground">
                   请求中，点击"取消"可中断…
                 </div>
               )}
-              {result && !testing && (
+              {result && (
                 <div className="flex-1 min-h-0 flex flex-col gap-2">
                   <div className="shrink-0 flex items-center gap-3 text-xs">
                     <span
@@ -463,6 +483,9 @@ export default function HttpTestPanel({
                     </span>
                     {!result.error && (
                       <span className="text-muted-foreground">{result.latency_ms} ms</span>
+                    )}
+                    {testing && (
+                      <span className="text-muted-foreground animate-pulse">流式输出中…</span>
                     )}
                   </div>
                   <CodeEditor
