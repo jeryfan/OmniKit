@@ -21,11 +21,13 @@ pub struct ProxyState {
 }
 
 fn detect_chat_format_from_path(path: &str) -> Option<&'static str> {
-    if path == "/v1/messages" || path.starts_with("/v1/messages?") {
+    // Normalize: strip optional /v1 prefix to support both /v1/chat/completions and /chat/completions
+    let normalized = path.strip_prefix("/v1").unwrap_or(path);
+    if normalized == "/messages" || normalized.starts_with("/messages?") {
         Some("anthropic")
-    } else if path == "/v1/chat/completions" || path.starts_with("/v1/chat/completions?") {
+    } else if normalized == "/chat/completions" || normalized.starts_with("/chat/completions?") {
         Some("openai-chat")
-    } else if path == "/v1/responses" || path.starts_with("/v1/responses?") {
+    } else if normalized == "/responses" || normalized.starts_with("/responses?") {
         Some("openai-responses")
     } else {
         None
@@ -48,22 +50,19 @@ fn build_upstream_url(base_url: &str, format: ChatFormat, model: &str, stream: b
     let base = base_url.trim_end_matches('/');
     match format {
         ChatFormat::OpenaiChat | ChatFormat::Moonshot => {
-            format!("{}/v1/chat/completions", base)
+            format!("{}/chat/completions", base)
         }
         ChatFormat::OpenaiResponses => {
-            format!("{}/v1/responses", base)
+            format!("{}/responses", base)
         }
         ChatFormat::Anthropic => {
-            format!("{}/v1/messages", base)
+            format!("{}/messages", base)
         }
         ChatFormat::Gemini => {
             if stream {
-                format!(
-                    "{}/v1beta/models/{}:streamGenerateContent?alt=sse",
-                    base, model
-                )
+                format!("{}/models/{}:streamGenerateContent?alt=sse", base, model)
             } else {
-                format!("{}/v1beta/models/{}:generateContent", base, model)
+                format!("{}/models/{}:generateContent", base, model)
             }
         }
     }

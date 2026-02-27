@@ -65,7 +65,9 @@ pub enum OaiRespApiInputItem {
 pub struct OaiRespApiTool {
     #[serde(rename = "type")]
     pub tool_type: String,
-    pub name: String,
+    // Only present for function tools; built-in tools (web_search_preview, file_search, etc.) have no name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -351,10 +353,13 @@ impl Decoder for OpenAiResponsesCodec {
 
         let tools = req.tools.map(|ts| {
             ts.into_iter()
-                .map(|t| IrTool {
-                    name: t.name,
-                    description: t.description,
-                    parameters: t.parameters.unwrap_or(serde_json::json!({})),
+                .filter_map(|t| {
+                    // Only function tools (with a name) map to IR; skip built-in tools.
+                    t.name.map(|name| IrTool {
+                        name,
+                        description: t.description,
+                        parameters: t.parameters.unwrap_or(serde_json::json!({})),
+                    })
                 })
                 .collect()
         });
@@ -665,7 +670,7 @@ impl Encoder for OpenAiResponsesCodec {
             ts.iter()
                 .map(|t| OaiRespApiTool {
                     tool_type: "function".to_string(),
-                    name: t.name.clone(),
+                    name: Some(t.name.clone()),
                     description: t.description.clone(),
                     parameters: Some(t.parameters.clone()),
                 })
