@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
+import { EditorView } from "@codemirror/view";
 import { Copy, Check, WrapText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -19,8 +20,8 @@ export interface CodeEditorProps {
   fill?: boolean;
 }
 
-const jsonExtensions = [json()];
-const textExtensions: never[] = [];
+const jsonExtensions = [json(), EditorView.lineWrapping];
+const textExtensions = [EditorView.lineWrapping];
 
 export default function CodeEditor({
   value,
@@ -129,7 +130,6 @@ export default function CodeEditor({
         readOnly={readOnly}
         extensions={extensions}
         {...cmProps}
-        lineWrapping
         basicSetup={{
           lineNumbers: true,
           foldGutter: language === "json",
