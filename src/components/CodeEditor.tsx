@@ -49,7 +49,9 @@ export default function CodeEditor({
   const cmProps =
     resizeH != null
       ? { height: `${Math.max(resizeH - TOOLBAR_H, 40)}px` }
-      : { minHeight, maxHeight };
+      : resizable
+        ? { minHeight, maxHeight: minHeight }
+        : { minHeight, maxHeight };
 
   async function handleCopy() {
     await navigator.clipboard.writeText(value);

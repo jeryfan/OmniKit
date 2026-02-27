@@ -17,6 +17,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -606,63 +612,105 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                   );
                 })()}
 
-                {/* Request / Response two-column */}
+                {/* Request / Response columns */}
                 {(() => {
                   const reqHeaders = detectBodyContent(selectedLog.request_headers);
                   const reqBody = detectBodyContent(selectedLog.request_body);
                   const respHeaders = detectBodyContent(selectedLog.response_headers);
                   const respBody = detectBodyContent(selectedLog.response_body);
+                  const hasHeaders =
+                    !!selectedLog.request_headers || !!selectedLog.response_headers;
+
                   return (
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-3">
-                        {selectedLog.request_headers && (
-                          <div className="flex flex-col gap-1.5">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">请求头</p>
-                            <CodeEditor
-                              value={reqHeaders.text}
-                              readOnly
-                              language={reqHeaders.language}
-                              minHeight="5rem"
-                              maxHeight="20vh"
-                            />
+                      {/* Request column */}
+                      <div className="flex flex-col gap-0">
+                        <Tabs defaultValue="body" className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold text-foreground">请求</p>
+                            {hasHeaders && (
+                              <TabsList className="h-6 gap-0 p-0.5">
+                                <TabsTrigger value="headers" className="h-5 px-2 text-[11px]">
+                                  Headers
+                                </TabsTrigger>
+                                <TabsTrigger value="body" className="h-5 px-2 text-[11px]">
+                                  Body
+                                </TabsTrigger>
+                              </TabsList>
+                            )}
                           </div>
-                        )}
-                        <div className="flex flex-col gap-1.5">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.requestLogs.requestBody}</p>
-                          <CodeEditor
-                            value={reqBody.text}
-                            readOnly
-                            language={reqBody.language}
-                            minHeight="14rem"
-                            maxHeight="50vh"
-                            resizable
-                          />
-                        </div>
+                          {hasHeaders && (
+                            <TabsContent value="headers" className="mt-0">
+                              {selectedLog.request_headers ? (
+                                <CodeEditor
+                                  value={reqHeaders.text}
+                                  readOnly
+                                  language={reqHeaders.language}
+                                  minHeight="8rem"
+                                  maxHeight="20rem"
+                                />
+                              ) : (
+                                <div className="flex h-20 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground/50">
+                                  无记录
+                                </div>
+                              )}
+                            </TabsContent>
+                          )}
+                          <TabsContent value="body" className="mt-0">
+                            <CodeEditor
+                              value={reqBody.text}
+                              readOnly
+                              language={reqBody.language}
+                              minHeight="20rem"
+                              resizable
+                            />
+                          </TabsContent>
+                        </Tabs>
                       </div>
-                      <div className="flex flex-col gap-3">
-                        {selectedLog.response_headers && (
-                          <div className="flex flex-col gap-1.5">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">响应头</p>
-                            <CodeEditor
-                              value={respHeaders.text}
-                              readOnly
-                              language={respHeaders.language}
-                              minHeight="5rem"
-                              maxHeight="20vh"
-                            />
+
+                      {/* Response column */}
+                      <div className="flex flex-col gap-0">
+                        <Tabs defaultValue="body" className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-semibold text-foreground">响应</p>
+                            {hasHeaders && (
+                              <TabsList className="h-6 gap-0 p-0.5">
+                                <TabsTrigger value="headers" className="h-5 px-2 text-[11px]">
+                                  Headers
+                                </TabsTrigger>
+                                <TabsTrigger value="body" className="h-5 px-2 text-[11px]">
+                                  Body
+                                </TabsTrigger>
+                              </TabsList>
+                            )}
                           </div>
-                        )}
-                        <div className="flex flex-col gap-1.5">
-                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t.requestLogs.responseBody}</p>
-                          <CodeEditor
-                            value={respBody.text}
-                            readOnly
-                            language={respBody.language}
-                            minHeight="14rem"
-                            maxHeight="50vh"
-                            resizable
-                          />
-                        </div>
+                          {hasHeaders && (
+                            <TabsContent value="headers" className="mt-0">
+                              {selectedLog.response_headers ? (
+                                <CodeEditor
+                                  value={respHeaders.text}
+                                  readOnly
+                                  language={respHeaders.language}
+                                  minHeight="8rem"
+                                  maxHeight="20rem"
+                                />
+                              ) : (
+                                <div className="flex h-20 items-center justify-center rounded-md border border-dashed text-xs text-muted-foreground/50">
+                                  无记录
+                                </div>
+                              )}
+                            </TabsContent>
+                          )}
+                          <TabsContent value="body" className="mt-0">
+                            <CodeEditor
+                              value={respBody.text}
+                              readOnly
+                              language={respBody.language}
+                              minHeight="20rem"
+                              resizable
+                            />
+                          </TabsContent>
+                        </Tabs>
                       </div>
                     </div>
                   );
