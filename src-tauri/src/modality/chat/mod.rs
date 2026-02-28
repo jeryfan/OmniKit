@@ -1,9 +1,14 @@
+pub mod helpers;
 pub mod ir;
 pub mod openai_chat;
 pub mod anthropic;
 pub mod openai_responses;
 pub mod gemini;
 pub mod moonshot;
+pub mod deepseek;
+pub mod qwen;
+pub mod mistral;
+pub mod azure_openai;
 
 use crate::error::AppError;
 use ir::{IrChatRequest, IrChatResponse, IrStreamChunk};
@@ -17,6 +22,10 @@ pub enum ChatFormat {
     Anthropic,
     Gemini,
     Moonshot,
+    DeepSeek,
+    Qwen,
+    Mistral,
+    AzureOpenAi,
 }
 
 impl ChatFormat {
@@ -28,6 +37,10 @@ impl ChatFormat {
             "anthropic" | "claude" => Some(Self::Anthropic),
             "gemini" | "google" => Some(Self::Gemini),
             "moonshot" | "kimi" => Some(Self::Moonshot),
+            "deepseek" => Some(Self::DeepSeek),
+            "qwen" | "tongyi" => Some(Self::Qwen),
+            "mistral" => Some(Self::Mistral),
+            "azure-openai" | "azure_openai" | "azure" => Some(Self::AzureOpenAi),
             _ => None,
         }
     }
@@ -35,11 +48,15 @@ impl ChatFormat {
     /// Return a string identifier for logging/display.
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::OpenaiChat => "openai_chat",
-            Self::OpenaiResponses => "openai_responses",
+            Self::OpenaiChat => "openai-chat",
+            Self::OpenaiResponses => "openai-responses",
             Self::Anthropic => "anthropic",
             Self::Gemini => "gemini",
             Self::Moonshot => "moonshot",
+            Self::DeepSeek => "deepseek",
+            Self::Qwen => "qwen",
+            Self::Mistral => "mistral",
+            Self::AzureOpenAi => "azure-openai",
         }
     }
 
@@ -50,6 +67,10 @@ impl ChatFormat {
             "anthropic" => Some(Self::Anthropic),
             "gemini" => Some(Self::Gemini),
             "moonshot" => Some(Self::Moonshot),
+            "deepseek" => Some(Self::DeepSeek),
+            "qwen" => Some(Self::Qwen),
+            "mistral" => Some(Self::Mistral),
+            "azure-openai" | "azure" => Some(Self::AzureOpenAi),
             _ => None,
         }
     }
@@ -79,11 +100,14 @@ pub trait Encoder: Send + Sync {
     /// Encode IR response into bytes to send downstream.
     fn encode_response(&self, ir: &IrChatResponse) -> Result<Vec<u8>, AppError>;
 
-    /// Encode an IR stream chunk into an SSE data line to send downstream.
-    fn encode_stream_chunk(&self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError>;
+    /// Encode an IR stream chunk into one or more SSE data lines to send downstream.
+    /// May accumulate state across calls for formats that require it (e.g. Responses API).
+    fn encode_stream_chunk(&mut self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError>;
 
-    /// Return the SSE termination signal for this format (e.g. "[DONE]").
-    fn stream_done_signal(&self) -> Option<String>;
+    /// Return the SSE termination signal(s) for this format.
+    /// Called once after the upstream stream ends (after [DONE] or equivalent).
+    /// May emit multiple events joined by '\n' (e.g. Responses API closing events).
+    fn stream_done_signal(&mut self) -> Option<String>;
 }
 
 /// Get a decoder for a given format.
@@ -91,6 +115,10 @@ pub fn get_decoder(format: ChatFormat) -> Box<dyn Decoder> {
     match format {
         ChatFormat::OpenaiChat => Box::new(openai_chat::OpenAiChatCodec),
         ChatFormat::Moonshot => Box::new(moonshot::MoonshotCodec),
+        ChatFormat::DeepSeek => Box::new(deepseek::DeepSeekCodec),
+        ChatFormat::Qwen => Box::new(qwen::QwenCodec),
+        ChatFormat::Mistral => Box::new(mistral::MistralCodec),
+        ChatFormat::AzureOpenAi => Box::new(azure_openai::AzureOpenAiCodec),
         ChatFormat::Anthropic => Box::new(anthropic::AnthropicCodec),
         ChatFormat::Gemini => Box::new(gemini::GeminiCodec),
         ChatFormat::OpenaiResponses => Box::new(openai_responses::OpenAiResponsesCodec),
@@ -102,8 +130,13 @@ pub fn get_encoder(format: ChatFormat) -> Box<dyn Encoder> {
     match format {
         ChatFormat::OpenaiChat => Box::new(openai_chat::OpenAiChatCodec),
         ChatFormat::Moonshot => Box::new(moonshot::MoonshotCodec),
+        ChatFormat::DeepSeek => Box::new(deepseek::DeepSeekCodec),
+        ChatFormat::Qwen => Box::new(qwen::QwenCodec),
+        ChatFormat::Mistral => Box::new(mistral::MistralCodec),
+        ChatFormat::AzureOpenAi => Box::new(azure_openai::AzureOpenAiCodec),
         ChatFormat::Anthropic => Box::new(anthropic::AnthropicCodec),
         ChatFormat::Gemini => Box::new(gemini::GeminiCodec),
-        ChatFormat::OpenaiResponses => Box::new(openai_responses::OpenAiResponsesCodec),
+        ChatFormat::OpenaiResponses => Box::new(openai_responses::OpenAiResponsesEncoder::new()),
     }
 }
+

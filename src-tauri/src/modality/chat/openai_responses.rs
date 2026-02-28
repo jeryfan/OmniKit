@@ -1,3 +1,4 @@
+use super::helpers::{from_json, from_json_str, to_json, to_json_str};
 use super::ir::*;
 use super::{Decoder, Encoder};
 use crate::error::AppError;
@@ -287,8 +288,45 @@ fn has_tool_calls_in_output(output: &[OaiRespApiOutputItem]) -> bool {
 
 impl Decoder for OpenAiResponsesCodec {
     fn decode_request(&self, body: &[u8]) -> Result<IrChatRequest, AppError> {
+        // Pre-process: inject `"type": "message"` into input items that lack the
+        // field.  The OpenAI Responses API allows bare `{"role","content"}` objects
+        // without an explicit type; the internally-tagged serde enum requires it.
+        let body: std::borrow::Cow<[u8]> = if let Ok(mut v) =
+            serde_json::from_slice::<serde_json::Value>(body)
+        {
+            let needs_fix = v
+                .get("input")
+                .and_then(|i| i.as_array())
+                .map(|arr| arr.iter().any(|item| {
+                    item.is_object() && item.get("type").is_none()
+                }))
+                .unwrap_or(false);
+
+            if needs_fix {
+                if let Some(arr) = v.get_mut("input").and_then(|i| i.as_array_mut()) {
+                    for item in arr.iter_mut() {
+                        if let Some(obj) = item.as_object_mut() {
+                            if !obj.contains_key("type") {
+                                obj.insert(
+                                    "type".to_string(),
+                                    serde_json::Value::String("message".to_string()),
+                                );
+                            }
+                        }
+                    }
+                }
+                std::borrow::Cow::Owned(
+                    to_json(&v)?,
+                )
+            } else {
+                std::borrow::Cow::Borrowed(body)
+            }
+        } else {
+            std::borrow::Cow::Borrowed(body)
+        };
+
         let req: OaiRespApiRequest =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(&body)?;
 
         let system = req.instructions.clone();
 
@@ -395,7 +433,7 @@ impl Decoder for OpenAiResponsesCodec {
 
     fn decode_response(&self, body: &[u8]) -> Result<IrChatResponse, AppError> {
         let resp: OaiRespApiResponse =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(body)?;
 
         // Collect text content and tool calls from output items.
         let mut text_parts: Vec<String> = Vec::new();
@@ -465,7 +503,7 @@ impl Decoder for OpenAiResponsesCodec {
         }
 
         let event: OaiRespApiStreamEvent =
-            serde_json::from_str(data).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json_str(data)?;
 
         match event.event_type.as_str() {
             "response.created" => {
@@ -617,8 +655,10 @@ fn extract_event_id(event: &OaiRespApiStreamEvent) -> String {
 // Encoder
 // =============================================================================
 
-impl Encoder for OpenAiResponsesCodec {
-    fn encode_request(&self, ir: &IrChatRequest, model: &str) -> Result<Vec<u8>, AppError> {
+/// Stateless encoder for non-streaming encode operations (request / response).
+/// Also used directly by `OpenAiResponsesEncoder` via delegation.
+impl OpenAiResponsesCodec {
+    fn encode_request_inner(ir: &IrChatRequest, model: &str) -> Result<Vec<u8>, AppError> {
         let instructions = ir.system.clone();
 
         let mut items: Vec<OaiRespApiInputItem> = Vec::new();
@@ -699,10 +739,10 @@ impl Encoder for OpenAiResponsesCodec {
             tool_choice,
         };
 
-        serde_json::to_vec(&req).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&req)
     }
 
-    fn encode_response(&self, ir: &IrChatResponse) -> Result<Vec<u8>, AppError> {
+    fn encode_response_inner(ir: &IrChatResponse) -> Result<Vec<u8>, AppError> {
         let mut output: Vec<OaiRespApiOutputItem> = Vec::new();
 
         // If there is text content, add a message output item.
@@ -747,20 +787,93 @@ impl Encoder for OpenAiResponsesCodec {
             status: Some(status),
         };
 
-        serde_json::to_vec(&resp).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&resp)
     }
 
-    fn encode_stream_chunk(&self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
+}
+
+// =============================================================================
+// OpenAiResponsesEncoder — stateful streaming encoder
+// =============================================================================
+
+/// Stateful encoder for OpenAI Responses API streaming output.
+///
+/// Accumulates state (id, model, finish_reason, usage, accumulated text, tool
+/// call indices) across `encode_stream_chunk` calls so that `stream_done_signal`
+/// can emit the complete sequence of closing events:
+///
+///   response.output_text.done → response.content_part.done →
+///   response.output_item.done → response.completed
+///
+/// `response.completed` is ONLY emitted from `stream_done_signal`, never from
+/// `encode_stream_chunk`.  This prevents clients (e.g. Codex) from closing the
+/// connection mid-stream when they see `response.completed`, which would drop
+/// the stream generator before the log can be saved to the database.
+pub struct OpenAiResponsesEncoder {
+    response_id: String,
+    model: String,
+    finish_reason: Option<IrFinishReason>,
+    usage: Option<IrUsage>,
+    accumulated_text: String,
+    preamble_sent: bool,
+    /// output_index values for each tool call that was started, in order.
+    tool_call_output_indices: Vec<u32>,
+}
+
+impl OpenAiResponsesEncoder {
+    pub fn new() -> Self {
+        Self {
+            response_id: String::new(),
+            model: String::new(),
+            finish_reason: None,
+            usage: None,
+            accumulated_text: String::new(),
+            preamble_sent: false,
+            tool_call_output_indices: Vec::new(),
+        }
+    }
+}
+
+impl Encoder for OpenAiResponsesEncoder {
+    fn encode_request(&self, ir: &IrChatRequest, model: &str) -> Result<Vec<u8>, AppError> {
+        OpenAiResponsesCodec::encode_request_inner(ir, model)
+    }
+
+    fn encode_response(&self, ir: &IrChatResponse) -> Result<Vec<u8>, AppError> {
+        OpenAiResponsesCodec::encode_response_inner(ir)
+    }
+
+    fn encode_stream_chunk(&mut self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
         let mut events: Vec<String> = Vec::new();
 
-        // If this chunk carries a role (first chunk), emit response.created.
-        if chunk.delta_role.is_some() && chunk.model.is_some() {
+        // Persist id and model from every chunk that carries them.
+        if !chunk.id.is_empty() {
+            self.response_id = chunk.id.clone();
+        }
+        if let Some(m) = &chunk.model {
+            if self.model.is_empty() {
+                self.model = m.clone();
+            }
+        }
+
+        // Accumulate finish_reason and usage — do NOT emit response.completed here.
+        if let Some(fr) = &chunk.finish_reason {
+            self.finish_reason = Some(fr.clone());
+        }
+        if let Some(u) = &chunk.usage {
+            self.usage = Some(u.clone());
+        }
+
+        // First chunk that carries a role: emit preamble events.
+        if chunk.delta_role.is_some() && !self.preamble_sent {
+            self.preamble_sent = true;
+
             let created = OaiRespApiStreamEvent {
                 event_type: "response.created".to_string(),
                 response: Some(OaiRespApiResponse {
-                    id: chunk.id.clone(),
+                    id: self.response_id.clone(),
                     object: "response".to_string(),
-                    model: chunk.model.clone().unwrap_or_default(),
+                    model: self.model.clone(),
                     output: vec![],
                     usage: None,
                     status: Some("in_progress".to_string()),
@@ -774,16 +887,13 @@ impl Encoder for OpenAiResponsesCodec {
                 arguments: None,
                 sequence_number: None,
             };
-            events.push(
-                serde_json::to_string(&created).map_err(|e| AppError::Codec(e.to_string()))?,
-            );
+            events.push(to_json_str(&created)?);
 
-            // Also emit output_item.added for the message and content_part.added.
             let item_added = OaiRespApiStreamEvent {
                 event_type: "response.output_item.added".to_string(),
                 response: None,
                 item: Some(OaiRespApiOutputItem::Message {
-                    id: Some(format!("msg_{}", chunk.id)),
+                    id: Some(format!("msg_{}", self.response_id)),
                     role: "assistant".to_string(),
                     content: vec![],
                 }),
@@ -795,9 +905,7 @@ impl Encoder for OpenAiResponsesCodec {
                 arguments: None,
                 sequence_number: None,
             };
-            events.push(
-                serde_json::to_string(&item_added).map_err(|e| AppError::Codec(e.to_string()))?,
-            );
+            events.push(to_json_str(&item_added)?);
 
             let part_added = OaiRespApiStreamEvent {
                 event_type: "response.content_part.added".to_string(),
@@ -814,13 +922,13 @@ impl Encoder for OpenAiResponsesCodec {
                 arguments: None,
                 sequence_number: None,
             };
-            events.push(
-                serde_json::to_string(&part_added).map_err(|e| AppError::Codec(e.to_string()))?,
-            );
+            events.push(to_json_str(&part_added)?);
         }
 
         // Text delta.
         if let Some(delta_text) = &chunk.delta_content {
+            self.accumulated_text.push_str(delta_text);
+
             let text_delta = OaiRespApiStreamEvent {
                 event_type: "response.output_text.delta".to_string(),
                 response: None,
@@ -833,17 +941,16 @@ impl Encoder for OpenAiResponsesCodec {
                 arguments: None,
                 sequence_number: None,
             };
-            events.push(
-                serde_json::to_string(&text_delta).map_err(|e| AppError::Codec(e.to_string()))?,
-            );
+            events.push(to_json_str(&text_delta)?);
         }
 
         // Tool call deltas.
         if let Some(tc_deltas) = &chunk.delta_tool_calls {
             for tc in tc_deltas {
-                // If this delta carries an id+name, it means a new function_call
-                // output item was started.
+                // New tool call: emit output_item.added and record the index.
                 if tc.id.is_some() && tc.name.is_some() {
+                    self.tool_call_output_indices.push(tc.index);
+
                     let fc_item = OaiRespApiOutputItem::FunctionCall {
                         id: tc.id.as_ref().map(|id| format!("fc_{}", id)),
                         call_id: tc.id.clone().unwrap_or_default(),
@@ -862,10 +969,7 @@ impl Encoder for OpenAiResponsesCodec {
                         arguments: None,
                         sequence_number: None,
                     };
-                    events.push(
-                        serde_json::to_string(&item_added)
-                            .map_err(|e| AppError::Codec(e.to_string()))?,
-                    );
+                    events.push(to_json_str(&item_added)?);
                 }
 
                 // Argument delta.
@@ -882,61 +986,138 @@ impl Encoder for OpenAiResponsesCodec {
                         arguments: None,
                         sequence_number: None,
                     };
-                    events.push(
-                        serde_json::to_string(&args_delta)
-                            .map_err(|e| AppError::Codec(e.to_string()))?,
-                    );
+                    events.push(to_json_str(&args_delta)?);
                 }
             }
         }
 
-        // Finish reason / usage → response.completed.
-        if chunk.finish_reason.is_some() || chunk.usage.is_some() {
-            let status = ir_finish_to_resp_status(&chunk.finish_reason);
-            let usage = chunk.usage.as_ref().map(|u| OaiRespApiUsage {
-                input_tokens: u.prompt_tokens,
-                output_tokens: u.completion_tokens,
-                total_tokens: u.total_tokens.unwrap_or(u.prompt_tokens + u.completion_tokens),
-            });
-
-            let completed = OaiRespApiStreamEvent {
-                event_type: "response.completed".to_string(),
-                response: Some(OaiRespApiResponse {
-                    id: chunk.id.clone(),
-                    object: "response".to_string(),
-                    model: chunk.model.clone().unwrap_or_default(),
-                    output: vec![],
-                    usage,
-                    status: Some(status),
-                }),
-                item: None,
-                part: None,
-                delta: None,
-                text: None,
-                output_index: None,
-                content_index: None,
-                arguments: None,
-                sequence_number: None,
-            };
-            events.push(
-                serde_json::to_string(&completed).map_err(|e| AppError::Codec(e.to_string()))?,
-            );
-        }
+        // NOTE: finish_reason and usage are saved to state above.
+        // response.completed is intentionally NOT emitted here — it is only
+        // emitted from stream_done_signal(), after the upstream [DONE] is received.
 
         if events.is_empty() {
             Ok(None)
         } else {
-            // Join multiple events with newline separators; the proxy layer
-            // will wrap each as an individual SSE `data:` line.
             Ok(Some(events.join("\n")))
         }
     }
 
-    fn stream_done_signal(&self) -> Option<String> {
-        // Emit a final `response.done` event as the terminal signal.
-        let done = OaiRespApiStreamEvent {
-            event_type: "response.done".to_string(),
-            response: None,
+    fn stream_done_signal(&mut self) -> Option<String> {
+        // Emit the sequence of closing events required by the Responses API spec:
+        //   response.output_text.done
+        //   response.content_part.done
+        //   response.output_item.done        (for the message item)
+        //   response.output_item.done        (for each tool call, if any)
+        //   response.completed
+        //
+        // This is called exactly once, after the upstream stream ends ([DONE]).
+        // By emitting response.completed only here — after the DB log has been
+        // saved in proxy.rs — we avoid the race condition where the client closes
+        // the connection upon seeing response.completed, dropping the generator
+        // before the log can be persisted.
+
+        let mut events: Vec<String> = Vec::new();
+
+        let has_text = !self.accumulated_text.is_empty();
+        let has_tool_calls = !self.tool_call_output_indices.is_empty();
+
+        if has_text {
+            let text_done = OaiRespApiStreamEvent {
+                event_type: "response.output_text.done".to_string(),
+                response: None,
+                item: None,
+                part: None,
+                delta: None,
+                text: Some(self.accumulated_text.clone()),
+                output_index: Some(0),
+                content_index: Some(0),
+                arguments: None,
+                sequence_number: None,
+            };
+            if let Ok(s) = serde_json::to_string(&text_done) { events.push(s); }
+
+            let part_done = OaiRespApiStreamEvent {
+                event_type: "response.content_part.done".to_string(),
+                response: None,
+                item: None,
+                part: Some(OaiRespApiContentPart::OutputText {
+                    text: self.accumulated_text.clone(),
+                    annotations: Some(vec![]),
+                }),
+                delta: None,
+                text: None,
+                output_index: Some(0),
+                content_index: Some(0),
+                arguments: None,
+                sequence_number: None,
+            };
+            if let Ok(s) = serde_json::to_string(&part_done) { events.push(s); }
+
+            let item_done = OaiRespApiStreamEvent {
+                event_type: "response.output_item.done".to_string(),
+                response: None,
+                item: Some(OaiRespApiOutputItem::Message {
+                    id: Some(format!("msg_{}", self.response_id)),
+                    role: "assistant".to_string(),
+                    content: vec![OaiRespApiContentPart::OutputText {
+                        text: self.accumulated_text.clone(),
+                        annotations: Some(vec![]),
+                    }],
+                }),
+                part: None,
+                delta: None,
+                text: None,
+                output_index: Some(0),
+                content_index: None,
+                arguments: None,
+                sequence_number: None,
+            };
+            if let Ok(s) = serde_json::to_string(&item_done) { events.push(s); }
+        }
+
+        // Tool call output_item.done events.
+        if has_tool_calls {
+            for &idx in &self.tool_call_output_indices {
+                let item_done = OaiRespApiStreamEvent {
+                    event_type: "response.output_item.done".to_string(),
+                    response: None,
+                    item: Some(OaiRespApiOutputItem::FunctionCall {
+                        id: None,
+                        call_id: String::new(),
+                        name: String::new(),
+                        arguments: String::new(),
+                    }),
+                    part: None,
+                    delta: None,
+                    text: None,
+                    output_index: Some(idx),
+                    content_index: None,
+                    arguments: None,
+                    sequence_number: None,
+                };
+                if let Ok(s) = serde_json::to_string(&item_done) { events.push(s); }
+            }
+        }
+
+        // response.completed — the terminal event that signals stream end.
+        let finish_reason = self.finish_reason.take();
+        let usage = self.usage.take();
+        let status = ir_finish_to_resp_status(&finish_reason);
+
+        let completed = OaiRespApiStreamEvent {
+            event_type: "response.completed".to_string(),
+            response: Some(OaiRespApiResponse {
+                id: self.response_id.clone(),
+                object: "response".to_string(),
+                model: self.model.clone(),
+                output: vec![],
+                usage: usage.map(|u| OaiRespApiUsage {
+                    input_tokens: u.prompt_tokens,
+                    output_tokens: u.completion_tokens,
+                    total_tokens: u.total_tokens.unwrap_or(u.prompt_tokens + u.completion_tokens),
+                }),
+                status: Some(status),
+            }),
             item: None,
             part: None,
             delta: None,
@@ -946,7 +1127,13 @@ impl Encoder for OpenAiResponsesCodec {
             arguments: None,
             sequence_number: None,
         };
-        serde_json::to_string(&done).ok()
+        if let Ok(s) = serde_json::to_string(&completed) { events.push(s); }
+
+        if events.is_empty() {
+            None
+        } else {
+            Some(events.join("\n"))
+        }
     }
 }
 
@@ -1154,7 +1341,7 @@ mod tests {
             tool_choice: None,
             extra: None,
         };
-        let codec = OpenAiResponsesCodec;
+        let mut codec = OpenAiResponsesEncoder::new();
         let bytes = codec.encode_request(&ir, "gpt-4o-mini").unwrap();
         let req: OaiRespApiRequest = serde_json::from_slice(&bytes).unwrap();
 
@@ -1212,7 +1399,7 @@ mod tests {
             tool_choice: None,
             extra: None,
         };
-        let codec = OpenAiResponsesCodec;
+        let mut codec = OpenAiResponsesEncoder::new();
         let bytes = codec.encode_request(&ir, "gpt-4o").unwrap();
         let req: OaiRespApiRequest = serde_json::from_slice(&bytes).unwrap();
 
@@ -1250,8 +1437,7 @@ mod tests {
                 total_tokens: Some(15),
             }),
         };
-        let codec = OpenAiResponsesCodec;
-        let bytes = codec.encode_response(&ir).unwrap();
+        let bytes = OpenAiResponsesCodec::encode_response_inner(&ir).unwrap();
         let resp: OaiRespApiResponse = serde_json::from_slice(&bytes).unwrap();
 
         assert_eq!(resp.id, "resp_123");
@@ -1288,8 +1474,7 @@ mod tests {
             finish_reason: Some(IrFinishReason::ToolCalls),
             usage: None,
         };
-        let codec = OpenAiResponsesCodec;
-        let bytes = codec.encode_response(&ir).unwrap();
+        let bytes = OpenAiResponsesCodec::encode_response_inner(&ir).unwrap();
         let resp: OaiRespApiResponse = serde_json::from_slice(&bytes).unwrap();
 
         // Empty text should not produce a message output item.
@@ -1394,8 +1579,8 @@ mod tests {
             finish_reason: None,
             usage: None,
         };
-        let codec = OpenAiResponsesCodec;
-        let result = codec.encode_stream_chunk(&chunk).unwrap().unwrap();
+        let mut enc = OpenAiResponsesEncoder::new();
+        let result = enc.encode_stream_chunk(&chunk).unwrap().unwrap();
 
         let event: OaiRespApiStreamEvent = serde_json::from_str(&result).unwrap();
         assert_eq!(event.event_type, "response.output_text.delta");
@@ -1413,8 +1598,8 @@ mod tests {
             finish_reason: None,
             usage: None,
         };
-        let codec = OpenAiResponsesCodec;
-        let result = codec.encode_stream_chunk(&chunk).unwrap().unwrap();
+        let mut enc = OpenAiResponsesEncoder::new();
+        let result = enc.encode_stream_chunk(&chunk).unwrap().unwrap();
 
         // Should contain multiple events separated by newlines.
         let lines: Vec<&str> = result.split('\n').collect();
@@ -1425,11 +1610,18 @@ mod tests {
     }
 
     #[test]
-    fn stream_done_signal_is_valid_json() {
-        let codec = OpenAiResponsesCodec;
-        let signal = codec.stream_done_signal().unwrap();
-        let event: OaiRespApiStreamEvent = serde_json::from_str(&signal).unwrap();
-        assert_eq!(event.event_type, "response.done");
+    fn stream_done_signal_emits_completed() {
+        // stream_done_signal must emit response.completed (not response.done).
+        // response.completed is the official terminal event in the Responses API spec.
+        let mut enc = OpenAiResponsesEncoder::new();
+        enc.response_id = "resp_001".to_string();
+        enc.model = "gpt-4o".to_string();
+        let signal = enc.stream_done_signal().unwrap();
+        // The signal may contain multiple events joined by '\n'.
+        // The last event must be response.completed.
+        let last_line = signal.split('\n').last().unwrap();
+        let event: OaiRespApiStreamEvent = serde_json::from_str(last_line).unwrap();
+        assert_eq!(event.event_type, "response.completed");
     }
 
     #[test]
@@ -1456,9 +1648,8 @@ mod tests {
             extra: None,
         };
 
-        let codec = OpenAiResponsesCodec;
-        let encoded = codec.encode_request(&ir, "gpt-4o").unwrap();
-        let decoded = codec.decode_request(&encoded).unwrap();
+        let encoded = OpenAiResponsesCodec::encode_request_inner(&ir, "gpt-4o").unwrap();
+        let decoded = OpenAiResponsesCodec.decode_request(&encoded).unwrap();
 
         assert_eq!(decoded.model, "gpt-4o");
         assert_eq!(decoded.system, Some("Be helpful".to_string()));
@@ -1488,9 +1679,8 @@ mod tests {
             }),
         };
 
-        let codec = OpenAiResponsesCodec;
-        let encoded = codec.encode_response(&ir).unwrap();
-        let decoded = codec.decode_response(&encoded).unwrap();
+        let encoded = OpenAiResponsesCodec::encode_response_inner(&ir).unwrap();
+        let decoded = OpenAiResponsesCodec.decode_response(&encoded).unwrap();
 
         assert_eq!(decoded.id, "resp_rt");
         assert_eq!(decoded.model, "gpt-4o");

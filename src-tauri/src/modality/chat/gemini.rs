@@ -1,3 +1,4 @@
+use super::helpers::{from_json, from_json_str, to_json, to_json_str};
 use super::ir::*;
 use super::{Decoder, Encoder};
 use crate::error::AppError;
@@ -272,7 +273,7 @@ fn ir_content_to_gemini_parts(content: &IrContent) -> Vec<GeminiPart> {
 impl Decoder for GeminiCodec {
     fn decode_request(&self, body: &[u8]) -> Result<IrChatRequest, AppError> {
         let req: GeminiRequest =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(body)?;
 
         // Extract system instruction
         let system = req.system_instruction.as_ref().map(|si| {
@@ -378,7 +379,7 @@ impl Decoder for GeminiCodec {
 
     fn decode_response(&self, body: &[u8]) -> Result<IrChatResponse, AppError> {
         let resp: GeminiResponse =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(body)?;
 
         let candidate = resp.candidates.into_iter().next().ok_or_else(|| {
             AppError::Codec("No candidates in Gemini response".to_string())
@@ -419,7 +420,7 @@ impl Decoder for GeminiCodec {
 
         // Each streaming chunk from Gemini has the same structure as a full response
         let chunk: GeminiResponse =
-            serde_json::from_str(data).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json_str(data)?;
 
         let candidate = match chunk.candidates.first() {
             Some(c) => c,
@@ -653,7 +654,7 @@ impl Encoder for GeminiCodec {
             tool_config,
         };
 
-        serde_json::to_vec(&req).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&req)
     }
 
     fn encode_response(&self, ir: &IrChatResponse) -> Result<Vec<u8>, AppError> {
@@ -704,10 +705,10 @@ impl Encoder for GeminiCodec {
             }),
         };
 
-        serde_json::to_vec(&resp).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&resp)
     }
 
-    fn encode_stream_chunk(&self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
+    fn encode_stream_chunk(&mut self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
         let mut parts = Vec::new();
 
         // Text delta
@@ -764,13 +765,12 @@ impl Encoder for GeminiCodec {
             }),
         };
 
-        let json = serde_json::to_string(&gemini_chunk)
-            .map_err(|e| AppError::Codec(e.to_string()))?;
+        let json = to_json_str(&gemini_chunk)?;
 
         Ok(Some(json))
     }
 
-    fn stream_done_signal(&self) -> Option<String> {
+    fn stream_done_signal(&mut self) -> Option<String> {
         // Gemini streams end when the connection closes; no explicit done signal.
         None
     }

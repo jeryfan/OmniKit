@@ -3,11 +3,10 @@ use super::openai_chat::OpenAiChatCodec;
 use super::{Decoder, Encoder};
 use crate::error::AppError;
 
-/// Moonshot codec — delegates to OpenAI Chat codec.
-/// Moonshot API is OpenAI-compatible with minor additions.
-pub struct MoonshotCodec;
+/// Mistral API — OpenAI 兼容格式，全部委托给 OpenAiChatCodec。
+pub struct MistralCodec;
 
-impl Decoder for MoonshotCodec {
+impl Decoder for MistralCodec {
     fn decode_request(&self, body: &[u8]) -> Result<IrChatRequest, AppError> {
         OpenAiChatCodec.decode_request(body)
     }
@@ -25,7 +24,7 @@ impl Decoder for MoonshotCodec {
     }
 }
 
-impl Encoder for MoonshotCodec {
+impl Encoder for MistralCodec {
     fn encode_request(&self, ir: &IrChatRequest, model: &str) -> Result<Vec<u8>, AppError> {
         OpenAiChatCodec.encode_request(ir, model)
     }

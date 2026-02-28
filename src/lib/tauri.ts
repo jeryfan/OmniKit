@@ -92,12 +92,16 @@ export interface TargetInput {
 }
 
 export const SUPPORTED_FORMATS = [
-  { value: "none", label: "None" },
-  { value: "anthropic", label: "Anthropic" },
-  { value: "openai-chat", label: "OpenAI Chat" },
-  { value: "openai-responses", label: "OpenAI Responses" },
-  { value: "gemini", label: "Gemini" },
-  { value: "moonshot", label: "Moonshot" },
+  { value: "none",              label: "None" },
+  { value: "anthropic",         label: "Anthropic" },
+  { value: "openai-chat",       label: "OpenAI Chat" },
+  { value: "openai-responses",  label: "OpenAI Responses" },
+  { value: "gemini",            label: "Gemini" },
+  { value: "moonshot",          label: "Moonshot" },
+  { value: "deepseek",          label: "DeepSeek" },
+  { value: "qwen",              label: "Qwen (通义千问)" },
+  { value: "mistral",           label: "Mistral" },
+  { value: "azure-openai",      label: "Azure OpenAI" },
 ] as const;
 
 // === Route commands ===
@@ -186,6 +190,7 @@ export interface RequestLog {
   completion_tokens: number | null;
   request_body: string | null;
   response_body: string | null;
+  response_body_converted: string | null;
   request_headers: string | null;
   response_headers: string | null;
   request_url: string | null;

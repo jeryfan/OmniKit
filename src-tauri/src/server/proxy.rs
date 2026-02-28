@@ -49,8 +49,12 @@ fn resolve_encoder(slug: &str) -> Result<Box<dyn chat::Encoder>, AppError> {
 fn build_upstream_url(base_url: &str, format: ChatFormat, model: &str, stream: bool) -> String {
     let base = base_url.trim_end_matches('/');
     match format {
-        ChatFormat::OpenaiChat | ChatFormat::Moonshot => {
+        ChatFormat::OpenaiChat | ChatFormat::Moonshot | ChatFormat::DeepSeek
+        | ChatFormat::Qwen | ChatFormat::Mistral => {
             format!("{}/chat/completions", base)
+        }
+        ChatFormat::AzureOpenAi => {
+            format!("{}/chat/completions?api-version=2024-02-01", base)
         }
         ChatFormat::OpenaiResponses => {
             format!("{}/responses", base)
@@ -74,9 +78,11 @@ fn apply_auth(
     api_key: &str,
 ) -> reqwest::RequestBuilder {
     match format {
-        ChatFormat::OpenaiChat | ChatFormat::OpenaiResponses | ChatFormat::Moonshot => {
+        ChatFormat::OpenaiChat | ChatFormat::OpenaiResponses | ChatFormat::Moonshot
+        | ChatFormat::DeepSeek | ChatFormat::Qwen | ChatFormat::Mistral => {
             builder.header("Authorization", format!("Bearer {}", api_key))
         }
+        ChatFormat::AzureOpenAi => builder.header("api-key", api_key),
         ChatFormat::Anthropic => builder
             .header("x-api-key", api_key)
             .header("anthropic-version", "2023-06-01"),
@@ -295,7 +301,7 @@ async fn handle_format_conversion(
             log_request(
                 &state.db, token_id, &route_id, &target_id, &model, "chat",
                 &input_fmt_str, &output_fmt_str, None, latency, None, None,
-                Some(&request_body_str), Some(&e.to_string()),
+                Some(&request_body_str), Some(&e.to_string()), None,
                 req_headers_json.as_deref(), None,
                 Some(request_url), Some(&upstream_url),
             ).await;
@@ -312,7 +318,7 @@ async fn handle_format_conversion(
         log_request(
             &state.db, token_id, &route_id, &target_id, &model, "chat",
             &input_fmt_str, &output_fmt_str, Some(status.as_u16() as i32),
-            latency, None, None, Some(&request_body_str), Some(&error_body),
+            latency, None, None, Some(&request_body_str), Some(&error_body), None,
             req_headers_json.as_deref(), resp_headers_json.as_deref(),
             Some(request_url), Some(&upstream_url),
         ).await;
@@ -327,7 +333,7 @@ async fn handle_format_conversion(
         let log_id = log_request(
             &state.db, token_id, &route_id, &target_id, &model, "chat",
             &input_fmt_str, &output_fmt_str, Some(200), latency, None, None,
-            Some(&request_body_str), None,
+            Some(&request_body_str), None, None,
             req_headers_json.as_deref(), resp_headers_json.as_deref(),
             Some(request_url), Some(&upstream_url),
         ).await;
@@ -350,13 +356,14 @@ async fn handle_format_conversion(
     let latency = start.elapsed().as_millis() as i64;
     let prompt_tokens = ir_response.usage.as_ref().map(|u| u.prompt_tokens as i64);
     let completion_tokens = ir_response.usage.as_ref().map(|u| u.completion_tokens as i64);
-    let resp_body_str = String::from_utf8_lossy(&output_bytes).to_string();
+    let raw_resp_body_str = String::from_utf8_lossy(&resp_bytes).to_string();
+    let converted_body_str = String::from_utf8_lossy(&output_bytes).to_string();
 
     log_request(
         &state.db, token_id, &route_id, &target_id, &model, "chat",
         &input_fmt_str, &output_fmt_str, Some(200), latency,
         prompt_tokens, completion_tokens,
-        Some(&request_body_str), Some(&resp_body_str),
+        Some(&request_body_str), Some(&raw_resp_body_str), Some(&converted_body_str),
         req_headers_json.as_deref(), resp_headers_json.as_deref(),
         Some(request_url), Some(&upstream_url),
     ).await;
@@ -465,7 +472,7 @@ async fn handle_passthrough(
             log_request(
                 &state.db, token_id, &route_id, &target_id, "", "passthrough",
                 &route.input_format, &upstream_format_str, None, latency, None, None,
-                Some(&request_body_str), Some(&e.to_string()),
+                Some(&request_body_str), Some(&e.to_string()), None,
                 req_headers_json.as_deref(), None,
                 Some(request_url), Some(&target_url),
             ).await;
@@ -488,7 +495,7 @@ async fn handle_passthrough(
         let log_id = log_request(
             &state.db, token_id, &route_id, &target_id, "", "passthrough",
             &route.input_format, &upstream_format_str, Some(status.as_u16() as i32),
-            latency, None, None, Some(&request_body_str), None,
+            latency, None, None, Some(&request_body_str), None, None,
             req_headers_json.as_deref(), resp_headers_json.as_deref(),
             Some(request_url), Some(&target_url),
         ).await;
@@ -543,7 +550,7 @@ async fn handle_passthrough(
     log_request(
         &state.db, token_id, &route_id, &target_id, "", "passthrough",
         &route.input_format, &upstream_format_str, Some(status.as_u16() as i32),
-        latency, None, None, Some(&request_body_str), Some(&resp_body_str),
+        latency, None, None, Some(&request_body_str), Some(&resp_body_str), None,
         req_headers_json.as_deref(), resp_headers_json.as_deref(),
         Some(request_url), Some(&target_url),
     ).await;
@@ -586,15 +593,17 @@ async fn proxy_stream(
     log_id: String,
 ) -> Result<Response, AppError> {
     let upstream_decoder = resolve_decoder(&upstream_slug)?;
-    let output_encoder = resolve_encoder(&output_slug)?;
+    let mut output_encoder = resolve_encoder(&output_slug)?;
 
     let byte_stream = upstream_resp.bytes_stream();
 
     let sse_stream = async_stream::stream! {
         let mut buffer = String::new();
         let mut byte_stream = Box::pin(byte_stream);
-        let mut response_body = String::new();
-        let mut has_response_chunk = false;
+        // Accumulate raw upstream data lines for logging (newline-delimited JSON).
+        let mut raw_response_body = String::new();
+        // Accumulate converted events (what the client actually receives).
+        let mut converted_response_body = String::new();
         let mut stream_done = false;
 
         while !stream_done {
@@ -629,27 +638,65 @@ async fn proxy_stream(
                     };
 
                     if upstream_decoder.is_stream_done(data) {
+                        // Persist logs BEFORE yielding the done signal.
+                        // The client closes the connection upon receiving the done event,
+                        // which drops this stream generator before any trailing code runs.
+                        if !raw_response_body.is_empty() {
+                            let converted = if converted_response_body.is_empty() {
+                                None::<String>
+                            } else {
+                                Some(converted_response_body.clone())
+                            };
+                            let _ = sqlx::query(
+                                "UPDATE request_logs SET response_body = ?, response_body_converted = ? WHERE id = ?"
+                            )
+                            .bind(&raw_response_body)
+                            .bind(converted.as_deref())
+                            .bind(&log_id)
+                            .execute(&db)
+                            .await;
+                        }
                         if let Some(done) = output_encoder.stream_done_signal() {
-                            yield Ok::<_, std::convert::Infallible>(
-                                format!("data: {}\n\n", done)
-                            );
+                            let events: Vec<String> = done
+                                .split('\n')
+                                .map(|s| s.trim().to_string())
+                                .filter(|s| !s.is_empty())
+                                .collect();
+                            for event in events {
+                                yield Ok::<_, std::convert::Infallible>(format!("data: {}\n\n", event));
+                            }
                         }
                         stream_done = true;
                         break;
                     }
 
+                    // Accumulate raw upstream chunk for logging.
+                    if !raw_response_body.is_empty() {
+                        raw_response_body.push('\n');
+                    }
+                    raw_response_body.push_str(data);
+
                     match upstream_decoder.decode_stream_chunk(data) {
                         Ok(Some(ir_chunk)) => {
                             match output_encoder.encode_stream_chunk(&ir_chunk) {
                                 Ok(Some(encoded)) => {
-                                    if has_response_chunk {
-                                        response_body.push(',');
-                                    } else {
-                                        response_body.push('[');
-                                        has_response_chunk = true;
+                                    // An encoder may return multiple newline-separated events.
+                                    // Collect into owned Strings first to avoid borrow-across-yield
+                                    // issues, then emit each as its own SSE message.
+                                    let events: Vec<String> = encoded
+                                        .split('\n')
+                                        .map(|s| s.trim().to_string())
+                                        .filter(|s| !s.is_empty())
+                                        .collect();
+                                    for event in &events {
+                                        if !converted_response_body.is_empty() {
+                                            converted_response_body.push('\n');
+                                        }
+                                        converted_response_body.push_str(event);
                                     }
-                                    response_body.push_str(&encoded);
-                                    yield Ok(format!("data: {}\n\n", encoded));
+                                    for event in events {
+                                        yield Ok(format!("data: {}\n\n", event));
+                                    }
                                 }
                                 Ok(None) => {}
                                 Err(e) => { log::error!("Encode stream chunk error: {}", e); }
@@ -663,13 +710,23 @@ async fn proxy_stream(
             }
         }
 
-        if has_response_chunk {
-            response_body.push(']');
-            let _ = sqlx::query("UPDATE request_logs SET response_body = ? WHERE id = ?")
-                .bind(&response_body)
-                .bind(&log_id)
-                .execute(&db)
-                .await;
+        // Fallback: persist logs if stream ended without a proper done signal
+        // (e.g., network drop). May not run if the client already closed the
+        // connection, but is best-effort for abnormal terminations.
+        if !stream_done && !raw_response_body.is_empty() {
+            let converted = if converted_response_body.is_empty() {
+                None::<String>
+            } else {
+                Some(converted_response_body)
+            };
+            let _ = sqlx::query(
+                "UPDATE request_logs SET response_body = ?, response_body_converted = ? WHERE id = ?"
+            )
+            .bind(&raw_response_body)
+            .bind(converted.as_deref())
+            .bind(&log_id)
+            .execute(&db)
+            .await;
         }
     };
 
@@ -698,6 +755,7 @@ async fn log_request(
     completion_tokens: Option<i64>,
     request_body: Option<&str>,
     response_body: Option<&str>,
+    response_body_converted: Option<&str>,
     request_headers: Option<&str>,
     response_headers: Option<&str>,
     request_url: Option<&str>,
@@ -706,12 +764,12 @@ async fn log_request(
     let id = uuid::Uuid::new_v4().to_string();
     let now = chrono::Utc::now().to_rfc3339();
     let result = sqlx::query(
-        "INSERT INTO request_logs (id, token_id, route_id, target_id, model, modality, input_format, output_format, status, latency_ms, prompt_tokens, completion_tokens, request_body, response_body, request_headers, response_headers, request_url, upstream_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        "INSERT INTO request_logs (id, token_id, route_id, target_id, model, modality, input_format, output_format, status, latency_ms, prompt_tokens, completion_tokens, request_body, response_body, response_body_converted, request_headers, response_headers, request_url, upstream_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
     .bind(&id).bind(token_id).bind(route_id).bind(target_id)
     .bind(model).bind(modality).bind(input_format).bind(output_format)
     .bind(status).bind(latency_ms).bind(prompt_tokens).bind(completion_tokens)
-    .bind(request_body).bind(response_body)
+    .bind(request_body).bind(response_body).bind(response_body_converted)
     .bind(request_headers).bind(response_headers)
     .bind(request_url).bind(upstream_url)
     .bind(&now)

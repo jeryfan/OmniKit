@@ -1,3 +1,4 @@
+use super::helpers::{from_json, from_json_str, to_json, to_json_str};
 use super::ir::*;
 use super::{Decoder, Encoder};
 use crate::error::AppError;
@@ -250,7 +251,7 @@ fn ir_finish_to_oai(reason: &Option<IrFinishReason>) -> Option<String> {
 impl Decoder for OpenAiChatCodec {
     fn decode_request(&self, body: &[u8]) -> Result<IrChatRequest, AppError> {
         let req: OaiRequest =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(body)?;
 
         // Extract system message from messages list
         let mut system = None;
@@ -339,7 +340,7 @@ impl Decoder for OpenAiChatCodec {
 
     fn decode_response(&self, body: &[u8]) -> Result<IrChatResponse, AppError> {
         let resp: OaiResponse =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(body)?;
 
         let choice = resp.choices.into_iter().next().ok_or_else(|| {
             AppError::Codec("No choices in response".to_string())
@@ -384,7 +385,7 @@ impl Decoder for OpenAiChatCodec {
         }
 
         let chunk: OaiStreamChunk =
-            serde_json::from_str(data).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json_str(data)?;
 
         let choice = match chunk.choices.first() {
             Some(c) => c,
@@ -525,7 +526,7 @@ impl Encoder for OpenAiChatCodec {
             },
         };
 
-        serde_json::to_vec(&req).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&req)
     }
 
     fn encode_response(&self, ir: &IrChatResponse) -> Result<Vec<u8>, AppError> {
@@ -570,10 +571,10 @@ impl Encoder for OpenAiChatCodec {
             usage,
         };
 
-        serde_json::to_vec(&resp).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&resp)
     }
 
-    fn encode_stream_chunk(&self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
+    fn encode_stream_chunk(&mut self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
         let delta_tool_calls = chunk.delta_tool_calls.as_ref().map(|tcs| {
             tcs.iter()
                 .map(|tc| OaiStreamToolCall {
@@ -612,13 +613,12 @@ impl Encoder for OpenAiChatCodec {
             }),
         };
 
-        let json = serde_json::to_string(&oai_chunk)
-            .map_err(|e| AppError::Codec(e.to_string()))?;
+        let json = to_json_str(&oai_chunk)?;
 
         Ok(Some(json))
     }
 
-    fn stream_done_signal(&self) -> Option<String> {
+    fn stream_done_signal(&mut self) -> Option<String> {
         Some("[DONE]".to_string())
     }
 }

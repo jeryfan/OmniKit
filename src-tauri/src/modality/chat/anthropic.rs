@@ -1,3 +1,4 @@
+use super::helpers::{from_json, from_json_str, from_json_value, to_json, to_json_str};
 use super::ir::*;
 use super::{Decoder, Encoder};
 use crate::error::AppError;
@@ -298,7 +299,7 @@ fn ir_content_to_anthropic(content: &IrContent) -> Vec<serde_json::Value> {
 impl Decoder for AnthropicCodec {
     fn decode_request(&self, body: &[u8]) -> Result<IrChatRequest, AppError> {
         let req: AnthropicRequest =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(body)?;
 
         let mut messages = Vec::new();
 
@@ -423,7 +424,7 @@ impl Decoder for AnthropicCodec {
 
     fn decode_response(&self, body: &[u8]) -> Result<IrChatResponse, AppError> {
         let resp: AnthropicResponse =
-            serde_json::from_slice(body).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json(body)?;
 
         let mut text_parts = Vec::new();
         let mut tool_calls = Vec::new();
@@ -476,7 +477,7 @@ impl Decoder for AnthropicCodec {
 
         // Parse the JSON to determine the event type
         let v: serde_json::Value =
-            serde_json::from_str(data).map_err(|e| AppError::Codec(e.to_string()))?;
+            from_json_str(data)?;
 
         let event_type = v
             .get("type")
@@ -486,7 +487,7 @@ impl Decoder for AnthropicCodec {
         match event_type {
             "message_start" => {
                 let evt: StreamMessageStart =
-                    serde_json::from_value(v).map_err(|e| AppError::Codec(e.to_string()))?;
+                    from_json_value(v)?;
                 Ok(Some(IrStreamChunk {
                     id: evt.message.id,
                     model: Some(evt.message.model),
@@ -503,7 +504,7 @@ impl Decoder for AnthropicCodec {
             }
             "content_block_start" => {
                 let evt: StreamContentBlockStart =
-                    serde_json::from_value(v).map_err(|e| AppError::Codec(e.to_string()))?;
+                    from_json_value(v)?;
                 match &evt.content_block {
                     AnthropicContentBlock::ToolUse { id, name, .. } => {
                         Ok(Some(IrStreamChunk {
@@ -526,7 +527,7 @@ impl Decoder for AnthropicCodec {
             }
             "content_block_delta" => {
                 let evt: StreamContentBlockDelta =
-                    serde_json::from_value(v).map_err(|e| AppError::Codec(e.to_string()))?;
+                    from_json_value(v)?;
                 match &evt.delta {
                     StreamDelta::TextDelta { text } => Ok(Some(IrStreamChunk {
                         id: String::new(),
@@ -557,7 +558,7 @@ impl Decoder for AnthropicCodec {
             }
             "message_delta" => {
                 let evt: StreamMessageDelta =
-                    serde_json::from_value(v).map_err(|e| AppError::Codec(e.to_string()))?;
+                    from_json_value(v)?;
                 Ok(Some(IrStreamChunk {
                     id: String::new(),
                     model: None,
@@ -712,7 +713,7 @@ impl Encoder for AnthropicCodec {
             tool_choice,
         };
 
-        serde_json::to_vec(&req).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&req)
     }
 
     fn encode_response(&self, ir: &IrChatResponse) -> Result<Vec<u8>, AppError> {
@@ -754,10 +755,10 @@ impl Encoder for AnthropicCodec {
             }),
         };
 
-        serde_json::to_vec(&resp).map_err(|e| AppError::Codec(e.to_string()))
+        to_json(&resp)
     }
 
-    fn encode_stream_chunk(&self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
+    fn encode_stream_chunk(&mut self, chunk: &IrStreamChunk) -> Result<Option<String>, AppError> {
         let mut events = Vec::new();
 
         // message_start event (when we have role + id)
@@ -784,8 +785,7 @@ impl Encoder for AnthropicCodec {
             });
             events.push(format!(
                 "event: message_start\ndata: {}",
-                serde_json::to_string(&msg_start)
-                    .map_err(|e| AppError::Codec(e.to_string()))?
+                to_json_str(&msg_start)?
             ));
         }
 
@@ -801,8 +801,7 @@ impl Encoder for AnthropicCodec {
             });
             events.push(format!(
                 "event: content_block_delta\ndata: {}",
-                serde_json::to_string(&delta)
-                    .map_err(|e| AppError::Codec(e.to_string()))?
+                to_json_str(&delta)?
             ));
         }
 
@@ -823,8 +822,7 @@ impl Encoder for AnthropicCodec {
                     });
                     events.push(format!(
                         "event: content_block_start\ndata: {}",
-                        serde_json::to_string(&block_start)
-                            .map_err(|e| AppError::Codec(e.to_string()))?
+                        to_json_str(&block_start)?
                     ));
                 }
                 if let Some(args) = &tc.arguments {
@@ -838,8 +836,7 @@ impl Encoder for AnthropicCodec {
                     });
                     events.push(format!(
                         "event: content_block_delta\ndata: {}",
-                        serde_json::to_string(&delta)
-                            .map_err(|e| AppError::Codec(e.to_string()))?
+                        to_json_str(&delta)?
                     ));
                 }
             }
@@ -869,8 +866,7 @@ impl Encoder for AnthropicCodec {
             });
             events.push(format!(
                 "event: message_delta\ndata: {}",
-                serde_json::to_string(&msg_delta)
-                    .map_err(|e| AppError::Codec(e.to_string()))?
+                to_json_str(&msg_delta)?
             ));
         }
 
@@ -885,7 +881,7 @@ impl Encoder for AnthropicCodec {
         }
     }
 
-    fn stream_done_signal(&self) -> Option<String> {
+    fn stream_done_signal(&mut self) -> Option<String> {
         Some(r#"event: message_stop
 data: {"type":"message_stop"}"#.to_string())
     }

@@ -69,6 +69,7 @@ pub struct RequestLog {
     pub completion_tokens: Option<i64>,
     pub request_body: Option<String>,
     pub response_body: Option<String>,
+    pub response_body_converted: Option<String>,
     pub request_headers: Option<String>,
     pub response_headers: Option<String>,
     pub request_url: Option<String>,

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Search, Trash2, RotateCcw, Copy, Check, RefreshCw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +118,74 @@ function detectBodyContent(raw: string | null): { text: string; language: "json"
     }
   }
   return { text: raw, language: "text" };
+}
+
+type BodyContent = { text: string; language: "json" | "text" };
+
+// Simple module-level state to keep Raw/Converted toggle in sync between the
+// header controls and the editor area without prop-drilling through an IIFE.
+const RespBodyViewContext = React.createContext<{
+  view: "raw" | "converted";
+  setView: (v: "raw" | "converted") => void;
+}>({ view: "raw", setView: () => {} });
+
+function RespBodyViewProvider({ children }: { children: React.ReactNode }) {
+  const [view, setView] = React.useState<"raw" | "converted">("raw");
+  return (
+    <RespBodyViewContext.Provider value={{ view, setView }}>
+      {children}
+    </RespBodyViewContext.Provider>
+  );
+}
+
+/** Replaces RespBodyTabs — renders the actual toggle pill inside the provider. */
+function RespBodyToggle() {
+  const { view, setView } = React.useContext(RespBodyViewContext);
+  return (
+    <div className="flex items-center rounded-md border border-border overflow-hidden h-6">
+      <button
+        className={`px-2 text-[11px] h-full transition-colors ${
+          view === "raw"
+            ? "bg-muted text-foreground font-medium"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        onClick={() => setView("raw")}
+      >
+        Raw
+      </button>
+      <button
+        className={`px-2 text-[11px] h-full transition-colors ${
+          view === "converted"
+            ? "bg-muted text-foreground font-medium"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        onClick={() => setView("converted")}
+      >
+        Converted
+      </button>
+    </div>
+  );
+}
+
+/** Editor that switches between raw and converted body based on context. */
+function RespBodyViewer({
+  respBody,
+  respBodyConverted,
+}: {
+  respBody: BodyContent;
+  respBodyConverted: BodyContent;
+}) {
+  const { view } = React.useContext(RespBodyViewContext);
+  const body = view === "converted" ? respBodyConverted : respBody;
+  return (
+    <CodeEditor
+      value={body.text}
+      readOnly
+      language={body.language}
+      minHeight="20rem"
+      resizable
+    />
+  );
 }
 
 export default function RequestLogs({ embedded = false }: { embedded?: boolean }) {
@@ -512,6 +580,7 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
       {/* Detail Dialog */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] max-h-[92vh] flex flex-col">
+          <RespBodyViewProvider>
           <DialogHeader className="shrink-0">
             <div className="flex items-center justify-between gap-3 pr-6">
               <div className="flex items-center gap-2 min-w-0">
@@ -630,8 +699,10 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                   const reqBody = detectBodyContent(selectedLog.request_body);
                   const respHeaders = detectBodyContent(selectedLog.response_headers);
                   const respBody = detectBodyContent(selectedLog.response_body);
+                  const respBodyConverted = detectBodyContent(selectedLog.response_body_converted);
                   const hasHeaders =
                     !!selectedLog.request_headers || !!selectedLog.response_headers;
+                  const hasConvertedBody = !!selectedLog.response_body_converted;
 
                   return (
                     <div className="grid grid-cols-2 gap-4">
@@ -685,16 +756,21 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                         <Tabs defaultValue="body" className="flex flex-col gap-2">
                           <div className="flex items-center justify-between">
                             <p className="text-xs font-semibold text-foreground">响应</p>
-                            {hasHeaders && (
-                              <TabsList className="h-6 gap-0 p-0.5">
-                                <TabsTrigger value="headers" className="h-5 px-2 text-[11px]">
-                                  Headers
-                                </TabsTrigger>
-                                <TabsTrigger value="body" className="h-5 px-2 text-[11px]">
-                                  Body
-                                </TabsTrigger>
-                              </TabsList>
-                            )}
+                            <div className="flex items-center gap-1.5">
+                              {hasConvertedBody && (
+                                <RespBodyToggle />
+                              )}
+                              {hasHeaders && (
+                                <TabsList className="h-6 gap-0 p-0.5">
+                                  <TabsTrigger value="headers" className="h-5 px-2 text-[11px]">
+                                    Headers
+                                  </TabsTrigger>
+                                  <TabsTrigger value="body" className="h-5 px-2 text-[11px]">
+                                    Body
+                                  </TabsTrigger>
+                                </TabsList>
+                              )}
+                            </div>
                           </div>
                           {hasHeaders && (
                             <TabsContent value="headers" className="mt-0">
@@ -714,13 +790,20 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
                             </TabsContent>
                           )}
                           <TabsContent value="body" className="mt-0">
-                            <CodeEditor
-                              value={respBody.text}
-                              readOnly
-                              language={respBody.language}
-                              minHeight="20rem"
-                              resizable
-                            />
+                            {hasConvertedBody ? (
+                              <RespBodyViewer
+                                respBody={respBody}
+                                respBodyConverted={respBodyConverted}
+                              />
+                            ) : (
+                              <CodeEditor
+                                value={respBody.text}
+                                readOnly
+                                language={respBody.language}
+                                minHeight="20rem"
+                                resizable
+                              />
+                            )}
                           </TabsContent>
                         </Tabs>
                       </div>
@@ -734,10 +817,9 @@ export default function RequestLogs({ embedded = false }: { embedded?: boolean }
               </div>
             )}
           </div>
+          </RespBodyViewProvider>
         </DialogContent>
       </Dialog>
-
-      {/* Edit & Retry Dialog */}
       <Dialog open={editRetryOpen} onOpenChange={setEditRetryOpen}>
         <DialogContent className="w-[80vw] max-w-[80vw] sm:max-w-[80vw] h-[88vh] flex flex-col">
           <DialogHeader className="shrink-0">
