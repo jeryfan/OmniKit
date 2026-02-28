@@ -149,6 +149,7 @@ const HOP_BY_HOP: &[&str] = &[
     "upgrade",
     "authorization",
     "x-api-key",
+    "api-key",
     "anthropic-version",
     "x-goog-api-key",
 ];
