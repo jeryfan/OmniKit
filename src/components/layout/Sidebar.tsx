@@ -9,6 +9,7 @@ import {
   PanelLeftOpen,
   Languages,
   Download,
+  Toolbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -47,6 +48,7 @@ export function Sidebar() {
   const navItems = [
     { to: "/api-gateway", icon: Network, label: t.sidebar.apiGateway },
     { to: "/video-download", icon: Download, label: t.sidebar.videoDownload },
+    { to: "/toolbox", icon: Toolbox, label: t.sidebar.toolBox },
   ];
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>

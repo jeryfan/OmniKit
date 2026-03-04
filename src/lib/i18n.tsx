@@ -48,6 +48,7 @@ export interface Translations {
     language: string;
     videoDownload: string;
     videoRecords: string;
+    toolBox: string;
   };
   channels: {
     title: string;
@@ -332,6 +333,44 @@ export interface Translations {
     playbackRate: string;
     buffering: string;
   };
+  toolBox: {
+    title: string;
+    subtitle: string;
+    tools: {
+      textCleaner: {
+        title: string;
+        description: string;
+      };
+    };
+  };
+  tools: {
+    textCleaner: {
+      title: string;
+      subtitle: string;
+      back: string;
+      inputLabel: string;
+      inputPlaceholder: string;
+      outputLabel: string;
+      outputPlaceholder: string;
+      clear: string;
+      options: string;
+      removeSpaces: string;
+      removeSpacesDesc: string;
+      removeNewlines: string;
+      removeNewlinesDesc: string;
+      removeTabs: string;
+      removeTabsDesc: string;
+      trimLines: string;
+      trimLinesDesc: string;
+      removeExtraSpaces: string;
+      removeExtraSpacesDesc: string;
+      removeAll: string;
+      removeAllDesc: string;
+      process: string;
+      processed: string;
+      emptyInput: string;
+    };
+  };
   rules: {
     title: string;
     subtitle: string;
@@ -443,6 +482,7 @@ const en: Translations = {
     language: "Language",
     videoDownload: "Video Download",
     videoRecords: "Video Records",
+    toolBox: "Toolbox",
   },
   rules: {
     title: "Conversion Rules",
@@ -504,6 +544,44 @@ const en: Translations = {
     modelName: "Model",
     selectChannel: "Select a channel",
     aiGenerateSuccess: "AI generated rule filled into form",
+  },
+  toolBox: {
+    title: "Toolbox",
+    subtitle: "A collection of practical utilities for everyday tasks.",
+    tools: {
+      textCleaner: {
+        title: "Text Cleaner",
+        description: "Remove unwanted formatting from text such as spaces, newlines, and tabs.",
+      },
+    },
+  },
+  tools: {
+    textCleaner: {
+      title: "Text Cleaner",
+      subtitle: "Remove unwanted formatting from your text",
+      back: "Back",
+      inputLabel: "Input",
+      inputPlaceholder: "Paste your text here...",
+      outputLabel: "Output",
+      outputPlaceholder: "Result will appear here...",
+      clear: "Clear",
+      options: "Cleaning Options",
+      removeSpaces: "Remove All Spaces",
+      removeSpacesDesc: "Remove all space characters",
+      removeNewlines: "Remove Newlines",
+      removeNewlinesDesc: "Remove all line breaks",
+      removeTabs: "Remove Tabs",
+      removeTabsDesc: "Remove all tab characters",
+      trimLines: "Trim Line Whitespace",
+      trimLinesDesc: "Remove leading/trailing spaces from each line first",
+      removeExtraSpaces: "Remove Extra Spaces",
+      removeExtraSpacesDesc: "Collapse multiple spaces into one",
+      removeAll: "Remove All",
+      removeAllDesc: "Enable all cleaning options at once",
+      process: "Process Text",
+      processed: "Text processed successfully",
+      emptyInput: "Please enter some text",
+    },
   },
   channels: {
     title: "Channels",
@@ -835,6 +913,7 @@ const zh: Translations = {
     language: "语言",
     videoDownload: "视频下载",
     videoRecords: "解析记录",
+    toolBox: "工具箱",
   },
   rules: {
     title: "转换规则",
@@ -896,6 +975,44 @@ const zh: Translations = {
     modelName: "模型",
     selectChannel: "选择渠道",
     aiGenerateSuccess: "AI 生成的规则已填充到表单",
+  },
+  toolBox: {
+    title: "工具箱",
+    subtitle: "实用的日常工具集合。",
+    tools: {
+      textCleaner: {
+        title: "文本格式化",
+        description: "去除文本中的空格、换行、制表符等不需要的格式。",
+      },
+    },
+  },
+  tools: {
+    textCleaner: {
+      title: "文本格式化",
+      subtitle: "清理文本中的多余格式",
+      back: "返回",
+      inputLabel: "输入",
+      inputPlaceholder: "在此粘贴文本...",
+      outputLabel: "输出",
+      outputPlaceholder: "结果将显示在这里...",
+      clear: "清空",
+      options: "清理选项",
+      removeSpaces: "去除所有空格",
+      removeSpacesDesc: "移除所有空格字符",
+      removeNewlines: "去除换行",
+      removeNewlinesDesc: "移除所有换行符",
+      removeTabs: "去除制表符",
+      removeTabsDesc: "移除所有 Tab 字符",
+      trimLines: "去除行首尾空白",
+      trimLinesDesc: "先去除每行开头和结尾的空白",
+      removeExtraSpaces: "去除多余空格",
+      removeExtraSpacesDesc: "将多个连续空格合并为一个",
+      removeAll: "去除所有",
+      removeAllDesc: "一键启用所有清理选项",
+      process: "处理文本",
+      processed: "文本处理成功",
+      emptyInput: "请输入文本",
+    },
   },
   channels: {
     title: "渠道",
