@@ -113,7 +113,7 @@ export default function HttpDebugger() {
   };
 
   return (
-    <div className="flex h-full flex-col min-h-0 p-1.5">
+    <div className="flex h-full flex-col min-h-0 p-2">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Button 

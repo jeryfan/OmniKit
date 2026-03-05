@@ -35,7 +35,7 @@ export default function ApiGateway() {
   ];
 
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-full flex-col p-1.5">
+    <Tabs value={activeTab} onValueChange={handleTabChange} className="flex h-full flex-col p-2">
       <TabsList className="mx-1.5 mt-1.5 w-fit">
         {tabItems.map((item) => (
           <TabsTrigger key={item.value} value={item.value}>

@@ -77,14 +77,14 @@ export default function ToolBox() {
   ];
 
   return (
-    <div className="flex h-full flex-col p-1.5">
+    <div className="flex h-full flex-col p-2">
       <PageHeader
         title={t.toolBox.title}
         description={t.toolBox.subtitle}
       />
 
       <div className="flex-1 overflow-auto">
-        <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {tools.map((tool) => (
             <Card
               key={tool.id}

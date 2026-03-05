@@ -223,7 +223,7 @@ export default function VideoDownload() {
   }, [videoInfo, selectedFormat, serverPort]);
 
   return (
-    <div className="flex h-full flex-col p-1.5">
+    <div className="flex h-full flex-col p-2">
       <PageHeader
         title={t.videoDownload.title}
         description={t.videoDownload.subtitle}
@@ -234,7 +234,7 @@ export default function VideoDownload() {
         }
       />
 
-      <div className="flex-1 overflow-auto p-1.5 space-y-3">
+      <div className="flex-1 overflow-auto p-2 space-y-3">
         {/* URL Input */}
         <div className="flex gap-2">
           <div className="relative flex-1">

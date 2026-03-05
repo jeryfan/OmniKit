@@ -389,7 +389,7 @@ export default function VideoRecords() {
   );
 
   return (
-    <div className="flex h-full flex-col p-1.5">
+    <div className="flex h-full flex-col p-2">
       <PageHeader
         title={t.videoRecords.title}
         description={t.videoRecords.subtitle}
@@ -401,7 +401,7 @@ export default function VideoRecords() {
         }
       />
 
-      <div className="flex-1 overflow-auto p-1.5">
+      <div className="flex-1 overflow-auto p-2">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
