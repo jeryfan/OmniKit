@@ -342,10 +342,6 @@ export interface Translations {
         title: string;
         description: string;
       };
-      jwtDecoder: {
-        title: string;
-        description: string;
-      };
       base64Codec: {
         title: string;
         description: string;
@@ -354,27 +350,11 @@ export interface Translations {
         title: string;
         description: string;
       };
-      sqlFormatter: {
-        title: string;
-        description: string;
-      };
       jsonFormatter: {
         title: string;
         description: string;
       };
-      markdownPreview: {
-        title: string;
-        description: string;
-      };
-      passwordGenerator: {
-        title: string;
-        description: string;
-      };
       timestampConverter: {
-        title: string;
-        description: string;
-      };
-      clipboardHistory: {
         title: string;
         description: string;
       };
@@ -383,22 +363,6 @@ export interface Translations {
         description: string;
       };
       httpDebugger: {
-        title: string;
-        description: string;
-      };
-      portScanner: {
-        title: string;
-        description: string;
-      };
-      imageCompressor: {
-        title: string;
-        description: string;
-      };
-      colorPicker: {
-        title: string;
-        description: string;
-      };
-      srtTool: {
         title: string;
         description: string;
       };
@@ -432,21 +396,6 @@ export interface Translations {
       emptyInput: string;
       chars: string;
     };
-    jwtDecoder: {
-      title: string;
-      subtitle: string;
-      back: string;
-      inputLabel: string;
-      inputPlaceholder: string;
-      headerLabel: string;
-      payloadLabel: string;
-      signatureLabel: string;
-      invalidToken: string;
-      copyHeader: string;
-      copyPayload: string;
-      decode: string;
-      decoded: string;
-    };
     base64Codec: {
       title: string;
       subtitle: string;
@@ -474,19 +423,6 @@ export interface Translations {
       flagsLabel: string;
       matchCount: (n: number) => string;
     };
-    sqlFormatter: {
-      title: string;
-      subtitle: string;
-      back: string;
-      inputLabel: string;
-      inputPlaceholder: string;
-      outputLabel: string;
-      format: string;
-      formatted: string;
-      copy: string;
-      dialectLabel: string;
-      uppercase: string;
-    };
     jsonFormatter: {
       title: string;
       subtitle: string;
@@ -503,30 +439,6 @@ export interface Translations {
       invalidJson: string;
       diffOnly: string;
     };
-    markdownPreview: {
-      title: string;
-      subtitle: string;
-      back: string;
-      inputLabel: string;
-      inputPlaceholder: string;
-      previewLabel: string;
-      splitView: string;
-      copy: string;
-    };
-    passwordGenerator: {
-      title: string;
-      subtitle: string;
-      back: string;
-      lengthLabel: string;
-      uppercase: string;
-      lowercase: string;
-      numbers: string;
-      symbols: string;
-      generate: string;
-      generated: string;
-      copied: string;
-      copy: string;
-    };
     timestampConverter: {
       title: string;
       subtitle: string;
@@ -540,19 +452,6 @@ export interface Translations {
       invalidTimestamp: string;
       local: string;
       utc: string;
-    };
-    clipboardHistory: {
-      title: string;
-      subtitle: string;
-      back: string;
-      clear: string;
-      empty: string;
-      copied: string;
-      copy: string;
-      delete: string;
-      textType: string;
-      imageType: string;
-      unknownType: string;
     };
     qrCodeGenerator: {
       title: string;
@@ -580,57 +479,6 @@ export interface Translations {
       statusLabel: string;
       timeLabel: string;
       copyResponse: string;
-    };
-    portScanner: {
-      title: string;
-      subtitle: string;
-      back: string;
-      hostLabel: string;
-      portRangeLabel: string;
-      scan: string;
-      scanning: string;
-      openPorts: string;
-      closedPorts: string;
-      portStatusOpen: string;
-      portStatusClosed: string;
-    };
-    imageCompressor: {
-      title: string;
-      subtitle: string;
-      back: string;
-      upload: string;
-      qualityLabel: string;
-      formatLabel: string;
-      compress: string;
-      compressed: string;
-      download: string;
-      originalSize: string;
-      compressedSize: string;
-      compressionRatio: string;
-    };
-    colorPicker: {
-      title: string;
-      subtitle: string;
-      back: string;
-      pickLabel: string;
-      hexLabel: string;
-      rgbLabel: string;
-      hslLabel: string;
-      copy: string;
-      copied: string;
-    };
-    srtTool: {
-      title: string;
-      subtitle: string;
-      back: string;
-      inputLabel: string;
-      shiftLabel: string;
-      shiftForward: string;
-      shiftBackward: string;
-      apply: string;
-      download: string;
-      copy: string;
-      invalidSrt: string;
     };
   };
   rules: {
@@ -816,10 +664,6 @@ const en: Translations = {
         title: "Text Cleaner",
         description: "Remove unwanted formatting from text such as spaces, newlines, and tabs.",
       },
-      jwtDecoder: {
-        title: "JWT Decoder",
-        description: "Decode and inspect JSON Web Tokens to view header and payload contents.",
-      },
       base64Codec: {
         title: "Base64/URL/Hex Codec",
         description: "Encode and decode text using Base64, URL encoding, or Hex formats.",
@@ -828,29 +672,13 @@ const en: Translations = {
         title: "Regex Tester",
         description: "Test and debug regular expressions with real-time match highlighting.",
       },
-      sqlFormatter: {
-        title: "SQL Formatter",
-        description: "Format and beautify SQL queries with customizable dialect options.",
-      },
       jsonFormatter: {
         title: "JSON Formatter",
         description: "Format, minify, and compare JSON data with syntax highlighting.",
       },
-      markdownPreview: {
-        title: "Markdown Preview",
-        description: "Live preview of Markdown with GitHub Flavored Markdown support.",
-      },
-      passwordGenerator: {
-        title: "Password Generator",
-        description: "Generate secure passwords with customizable length and character sets.",
-      },
       timestampConverter: {
         title: "Timestamp Converter",
         description: "Convert between Unix timestamps and human-readable dates.",
-      },
-      clipboardHistory: {
-        title: "Clipboard History",
-        description: "Track and manage clipboard history for quick access to copied items.",
       },
       qrCodeGenerator: {
         title: "QR Code Generator",
@@ -859,22 +687,6 @@ const en: Translations = {
       httpDebugger: {
         title: "HTTP Debugger",
         description: "Send HTTP requests and inspect responses for API testing.",
-      },
-      portScanner: {
-        title: "Port Scanner",
-        description: "Scan ports on a host to check which are open or closed.",
-      },
-      imageCompressor: {
-        title: "Image Compressor",
-        description: "Compress and convert images to reduce file size while maintaining quality.",
-      },
-      colorPicker: {
-        title: "Color Picker",
-        description: "Pick colors and convert between HEX, RGB, and HSL formats.",
-      },
-      srtTool: {
-        title: "SRT Subtitle Tool",
-        description: "Shift and adjust SRT subtitle timestamps for synchronization.",
       },
     },
   },
@@ -906,21 +718,6 @@ const en: Translations = {
       emptyInput: "Please enter some text",
       chars: "chars",
     },
-    jwtDecoder: {
-      title: "JWT Decoder",
-      subtitle: "Decode and inspect JSON Web Tokens",
-      back: "Back",
-      inputLabel: "JWT Token",
-      inputPlaceholder: "Paste your JWT token here...",
-      headerLabel: "Header",
-      payloadLabel: "Payload",
-      signatureLabel: "Signature",
-      invalidToken: "Invalid JWT token",
-      copyHeader: "Copy Header",
-      copyPayload: "Copy Payload",
-      decode: "Decode",
-      decoded: "Token decoded successfully",
-    },
     base64Codec: {
       title: "Base64/URL/Hex Codec",
       subtitle: "Encode and decode between different formats",
@@ -948,19 +745,6 @@ const en: Translations = {
       flagsLabel: "Flags",
       matchCount: (n: number) => `${n} match${n === 1 ? "" : "es"}`,
     },
-    sqlFormatter: {
-      title: "SQL Formatter",
-      subtitle: "Format and beautify SQL queries",
-      back: "Back",
-      inputLabel: "Input SQL",
-      inputPlaceholder: "Paste your SQL here...",
-      outputLabel: "Formatted SQL",
-      format: "Format",
-      formatted: "SQL formatted successfully",
-      copy: "Copy",
-      dialectLabel: "Dialect",
-      uppercase: "Uppercase Keywords",
-    },
     jsonFormatter: {
       title: "JSON Formatter",
       subtitle: "Format, minify, and compare JSON",
@@ -977,30 +761,6 @@ const en: Translations = {
       invalidJson: "Invalid JSON",
       diffOnly: "Show diff only",
     },
-    markdownPreview: {
-      title: "Markdown Preview",
-      subtitle: "Live preview of Markdown content",
-      back: "Back",
-      inputLabel: "Markdown",
-      inputPlaceholder: "Type or paste Markdown here...",
-      previewLabel: "Preview",
-      splitView: "Split View",
-      copy: "Copy Markdown",
-    },
-    passwordGenerator: {
-      title: "Password Generator",
-      subtitle: "Generate secure passwords",
-      back: "Back",
-      lengthLabel: "Length",
-      uppercase: "Uppercase (A-Z)",
-      lowercase: "Lowercase (a-z)",
-      numbers: "Numbers (0-9)",
-      symbols: "Symbols (!@#$%)",
-      generate: "Generate",
-      generated: "Password generated",
-      copied: "Password copied",
-      copy: "Copy",
-    },
     timestampConverter: {
       title: "Timestamp Converter",
       subtitle: "Convert between timestamps and dates",
@@ -1014,19 +774,6 @@ const en: Translations = {
       invalidTimestamp: "Invalid timestamp",
       local: "Local",
       utc: "UTC",
-    },
-    clipboardHistory: {
-      title: "Clipboard History",
-      subtitle: "Track and manage clipboard items",
-      back: "Back",
-      clear: "Clear History",
-      empty: "No clipboard history",
-      copied: "Copied to clipboard",
-      copy: "Copy",
-      delete: "Delete",
-      textType: "Text",
-      imageType: "Image",
-      unknownType: "Unknown",
     },
     qrCodeGenerator: {
       title: "QR Code Generator",
@@ -1054,57 +801,6 @@ const en: Translations = {
       statusLabel: "Status",
       timeLabel: "Time",
       copyResponse: "Copy Response",
-    },
-    portScanner: {
-      title: "Port Scanner",
-      subtitle: "Scan ports on a host",
-      back: "Back",
-      hostLabel: "Host",
-      portRangeLabel: "Port Range",
-      scan: "Scan",
-      scanning: "Scanning...",
-      openPorts: "Open Ports",
-      closedPorts: "Closed",
-      portStatusOpen: "Open",
-      portStatusClosed: "Closed",
-    },
-    imageCompressor: {
-      title: "Image Compressor",
-      subtitle: "Compress and convert images",
-      back: "Back",
-      upload: "Upload Image",
-      qualityLabel: "Quality",
-      formatLabel: "Format",
-      compress: "Compress",
-      compressed: "Image compressed",
-      download: "Download",
-      originalSize: "Original",
-      compressedSize: "Compressed",
-      compressionRatio: "Ratio",
-    },
-    colorPicker: {
-      title: "Color Picker",
-      subtitle: "Pick and convert colors",
-      back: "Back",
-      pickLabel: "Pick Color",
-      hexLabel: "HEX",
-      rgbLabel: "RGB",
-      hslLabel: "HSL",
-      copy: "Copy",
-      copied: "Copied",
-    },
-    srtTool: {
-      title: "SRT Subtitle Tool",
-      subtitle: "Adjust subtitle timestamps",
-      back: "Back",
-      inputLabel: "SRT Content",
-      shiftLabel: "Shift (ms)",
-      shiftForward: "Forward",
-      shiftBackward: "Backward",
-      apply: "Apply",
-      download: "Download",
-      copy: "Copy",
-      invalidSrt: "Invalid SRT format",
     },
   },
   channels: {
@@ -1509,10 +1205,6 @@ const zh: Translations = {
         title: "文本格式化",
         description: "去除文本中的空格、换行、制表符等不需要的格式。",
       },
-      jwtDecoder: {
-        title: "JWT 解码器",
-        description: "解码和查看 JSON Web Token 的头部和载荷内容。",
-      },
       base64Codec: {
         title: "Base64/URL/Hex 编解码",
         description: "使用 Base64、URL 编码或 Hex 格式对文本进行编码和解码。",
@@ -1521,29 +1213,13 @@ const zh: Translations = {
         title: "正则表达式测试器",
         description: "测试和调试正则表达式，实时高亮匹配结果。",
       },
-      sqlFormatter: {
-        title: "SQL 格式化",
-        description: "美化和格式化 SQL 查询语句，支持多种方言。",
-      },
       jsonFormatter: {
         title: "JSON 格式化",
         description: "格式化、压缩和对比 JSON 数据，支持语法高亮。",
       },
-      markdownPreview: {
-        title: "Markdown 预览",
-        description: "实时预览 Markdown 内容，支持 GitHub 风格 Markdown。",
-      },
-      passwordGenerator: {
-        title: "密码生成器",
-        description: "生成安全的随机密码，可自定义长度和字符集。",
-      },
       timestampConverter: {
         title: "时间戳转换",
         description: "在 Unix 时间戳和人类可读的日期格式之间转换。",
-      },
-      clipboardHistory: {
-        title: "剪贴板历史",
-        description: "追踪和管理剪贴板历史，快速访问复制过的内容。",
       },
       qrCodeGenerator: {
         title: "二维码生成器",
@@ -1552,22 +1228,6 @@ const zh: Translations = {
       httpDebugger: {
         title: "HTTP 调试器",
         description: "发送 HTTP 请求并检查响应，用于 API 测试。",
-      },
-      portScanner: {
-        title: "端口扫描器",
-        description: "扫描主机端口，检查哪些端口是开放或关闭的。",
-      },
-      imageCompressor: {
-        title: "图片压缩",
-        description: "压缩和转换图片格式，在保持质量的同时减小文件大小。",
-      },
-      colorPicker: {
-        title: "取色器",
-        description: "选取颜色并在 HEX、RGB、HSL 格式之间转换。",
-      },
-      srtTool: {
-        title: "SRT 字幕工具",
-        description: "调整 SRT 字幕时间戳，用于同步字幕。",
       },
     },
   },
@@ -1599,21 +1259,6 @@ const zh: Translations = {
       emptyInput: "请输入文本",
       chars: "字符",
     },
-    jwtDecoder: {
-      title: "JWT 解码器",
-      subtitle: "解码和查看 JSON Web Token",
-      back: "返回",
-      inputLabel: "JWT Token",
-      inputPlaceholder: "在此粘贴 JWT Token...",
-      headerLabel: "头部",
-      payloadLabel: "载荷",
-      signatureLabel: "签名",
-      invalidToken: "无效的 JWT Token",
-      copyHeader: "复制头部",
-      copyPayload: "复制载荷",
-      decode: "解码",
-      decoded: "Token 解码成功",
-    },
     base64Codec: {
       title: "Base64/URL/Hex 编解码",
       subtitle: "在不同格式之间编码和解码",
@@ -1641,19 +1286,6 @@ const zh: Translations = {
       flagsLabel: "标志",
       matchCount: (n: number) => `${n} 个匹配`,
     },
-    sqlFormatter: {
-      title: "SQL 格式化",
-      subtitle: "美化和格式化 SQL 查询",
-      back: "返回",
-      inputLabel: "输入 SQL",
-      inputPlaceholder: "在此粘贴 SQL...",
-      outputLabel: "格式化 SQL",
-      format: "格式化",
-      formatted: "SQL 格式化成功",
-      copy: "复制",
-      dialectLabel: "方言",
-      uppercase: "关键字大写",
-    },
     jsonFormatter: {
       title: "JSON 格式化",
       subtitle: "格式化、压缩和对比 JSON",
@@ -1670,30 +1302,6 @@ const zh: Translations = {
       invalidJson: "无效的 JSON",
       diffOnly: "仅显示差异",
     },
-    markdownPreview: {
-      title: "Markdown 预览",
-      subtitle: "实时预览 Markdown 内容",
-      back: "返回",
-      inputLabel: "Markdown",
-      inputPlaceholder: "在此输入或粘贴 Markdown...",
-      previewLabel: "预览",
-      splitView: "分屏视图",
-      copy: "复制 Markdown",
-    },
-    passwordGenerator: {
-      title: "密码生成器",
-      subtitle: "生成安全的随机密码",
-      back: "返回",
-      lengthLabel: "长度",
-      uppercase: "大写字母 (A-Z)",
-      lowercase: "小写字母 (a-z)",
-      numbers: "数字 (0-9)",
-      symbols: "符号 (!@#$%)",
-      generate: "生成",
-      generated: "密码已生成",
-      copied: "密码已复制",
-      copy: "复制",
-    },
     timestampConverter: {
       title: "时间戳转换",
       subtitle: "在时间戳和日期格式之间转换",
@@ -1707,19 +1315,6 @@ const zh: Translations = {
       invalidTimestamp: "无效的时间戳",
       local: "本地时间",
       utc: "UTC",
-    },
-    clipboardHistory: {
-      title: "剪贴板历史",
-      subtitle: "追踪和管理剪贴板内容",
-      back: "返回",
-      clear: "清空历史",
-      empty: "暂无剪贴板历史",
-      copied: "已复制到剪贴板",
-      copy: "复制",
-      delete: "删除",
-      textType: "文本",
-      imageType: "图片",
-      unknownType: "未知",
     },
     qrCodeGenerator: {
       title: "二维码生成器",
@@ -1747,57 +1342,6 @@ const zh: Translations = {
       statusLabel: "状态码",
       timeLabel: "耗时",
       copyResponse: "复制响应",
-    },
-    portScanner: {
-      title: "端口扫描器",
-      subtitle: "扫描主机端口状态",
-      back: "返回",
-      hostLabel: "主机",
-      portRangeLabel: "端口范围",
-      scan: "扫描",
-      scanning: "扫描中...",
-      openPorts: "开放端口",
-      closedPorts: "已关闭",
-      portStatusOpen: "开放",
-      portStatusClosed: "关闭",
-    },
-    imageCompressor: {
-      title: "图片压缩",
-      subtitle: "压缩和转换图片格式",
-      back: "返回",
-      upload: "上传图片",
-      qualityLabel: "质量",
-      formatLabel: "格式",
-      compress: "压缩",
-      compressed: "图片已压缩",
-      download: "下载",
-      originalSize: "原始大小",
-      compressedSize: "压缩后",
-      compressionRatio: "压缩率",
-    },
-    colorPicker: {
-      title: "取色器",
-      subtitle: "选取和转换颜色",
-      back: "返回",
-      pickLabel: "选取颜色",
-      hexLabel: "HEX",
-      rgbLabel: "RGB",
-      hslLabel: "HSL",
-      copy: "复制",
-      copied: "已复制",
-    },
-    srtTool: {
-      title: "SRT 字幕工具",
-      subtitle: "调整字幕时间戳",
-      back: "返回",
-      inputLabel: "SRT 内容",
-      shiftLabel: "偏移 (毫秒)",
-      shiftForward: "向后",
-      shiftBackward: "向前",
-      apply: "应用",
-      download: "下载",
-      copy: "复制",
-      invalidSrt: "无效的 SRT 格式",
     },
   },
   channels: {
