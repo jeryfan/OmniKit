@@ -1,13 +1,22 @@
 import { useState, useCallback } from "react";
-import { ArrowLeft, Eraser, Copy, Check, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, Eraser, Copy, Check, X, Space, AlignLeft, ArrowRightFromLine, Indent, Minimize2, Settings2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { PageHeader } from "@/components/page-header";
 import { useLanguage } from "@/lib/i18n";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+// Option item type definition
+interface OptionItem {
+  id: string;
+  label: string;
+  desc: string;
+  icon: React.ReactNode;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
 
 export default function TextCleaner() {
   const navigate = useNavigate();
@@ -15,6 +24,7 @@ export default function TextCleaner() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"input" | "output">("input");
 
   // Options
   const [removeSpaces, setRemoveSpaces] = useState(true);
@@ -25,8 +35,6 @@ export default function TextCleaner() {
 
   // Master switch state - computed from all options
   const allSelected = removeSpaces && removeNewlines && removeTabs && trimLines && removeExtraSpaces;
-  const noneSelected = !removeSpaces && !removeNewlines && !removeTabs && !trimLines && !removeExtraSpaces;
-  const removeAll = allSelected;
 
   const handleRemoveAll = useCallback((checked: boolean) => {
     setRemoveSpaces(checked);
@@ -44,35 +52,27 @@ export default function TextCleaner() {
 
     let result = input;
 
-    // Trim each line first if enabled
     if (trimLines) {
       result = result
         .split("\n")
         .map((line) => line.trim())
         .join("\n");
     }
-
-    // Remove tabs
     if (removeTabs) {
       result = result.replace(/\t/g, "");
     }
-
-    // Remove newlines
     if (removeNewlines) {
       result = result.replace(/\r?\n/g, "");
     }
-
-    // Remove extra spaces (multiple spaces become one)
     if (removeExtraSpaces) {
       result = result.replace(/ +/g, " ");
     }
-
-    // Remove all spaces
     if (removeSpaces) {
       result = result.replace(/ /g, "");
     }
 
     setOutput(result);
+    setActiveTab("output");
     toast.success(t.tools.textCleaner.processed);
   }, [input, removeSpaces, removeNewlines, removeTabs, trimLines, removeExtraSpaces, t]);
 
@@ -93,188 +93,255 @@ export default function TextCleaner() {
     setOutput("");
   }, []);
 
-  return (
-    <div className="flex h-full flex-col">
-      <PageHeader
-        title={t.tools.textCleaner.title}
-        description={t.tools.textCleaner.subtitle}
-        actions={
-          <Button variant="outline" size="sm" onClick={() => navigate("/toolbox")}>
-            <ArrowLeft className="mr-1.5 h-4 w-4" />
-            {t.tools.textCleaner.back}
-          </Button>
-        }
-      />
+  const options: OptionItem[] = [
+    {
+      id: "remove-spaces",
+      label: t.tools.textCleaner.removeSpaces,
+      desc: "移除所有空格字符",
+      icon: <Space className="h-4 w-4" />,
+      checked: removeSpaces,
+      onChange: setRemoveSpaces,
+    },
+    {
+      id: "remove-newlines",
+      label: t.tools.textCleaner.removeNewlines,
+      desc: "移除所有换行符",
+      icon: <ArrowRightFromLine className="h-4 w-4" />,
+      checked: removeNewlines,
+      onChange: setRemoveNewlines,
+    },
+    {
+      id: "remove-tabs",
+      label: t.tools.textCleaner.removeTabs,
+      desc: "移除所有 Tab 字符",
+      icon: <Indent className="h-4 w-4" />,
+      checked: removeTabs,
+      onChange: setRemoveTabs,
+    },
+    {
+      id: "trim-lines",
+      label: t.tools.textCleaner.trimLines,
+      desc: "去除每行首尾空白",
+      icon: <AlignLeft className="h-4 w-4" />,
+      checked: trimLines,
+      onChange: setTrimLines,
+    },
+    {
+      id: "remove-extra-spaces",
+      label: t.tools.textCleaner.removeExtraSpaces,
+      desc: "合并多个连续空格",
+      icon: <Minimize2 className="h-4 w-4" />,
+      checked: removeExtraSpaces,
+      onChange: setRemoveExtraSpaces,
+    },
+  ];
 
-      <div className="flex-1 overflow-auto p-6">
-        {/* Options - Moved to top */}
-        <div className="mb-6 rounded-lg border bg-card p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-4 w-4 text-primary" />
+  return (
+    <div className="flex h-full flex-col min-h-0">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full hover:bg-muted" 
+          onClick={() => navigate("/toolbox")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-xl font-semibold">{t.tools.textCleaner.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.tools.textCleaner.subtitle}</p>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-h-0 bg-muted/30 rounded-2xl border overflow-hidden">
+        {/* Toolbar with Tabs */}
+        <div className="flex items-center justify-between px-4 h-12 border-b bg-background">
+          <div className="flex items-center gap-1">
+            <TabButton 
+              active={activeTab === "input"} 
+              onClick={() => setActiveTab("input")}
+              label={t.tools.textCleaner.inputLabel}
+              count={input.length}
+            />
+            <TabButton 
+              active={activeTab === "output"} 
+              onClick={() => setActiveTab("output")}
+              label={t.tools.textCleaner.outputLabel}
+              count={output.length}
+              showCount={output.length > 0}
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            {activeTab === "input" ? (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={handleClear}
+                  disabled={!input && !output}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={processText}
+                  disabled={!input.trim()}
+                  size="sm"
+                  className="h-8 px-3 gap-1.5"
+                >
+                  <Eraser className="h-3.5 w-3.5" />
+                  {t.tools.textCleaner.process}
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-3 gap-1.5"
+                onClick={handleCopy}
+                disabled={!output}
+              >
+                {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? t.common.copied : t.common.copy}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Editor Area */}
+        <div className="flex-1 min-h-0 p-4">
+          {activeTab === "input" ? (
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t.tools.textCleaner.inputPlaceholder}
+              className="h-full w-full resize-none font-mono text-sm border-0 bg-transparent focus-visible:ring-0 p-0 shadow-none"
+              autoFocus
+            />
+          ) : (
+            <Textarea
+              value={output}
+              readOnly
+              placeholder={t.tools.textCleaner.outputPlaceholder}
+              className="h-full w-full resize-none font-mono text-sm border-0 bg-transparent focus-visible:ring-0 p-0 shadow-none"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Options Panel */}
+      <div className="mt-4 space-y-3">
+        {/* Options Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Settings2 className="h-4 w-4" />
             <span className="text-sm font-medium">{t.tools.textCleaner.options}</span>
           </div>
-
-          {/* Master Switch - Remove All */}
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-primary/5 border border-primary/20 p-4">
-            <div className="space-y-0.5">
-              <Label htmlFor="remove-all" className="text-sm font-semibold text-primary">
-                {t.tools.textCleaner.removeAll}
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                {t.tools.textCleaner.removeAllDesc}
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">{t.tools.textCleaner.removeAll}</span>
             <Switch
-              id="remove-all"
-              checked={removeAll}
+              checked={allSelected}
               onCheckedChange={handleRemoveAll}
             />
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="flex items-center justify-between space-x-2 rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="remove-spaces" className="text-sm">
-                  {t.tools.textCleaner.removeSpaces}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t.tools.textCleaner.removeSpacesDesc}
-                </p>
-              </div>
-              <Switch
-                id="remove-spaces"
-                checked={removeSpaces}
-                onCheckedChange={setRemoveSpaces}
-              />
-            </div>
-
-            <div className="flex items-center justify-between space-x-2 rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="remove-newlines" className="text-sm">
-                  {t.tools.textCleaner.removeNewlines}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t.tools.textCleaner.removeNewlinesDesc}
-                </p>
-              </div>
-              <Switch
-                id="remove-newlines"
-                checked={removeNewlines}
-                onCheckedChange={setRemoveNewlines}
-              />
-            </div>
-
-            <div className="flex items-center justify-between space-x-2 rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="remove-tabs" className="text-sm">
-                  {t.tools.textCleaner.removeTabs}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t.tools.textCleaner.removeTabsDesc}
-                </p>
-              </div>
-              <Switch
-                id="remove-tabs"
-                checked={removeTabs}
-                onCheckedChange={setRemoveTabs}
-              />
-            </div>
-
-            <div className="flex items-center justify-between space-x-2 rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="trim-lines" className="text-sm">
-                  {t.tools.textCleaner.trimLines}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t.tools.textCleaner.trimLinesDesc}
-                </p>
-              </div>
-              <Switch
-                id="trim-lines"
-                checked={trimLines}
-                onCheckedChange={setTrimLines}
-              />
-            </div>
-
-            <div className="flex items-center justify-between space-x-2 rounded-lg border p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="remove-extra-spaces" className="text-sm">
-                  {t.tools.textCleaner.removeExtraSpaces}
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  {t.tools.textCleaner.removeExtraSpacesDesc}
-                </p>
-              </div>
-              <Switch
-                id="remove-extra-spaces"
-                checked={removeExtraSpaces}
-                onCheckedChange={setRemoveExtraSpaces}
-              />
-            </div>
-          </div>
-
-          <Button
-            className="mt-4 w-full"
-            onClick={processText}
-            disabled={!input.trim()}
-          >
-            <Eraser className="mr-1.5 h-4 w-4" />
-            {t.tools.textCleaner.process}
-          </Button>
         </div>
 
-        {/* Input Section - Full width */}
-        <div className="mb-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">
-              {t.tools.textCleaner.inputLabel}
-            </Label>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleClear}
-              disabled={!input && !output}
-            >
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-              {t.tools.textCleaner.clear}
-            </Button>
-          </div>
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t.tools.textCleaner.inputPlaceholder}
-            className="min-h-[120px] resize-none font-mono text-sm border-input transition-colors focus-visible:ring-0 focus-visible:border-ring"
-          />
-        </div>
-
-        {/* Output Section - Full width */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">
-              {t.tools.textCleaner.outputLabel}
-            </Label>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleCopy}
-              disabled={!output}
-            >
-              {copied ? (
-                <Check className="mr-1.5 h-3.5 w-3.5" />
-              ) : (
-                <Copy className="mr-1.5 h-3.5 w-3.5" />
-              )}
-              {copied ? t.common.copied : t.common.copy}
-            </Button>
-          </div>
-          <Textarea
-            value={output}
-            readOnly
-            placeholder={t.tools.textCleaner.outputPlaceholder}
-            className="min-h-[120px] resize-none font-mono text-sm bg-muted/30 focus-visible:ring-0"
-          />
+        {/* Options Grid */}
+        <div className="grid grid-cols-5 gap-2">
+          {options.map((option) => (
+            <OptionItem
+              key={option.id}
+              id={option.id}
+              label={option.label}
+              desc={option.desc}
+              icon={option.icon}
+              checked={option.checked}
+              onCheckedChange={option.onChange}
+            />
+          ))}
         </div>
       </div>
     </div>
+  );
+}
+
+// Tab Button Component
+interface TabButtonProps {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
+  showCount?: boolean;
+}
+
+function TabButton({ active, onClick, label, count, showCount = true }: TabButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+        active 
+          ? "bg-primary text-primary-foreground" 
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <span>{label}</span>
+      {showCount && (
+        <span className={cn(
+          "text-xs px-1.5 py-0.5 rounded-full",
+          active ? "bg-primary-foreground/20" : "bg-muted"
+        )}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
+// Option Item Component
+interface OptionItemProps {
+  id: string;
+  label: string;
+  desc: string;
+  icon: React.ReactNode;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+function OptionItem({ id, label, desc, icon, checked, onCheckedChange }: OptionItemProps) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200",
+        checked
+          ? "border-primary/50 bg-primary/5"
+          : "border-border bg-background hover:border-muted-foreground/30 hover:bg-accent/30"
+      )}
+    >
+      <div className={cn(
+        "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+        checked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+      )}>
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className={cn(
+          "text-sm font-medium truncate",
+          checked ? "text-primary" : "text-foreground"
+        )}>
+          {label}
+        </div>
+        <div className="text-xs text-muted-foreground truncate">{desc}</div>
+      </div>
+      <Switch
+        id={id}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="sr-only"
+      />
+    </label>
   );
 }
