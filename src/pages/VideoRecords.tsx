@@ -389,7 +389,7 @@ export default function VideoRecords() {
   );
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col p-1.5">
       <PageHeader
         title={t.videoRecords.title}
         description={t.videoRecords.subtitle}

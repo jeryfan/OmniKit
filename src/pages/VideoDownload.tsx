@@ -223,7 +223,7 @@ export default function VideoDownload() {
   }, [videoInfo, selectedFormat, serverPort]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col p-1.5">
       <PageHeader
         title={t.videoDownload.title}
         description={t.videoDownload.subtitle}

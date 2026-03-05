@@ -119,9 +119,9 @@ export default function QrCodeGenerator() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col min-h-0">
+    <div className="flex h-full flex-col min-h-0 p-1.5">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -167,7 +167,7 @@ export default function QrCodeGenerator() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 min-h-0 p-1.5 overflow-auto">
+        <div className="flex-1 min-h-0 p-4 overflow-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 h-full">
             {/* Input Area */}
             <div className="flex flex-col">

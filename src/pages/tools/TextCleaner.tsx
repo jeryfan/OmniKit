@@ -137,9 +137,9 @@ export default function TextCleaner() {
   ];
 
   return (
-    <div className="flex h-full flex-col min-h-0">
+    <div className="flex h-full flex-col min-h-0 p-1.5">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -155,7 +155,7 @@ export default function TextCleaner() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-0 bg-muted/30 rounded-2xl border overflow-hidden">
+      <div className="flex-1 flex flex-col min-h-0 bg-muted/30 rounded-2xl border overflow-hidden p-4">
         {/* Toolbar with Tabs */}
         <div className="flex items-center justify-between px-4 h-12 border-b bg-background">
           <div className="flex items-center gap-1">
@@ -211,7 +211,7 @@ export default function TextCleaner() {
         </div>
 
         {/* Editor Area */}
-        <div className="flex-1 min-h-0 p-4">
+        <div className="flex-1 min-h-0">
           {activeTab === "input" ? (
             <Textarea
               value={input}

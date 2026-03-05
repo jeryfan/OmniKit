@@ -109,9 +109,9 @@ export default function RegexTester() {
   };
 
   return (
-    <div className="flex h-full flex-col min-h-0">
+    <div className="flex h-full flex-col min-h-0 p-1.5">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -127,7 +127,7 @@ export default function RegexTester() {
       </div>
 
       {/* Pattern Input */}
-      <div className="bg-muted/30 rounded-2xl border overflow-hidden mb-4">
+      <div className="bg-muted/30 rounded-2xl border overflow-hidden">
         <div className="flex items-center justify-between px-4 h-12 border-b bg-background">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Regex className="h-4 w-4" />
@@ -173,8 +173,8 @@ export default function RegexTester() {
       </div>
 
       {/* Main Content - Test Text & Results */}
-      <div className="flex-1 flex flex-col min-h-0 bg-muted/30 rounded-2xl border overflow-hidden">
-        <div className="flex items-center justify-between px-4 h-12 border-b bg-background">
+      <div className="flex-1 flex flex-col min-h-0 bg-muted/30 rounded-2xl border overflow-hidden p-4">
+        <div className="flex items-center justify-between px-4 h-12 border-b bg-background -mx-4 -mt-4 mb-4">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span className="text-sm font-medium">{t.tools.regexTester.testTextLabel}</span>
             {matches.length > 0 && (
@@ -184,7 +184,7 @@ export default function RegexTester() {
             )}
           </div>
         </div>
-        <div className="flex-1 min-h-0 p-4">
+        <div className="flex-1 min-h-0">
           <Textarea
             value={testText}
             onChange={(e) => setTestText(e.target.value)}
@@ -193,12 +193,12 @@ export default function RegexTester() {
           />
         </div>
         {error && (
-          <div className="px-4 py-2 text-sm text-red-500 border-t bg-red-50 dark:bg-red-950/20">
+          <div className="px-4 py-2 text-sm text-red-500 border-t bg-red-50 dark:bg-red-950/20 -mx-4">
             {error}
           </div>
         )}
         {matches.length > 0 && (
-          <div className="flex-1 min-h-0 border-t p-4 bg-background overflow-auto">
+          <div className="flex-1 min-h-0 border-t p-4 bg-background overflow-auto -mx-4">
             <div className="text-sm font-medium mb-2 text-muted-foreground">{t.tools.regexTester.matches}</div>
             <div className="p-3 bg-muted rounded-lg font-mono text-sm whitespace-pre-wrap">
               {highlightedText || <span className="text-muted-foreground">{testText}</span>}

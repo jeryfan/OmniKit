@@ -92,9 +92,9 @@ export default function TimestampConverter() {
   }, []);
 
   return (
-    <div className="flex h-full flex-col min-h-0">
+    <div className="flex h-full flex-col min-h-0 p-1.5">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center gap-3">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -150,7 +150,7 @@ export default function TimestampConverter() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 min-h-0 p-1.5 space-y-3 overflow-auto">
+        <div className="flex-1 min-h-0 p-4 space-y-3 overflow-auto">
           {/* Timestamp Input */}
           <div className={cn("space-y-2", activeTab !== "timestamp" && "opacity-50")}>
             <label className="text-sm font-medium flex items-center gap-2">

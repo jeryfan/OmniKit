@@ -178,8 +178,7 @@ export default function UsageStats() {
   // =========================================================================
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="flex h-full flex-col p-1.5">
       <PageHeader
         title={t.usageStats.title}
         description={t.usageStats.subtitle}
@@ -200,6 +199,7 @@ export default function UsageStats() {
         }
       />
 
+      <div className="flex-1 overflow-auto p-1.5 space-y-4">
       {/* Error state */}
       {error && (
         <Card className="border-destructive/50 bg-destructive/5">
@@ -478,6 +478,7 @@ export default function UsageStats() {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }

@@ -127,9 +127,10 @@ export default function Settings() {
   const isServerOk = serverStatus?.status === "ok";
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
+    <div className="flex h-full flex-col p-1.5">
       <PageHeader title={t.settings.title} description={t.settings.subtitle} />
+
+      <div className="flex-1 overflow-auto p-1.5 space-y-3">
 
       {/* Server Configuration */}
       <Card className="card-elevated">
@@ -375,6 +376,7 @@ export default function Settings() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
