@@ -111,7 +111,7 @@ export default function RegexTester() {
   return (
     <div className="flex h-full flex-col min-h-0 p-2">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mb-3">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -155,7 +155,7 @@ export default function RegexTester() {
             </Button>
           </div>
         </div>
-        <div className="p-4 flex items-center gap-3">
+        <div className="p-4 flex items-center gap-3 mb-3">
           <span className="text-muted-foreground font-mono">/</span>
           <Input
             value={pattern}
@@ -205,7 +205,7 @@ export default function RegexTester() {
             </div>
             <div className="mt-3 space-y-1">
               {matches.map((match, i) => (
-                <div key={i} className="flex items-center gap-3 text-sm">
+                <div key={i} className="flex items-center gap-3 mb-3 text-sm">
                   <span className="text-xs text-muted-foreground w-8">#{i + 1}</span>
                   <code className="flex-1 font-mono bg-yellow-100 dark:bg-yellow-900/30 px-2 py-0.5 rounded">
                     {match.text}
@@ -260,7 +260,7 @@ function FlagOptionCard({ id, label, desc, checked, onCheckedChange }: FlagOptio
     <label
       htmlFor={id}
       className={cn(
-        "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200",
+        "flex items-center gap-3 mb-3 p-3 rounded-xl border cursor-pointer transition-all duration-200",
         checked
           ? "border-primary/50 bg-primary/5"
           : "border-border bg-background hover:border-muted-foreground/30 hover:bg-accent/30"

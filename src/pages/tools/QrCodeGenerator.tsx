@@ -121,7 +121,7 @@ export default function QrCodeGenerator() {
   return (
     <div className="flex h-full flex-col min-h-0 p-2">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mb-3">
         <Button 
           variant="ghost" 
           size="icon" 
@@ -266,7 +266,7 @@ function SizeOptionCard({ id, label, desc, checked, onCheckedChange }: SizeOptio
     <label
       htmlFor={id}
       className={cn(
-        "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200",
+        "flex items-center gap-3 mb-3 p-3 rounded-xl border cursor-pointer transition-all duration-200",
         checked
           ? "border-primary/50 bg-primary/5"
           : "border-border bg-background hover:border-muted-foreground/30 hover:bg-accent/30"

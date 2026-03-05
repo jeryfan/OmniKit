@@ -420,7 +420,7 @@ export default function Routes({ embedded }: RoutesProps) {
     }));
   }
 
-  const containerClass = embedded ? "p-2" : "container mx-auto p-2";
+  const containerClass = embedded ? "" : "container mx-auto p-4";
 
   return (
     <div className={containerClass}>

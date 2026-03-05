@@ -234,7 +234,7 @@ export default function VideoDownload() {
         }
       />
 
-      <div className="flex-1 overflow-auto p-2 space-y-3">
+      <div className="flex-1 overflow-auto space-y-3">
         {/* URL Input */}
         <div className="flex gap-2">
           <div className="relative flex-1">

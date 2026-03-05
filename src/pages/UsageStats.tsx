@@ -199,7 +199,7 @@ export default function UsageStats() {
         }
       />
 
-      <div className="flex-1 overflow-auto p-2 space-y-4">
+      <div className="flex-1 overflow-auto space-y-4">
       {/* Error state */}
       {error && (
         <Card className="border-destructive/50 bg-destructive/5">
