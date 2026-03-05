@@ -218,7 +218,7 @@ export default function UsageStats() {
         ) : (
           <>
             <Card className="card-elevated transition-shadow duration-200 hover:shadow-md">
-              <CardContent className="p-6">
+              <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-[13px] font-medium text-muted-foreground">{t.usageStats.totalRequests}</p>
@@ -237,7 +237,7 @@ export default function UsageStats() {
             </Card>
 
             <Card className="card-elevated transition-shadow duration-200 hover:shadow-md">
-              <CardContent className="p-6">
+              <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-[13px] font-medium text-muted-foreground">{t.usageStats.totalPromptTokens}</p>
@@ -256,7 +256,7 @@ export default function UsageStats() {
             </Card>
 
             <Card className="card-elevated transition-shadow duration-200 hover:shadow-md">
-              <CardContent className="p-6">
+              <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <p className="text-[13px] font-medium text-muted-foreground">{t.usageStats.totalCompletionTokens}</p>

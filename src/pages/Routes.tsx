@@ -491,14 +491,14 @@ export default function Routes({ embedded }: RoutesProps) {
         <DialogContent className="max-w-[960px] max-h-[88vh] flex flex-col p-0 gap-0 overflow-hidden">
 
           {/* Fixed header */}
-          <div className="px-6 py-4 border-b shrink-0">
+          <div className="px-3 py-2 border-b shrink-0">
             <DialogTitle className="text-[15px] font-semibold tracking-tight">
               {editingRoute ? "编辑路由" : "新建路由"}
             </DialogTitle>
           </div>
 
           {/* Route basics — fixed, does not scroll */}
-          <div className="px-6 py-5 border-b shrink-0 bg-muted/20">
+          <div className="px-3 py-2 border-b shrink-0 bg-muted/20">
             <p className="text-[10px] font-semibold tracking-[0.14em] uppercase text-muted-foreground mb-4">
               基本信息
             </p>
@@ -549,7 +549,7 @@ export default function Routes({ embedded }: RoutesProps) {
 
           {/* Targets — scrollable with custom thin scrollbar */}
           <div
-            className="flex-1 min-h-0 overflow-y-auto px-6 py-5
+            className="flex-1 min-h-0 overflow-y-auto px-3 py-2
               [&::-webkit-scrollbar]:w-[3px]
               [&::-webkit-scrollbar-track]:bg-transparent
               [&::-webkit-scrollbar-thumb]:bg-border
@@ -802,7 +802,7 @@ export default function Routes({ embedded }: RoutesProps) {
           </div>
 
           {/* Fixed footer */}
-          <div className="px-6 py-3.5 border-t shrink-0 flex items-center gap-4">
+          <div className="px-3 py-2 border-t shrink-0 flex items-center gap-4">
             <div className="flex-1 min-w-0">
               {formError && <p className="text-destructive text-sm truncate">{formError}</p>}
             </div>

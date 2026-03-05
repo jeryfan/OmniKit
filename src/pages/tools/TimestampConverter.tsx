@@ -150,7 +150,7 @@ export default function TimestampConverter() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 min-h-0 p-6 space-y-6 overflow-auto">
+        <div className="flex-1 min-h-0 p-1.5 space-y-3 overflow-auto">
           {/* Timestamp Input */}
           <div className={cn("space-y-2", activeTab !== "timestamp" && "opacity-50")}>
             <label className="text-sm font-medium flex items-center gap-2">

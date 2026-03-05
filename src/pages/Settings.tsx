@@ -127,7 +127,7 @@ export default function Settings() {
   const isServerOk = serverStatus?.status === "ok";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3">
       {/* Header */}
       <PageHeader title={t.settings.title} description={t.settings.subtitle} />
 
@@ -142,9 +142,9 @@ export default function Settings() {
             {t.settings.serverConfigDesc}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-3">
           {/* Server Config Grid */}
-          <div className="grid gap-6 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             {/* Server Port */}
             <div className="space-y-2">
               <label className="text-sm font-medium">

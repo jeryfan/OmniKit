@@ -167,8 +167,8 @@ export default function QrCodeGenerator() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 min-h-0 p-6 overflow-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+        <div className="flex-1 min-h-0 p-1.5 overflow-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 h-full">
             {/* Input Area */}
             <div className="flex flex-col">
               <Textarea
