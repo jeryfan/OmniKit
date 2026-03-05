@@ -125,7 +125,7 @@ export default function Base64Codec() {
   return (
     <div className="flex h-full flex-col min-h-0">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mb-3">
         <Button 
           variant="ghost" 
           size="icon" 
