@@ -1,249 +1,391 @@
 import { useState, useCallback } from "react";
-import { ArrowLeft, Copy, Check, Send, Trash2, Plus, X } from "lucide-react";
+import { ArrowLeft, Copy, Check, X, Globe, Send, Clock, Settings2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/page-header";
+import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/lib/i18n";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
-interface Header {
-  key: string;
-  value: string;
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "HEAD" | "OPTIONS";
+
+interface MethodOption {
+  id: HttpMethod;
+  label: string;
+  desc: string;
+  color: string;
+}
+
+interface HttpResponse {
+  status: number;
+  statusText: string;
+  headers: Record<string, string>;
+  body: string;
+  time: number;
 }
 
 export default function HttpDebugger() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [url, setUrl] = useState("");
-  const [method, setMethod] = useState("GET");
-  const [headers, setHeaders] = useState<Header[]>([{ key: "Content-Type", value: "application/json" }]);
+  const [method, setMethod] = useState<HttpMethod>("GET");
+  const [headers, setHeaders] = useState("");
   const [body, setBody] = useState("");
-  const [response, setResponse] = useState<{
-    status: number;
-    statusText: string;
-    headers: Record<string, string>;
-    data: unknown;
-    time: number;
-  } | null>(null);
+  const [response, setResponse] = useState<HttpResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"request" | "response">("request");
 
-  const addHeader = useCallback(() => {
-    setHeaders((prev) => [...prev, { key: "", value: "" }]);
-  }, []);
-
-  const removeHeader = useCallback((index: number) => {
-    setHeaders((prev) => prev.filter((_, i) => i !== index));
-  }, []);
-
-  const updateHeader = useCallback((index: number, field: keyof Header, value: string) => {
-    setHeaders((prev) =>
-      prev.map((h, i) => (i === index ? { ...h, [field]: value } : h))
-    );
-  }, []);
+  const methodOptions: MethodOption[] = [
+    { id: "GET", label: "GET", desc: "获取资源", color: "text-green-600 dark:text-green-400" },
+    { id: "POST", label: "POST", desc: "创建资源", color: "text-blue-600 dark:text-blue-400" },
+    { id: "PUT", label: "PUT", desc: "更新资源", color: "text-yellow-600 dark:text-yellow-400" },
+    { id: "DELETE", label: "DELETE", desc: "删除资源", color: "text-red-600 dark:text-red-400" },
+    { id: "PATCH", label: "PATCH", desc: "部分更新", color: "text-purple-600 dark:text-purple-400" },
+  ];
 
   const sendRequest = useCallback(async () => {
     if (!url) {
-      toast.error("Please enter a URL");
+      toast.error("请输入 URL");
       return;
     }
 
     setLoading(true);
-    const startTime = performance.now();
+    setResponse(null);
+    const startTime = Date.now();
 
     try {
-      const headerRecord: Record<string, string> = {};
-      headers.forEach((h) => {
-        if (h.key && h.value) {
-          headerRecord[h.key] = h.value;
-        }
-      });
-
-      const fetchOptions: {
-        method: string;
-        headers: Record<string, string>;
-        body?: string;
-      } = {
+      const requestInit: RequestInit = {
         method,
-        headers: headerRecord,
+        headers: headers ? JSON.parse(headers) : undefined,
+        body: body && method !== "GET" ? body : undefined,
       };
 
-      if (method !== "GET" && method !== "HEAD" && body) {
-        fetchOptions.body = body;
-      }
+      const res = await fetch(url, requestInit);
+      const responseHeaders: Record<string, string> = {};
+      res.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
 
-      const result = await fetch(url, fetchOptions);
-      const endTime = performance.now();
-
-      let responseData: unknown;
-      try {
-        responseData = await result.json();
-      } catch {
-        responseData = await result.text();
-      }
+      const responseBody = await res.text();
 
       setResponse({
-        status: result.status,
-        statusText: result.statusText || (result.status < 400 ? "OK" : "Error"),
-        headers: Object.fromEntries(result.headers.entries()),
-        data: responseData,
-        time: Math.round(endTime - startTime),
+        status: res.status,
+        statusText: res.statusText,
+        headers: responseHeaders,
+        body: responseBody,
+        time: Date.now() - startTime,
       });
-    } catch (error) {
-      const endTime = performance.now();
-      setResponse({
-        status: 0,
-        statusText: "Network Error",
-        headers: {},
-        data: { error: String(error) },
-        time: Math.round(endTime - startTime),
-      });
+      setActiveTab("response");
+    } catch (err) {
+      toast.error("请求失败: " + (err as Error).message);
     } finally {
       setLoading(false);
     }
   }, [url, method, headers, body]);
 
-  const handleCopyResponse = useCallback(async () => {
-    if (!response) return;
+  const handleCopy = useCallback(async (text: string) => {
     try {
-      await navigator.clipboard.writeText(JSON.stringify(response.data, null, 2));
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       toast.success(t.common.copied);
     } catch {
       toast.error(t.common.unknownError);
     }
-  }, [response, t]);
+  }, [t]);
 
   const handleClear = useCallback(() => {
     setUrl("");
+    setHeaders("");
     setBody("");
     setResponse(null);
-    setHeaders([{ key: "Content-Type", value: "application/json" }]);
   }, []);
+
+  const formatJson = (text: string) => {
+    try {
+      return JSON.stringify(JSON.parse(text), null, 2);
+    } catch {
+      return text;
+    }
+  };
 
   return (
     <div className="flex h-full flex-col min-h-0">
-      <PageHeader
-        title={t.tools.httpDebugger.title}
-        description={t.tools.httpDebugger.subtitle}
-        actions={
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => navigate("/toolbox")}>
-            <ArrowLeft className="h-4 w-4" />
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8 rounded-full hover:bg-muted" 
+          onClick={() => navigate("/toolbox")}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-xl font-semibold">{t.tools.httpDebugger.title}</h1>
+          <p className="text-sm text-muted-foreground">{t.tools.httpDebugger.subtitle}</p>
+        </div>
+      </div>
+
+      {/* URL Bar */}
+      <div className="bg-muted/30 rounded-2xl border overflow-hidden mb-4">
+        <div className="flex items-center gap-2 p-2 bg-background border-b">
+          <select
+            value={method}
+            onChange={(e) => setMethod(e.target.value as HttpMethod)}
+            className="h-9 px-3 rounded-lg border bg-muted font-mono text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            {methodOptions.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <Input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://api.example.com/data"
+            className="flex-1 font-mono text-sm"
+          />
+          <Button
+            onClick={sendRequest}
+            disabled={loading || !url}
+            size="sm"
+            className="h-9 px-4 gap-1.5"
+          >
+            <Send className="h-3.5 w-3.5" />
+            {loading ? "发送中..." : t.tools.httpDebugger.send}
           </Button>
-        }
-      />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={handleClear}
+            disabled={!url && !response}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
-      <div className="flex-1 flex flex-col min-h-0 py-6 gap-4">
-        {/* Request Section */}
-        <div className="rounded-xl border bg-card flex flex-col">
-          <div className="flex items-center gap-2 px-4 py-3 border-b">
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger className="w-28">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"].map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://api.example.com/data"
-              className="flex-1"
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-h-0 bg-muted/30 rounded-2xl border overflow-hidden">
+        {/* Toolbar with Tabs */}
+        <div className="flex items-center justify-between px-4 h-12 border-b bg-background">
+          <div className="flex items-center gap-1">
+            <TabButton 
+              active={activeTab === "request"} 
+              onClick={() => setActiveTab("request")}
+              label={t.tools.httpDebugger.bodyLabel}
+              showCount={false}
             />
-            <Button onClick={sendRequest} disabled={loading || !url}>
-              <Send className="mr-2 h-4 w-4" />
-              {loading ? "..." : t.tools.httpDebugger.send}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={handleClear} disabled={!url && !response}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <TabButton 
+              active={activeTab === "response"} 
+              onClick={() => setActiveTab("response")}
+              label={t.tools.httpDebugger.responseLabel}
+              showCount={false}
+            />
           </div>
-
-          <Tabs defaultValue="headers" className="flex-1 flex flex-col min-h-0">
-            <TabsList className="mx-4 mt-2">
-              <TabsTrigger value="headers">{t.tools.httpDebugger.headersLabel}</TabsTrigger>
-              <TabsTrigger value="body">{t.tools.httpDebugger.bodyLabel}</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="headers" className="flex-1 flex flex-col min-h-0 p-4 m-0 overflow-auto">
-              <div className="space-y-2">
-                {headers.map((header, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={t.channels.headerKey}
-                      value={header.key}
-                      onChange={(e) => updateHeader(index, "key", e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      placeholder={t.channels.headerValue}
-                      value={header.value}
-                      onChange={(e) => updateHeader(index, "value", e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button variant="ghost" size="icon" onClick={() => removeHeader(index)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={addHeader} className="w-full">
-                  <Plus className="mr-2 h-4 w-4" />
-                  {t.channels.addHeader}
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="body" className="flex-1 flex flex-col min-h-0 p-4 m-0">
-              <Textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder='{"key": "value"}'
-                className="h-full font-mono text-sm resize-none"
-              />
-            </TabsContent>
-          </Tabs>
+          {response && activeTab === "response" && (
+            <div className="flex items-center gap-2">
+              <span className={cn(
+                "text-sm font-medium",
+                response.status >= 200 && response.status < 300 ? "text-green-600" : "text-red-600"
+              )}>
+                {response.status} {response.statusText}
+              </span>
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {response.time}ms
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Response Section */}
-        {response ? (
-          <div className="rounded-xl border bg-card flex flex-col flex-1 min-h-0">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="flex items-center gap-4">
-                <span className="font-medium">{t.tools.httpDebugger.responseLabel}</span>
-                <span
-                  className={`text-sm px-2 py-1 rounded ${
-                    response.status < 400 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {response.status} {response.statusText}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {response.time}ms
-                </span>
+        {/* Content Area */}
+        <div className="flex-1 min-h-0 p-4">
+          {activeTab === "request" ? (
+            <div className="h-full space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                  <Globe className="h-4 w-4" />
+                  {t.tools.httpDebugger.headersLabel} (JSON)
+                </label>
+                <Textarea
+                  value={headers}
+                  onChange={(e) => setHeaders(e.target.value)}
+                  placeholder={`{\n  "Content-Type": "application/json",\n  "Authorization": "Bearer token"\n}`}
+                  className="h-24 resize-none font-mono text-sm border bg-background"
+                />
               </div>
-              <Button variant="ghost" size="sm" onClick={handleCopyResponse}>
-                {copied ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Copy className="mr-1.5 h-3.5 w-3.5" />}
-                {copied ? t.common.copied : t.tools.httpDebugger.copyResponse}
-              </Button>
+              <div className="space-y-2 flex-1 flex flex-col">
+                <label className="text-sm font-medium flex items-center gap-2 text-muted-foreground">
+                  <Send className="h-4 w-4" />
+                  {t.tools.httpDebugger.bodyLabel}
+                </label>
+                <Textarea
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder={`{\n  "key": "value"\n}`}
+                  className="flex-1 resize-none font-mono text-sm border bg-background"
+                  disabled={method === "GET" || method === "HEAD"}
+                />
+              </div>
             </div>
-            <div className="flex-1 p-4 overflow-auto">
-              <pre className="font-mono text-sm whitespace-pre-wrap">
-                {JSON.stringify(response.data, null, 2)}
-              </pre>
+          ) : (
+            <div className="h-full">
+              {response ? (
+                <div className="h-full space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        {t.tools.httpDebugger.headersLabel}
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => handleCopy(JSON.stringify(response.headers, null, 2))}
+                      >
+                        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                    <div className="bg-background border rounded-lg p-3 overflow-auto max-h-32">
+                      <pre className="text-xs font-mono">
+                        {JSON.stringify(response.headers, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                  <div className="space-y-2 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        {t.tools.httpDebugger.bodyLabel}
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2"
+                        onClick={() => handleCopy(response.body)}
+                      >
+                        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                      </Button>
+                    </div>
+                    <div className="flex-1 bg-background border rounded-lg p-3 overflow-auto">
+                      <pre className="text-xs font-mono whitespace-pre-wrap">
+                        {formatJson(response.body)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                  <Globe className="h-16 w-16 mb-2 opacity-30" />
+                  <p className="text-sm">发送请求查看响应</p>
+                </div>
+              )}
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Options Panel */}
+      <div className="mt-4 space-y-3">
+        {/* Options Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Settings2 className="h-4 w-4" />
+            <span className="text-sm font-medium">{t.tools.httpDebugger.methodLabel}</span>
           </div>
-        ) : null}
+        </div>
+
+        {/* Options Grid */}
+        <div className="grid grid-cols-5 gap-2">
+          {methodOptions.map((option) => (
+            <MethodOptionCard
+              key={option.id}
+              id={option.id}
+              label={option.label}
+              desc={option.desc}
+              color={option.color}
+              checked={method === option.id}
+              onCheckedChange={() => setMethod(option.id)}
+            />
+          ))}
+        </div>
       </div>
     </div>
+  );
+}
+
+// Tab Button Component
+interface TabButtonProps {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  showCount?: boolean;
+}
+
+function TabButton({ active, onClick, label }: TabButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all",
+        active 
+          ? "bg-primary text-primary-foreground" 
+          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <span>{label}</span>
+    </button>
+  );
+}
+
+// Method Option Card Component
+interface MethodOptionCardProps {
+  id: string;
+  label: string;
+  desc: string;
+  color: string;
+  checked: boolean;
+  onCheckedChange: () => void;
+}
+
+function MethodOptionCard({ id, label, desc, color, checked, onCheckedChange }: MethodOptionCardProps) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200",
+        checked
+          ? "border-primary/50 bg-primary/5"
+          : "border-border bg-background hover:border-muted-foreground/30 hover:bg-accent/30"
+      )}
+    >
+      <div className={cn(
+        "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-mono text-sm font-bold transition-colors",
+        checked ? "bg-primary text-primary-foreground" : "bg-muted " + color
+      )}>
+        {label.slice(0, 3)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className={cn(
+          "text-sm font-medium",
+          checked ? "text-primary" : "text-foreground"
+        )}>
+          {label}
+        </div>
+        <div className="text-xs text-muted-foreground truncate">{desc}</div>
+      </div>
+      <Switch
+        id={id}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+        className="sr-only"
+      />
+    </label>
   );
 }
