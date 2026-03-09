@@ -7,6 +7,7 @@ import {
   Clock,
   QrCode,
   Globe,
+  Shield,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -73,6 +74,13 @@ export default function ToolBox() {
       description: t.toolBox.tools.httpDebugger.description,
       icon: Globe,
       path: "/toolbox/http-debugger",
+    },
+    {
+      id: "jwt-decoder",
+      title: t.toolBox.tools.jwtDecoder.title,
+      description: t.toolBox.tools.jwtDecoder.description,
+      icon: Shield,
+      path: "/toolbox/jwt-decoder",
     },
   ];
 

@@ -13,6 +13,7 @@ import JsonFormatter from "@/pages/tools/JsonFormatter";
 import TimestampConverter from "@/pages/tools/TimestampConverter";
 import QrCodeGenerator from "@/pages/tools/QrCodeGenerator";
 import HttpDebugger from "@/pages/tools/HttpDebugger";
+import JwtDecoder from "@/pages/tools/JwtDecoder";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Route path="toolbox/timestamp-converter" element={<TimestampConverter />} />
           <Route path="toolbox/qr-code-generator" element={<QrCodeGenerator />} />
           <Route path="toolbox/http-debugger" element={<HttpDebugger />} />
+          <Route path="toolbox/jwt-decoder" element={<JwtDecoder />} />
         </Route>
       </Routes>
     </BrowserRouter>

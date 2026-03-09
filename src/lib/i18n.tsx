@@ -366,6 +366,10 @@ export interface Translations {
         title: string;
         description: string;
       };
+      jwtDecoder: {
+        title: string;
+        description: string;
+      };
     };
   };
   tools: {
@@ -479,6 +483,23 @@ export interface Translations {
       statusLabel: string;
       timeLabel: string;
       copyResponse: string;
+    };
+    jwtDecoder: {
+      title: string;
+      subtitle: string;
+      back: string;
+      inputLabel: string;
+      inputPlaceholder: string;
+      headerLabel: string;
+      payloadLabel: string;
+      signatureLabel: string;
+      valid: string;
+      expired: string;
+      expiresIn: string;
+      timingInfo: string;
+      issuedAt: string;
+      notBefore: string;
+      invalidToken: string;
     };
   };
   rules: {
@@ -688,6 +709,10 @@ const en: Translations = {
         title: "HTTP Debugger",
         description: "Send HTTP requests and inspect responses for API testing.",
       },
+      jwtDecoder: {
+        title: "JWT Decoder",
+        description: "Decode and inspect JSON Web Tokens, view payload, header, and verify signature.",
+      },
     },
   },
   tools: {
@@ -801,6 +826,23 @@ const en: Translations = {
       statusLabel: "Status",
       timeLabel: "Time",
       copyResponse: "Copy Response",
+    },
+    jwtDecoder: {
+      title: "JWT Decoder",
+      subtitle: "Decode and inspect JSON Web Tokens",
+      back: "Back",
+      inputLabel: "JWT Token",
+      inputPlaceholder: "Paste your JWT token here (eyJhbGciOiJ...)",
+      headerLabel: "Header",
+      payloadLabel: "Payload",
+      signatureLabel: "Signature",
+      valid: "Valid",
+      expired: "Expired",
+      expiresIn: "Expires in {time}",
+      timingInfo: "Timing Information",
+      issuedAt: "Issued At",
+      notBefore: "Not Before",
+      invalidToken: "Invalid JWT token format",
     },
   },
   channels: {
@@ -1229,6 +1271,10 @@ const zh: Translations = {
         title: "HTTP 调试器",
         description: "发送 HTTP 请求并检查响应，用于 API 测试。",
       },
+      jwtDecoder: {
+        title: "JWT 解码器",
+        description: "解码和检查 JSON Web Token，查看载荷、头部信息并验证签名。",
+      },
     },
   },
   tools: {
@@ -1342,6 +1388,23 @@ const zh: Translations = {
       statusLabel: "状态码",
       timeLabel: "耗时",
       copyResponse: "复制响应",
+    },
+    jwtDecoder: {
+      title: "JWT 解码器",
+      subtitle: "解码和检查 JSON Web Token",
+      back: "返回",
+      inputLabel: "JWT Token",
+      inputPlaceholder: "在此粘贴 JWT token (eyJhbGciOiJ...)",
+      headerLabel: "头部",
+      payloadLabel: "载荷",
+      signatureLabel: "签名",
+      valid: "有效",
+      expired: "已过期",
+      expiresIn: "{time} 后过期",
+      timingInfo: "时间信息",
+      issuedAt: "签发时间",
+      notBefore: "生效时间",
+      invalidToken: "无效的 JWT token 格式",
     },
   },
   channels: {
