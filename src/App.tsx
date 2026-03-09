@@ -18,6 +18,7 @@ import PortScanner from "@/pages/tools/PortScanner";
 import TextDiff from "@/pages/tools/TextDiff";
 import PasswordGenerator from "@/pages/tools/PasswordGenerator";
 import HashCalculator from "@/pages/tools/HashCalculator";
+import CronParser from "@/pages/tools/CronParser";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
           <Route path="toolbox/text-diff" element={<TextDiff />} />
           <Route path="toolbox/password-generator" element={<PasswordGenerator />} />
           <Route path="toolbox/hash-calculator" element={<HashCalculator />} />
+          <Route path="toolbox/cron-parser" element={<CronParser />} />
         </Route>
       </Routes>
     </BrowserRouter>

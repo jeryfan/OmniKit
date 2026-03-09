@@ -12,6 +12,7 @@ import {
   GitCompare,
   Lock,
   Hash,
+  Timer,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -113,6 +114,13 @@ export default function ToolBox() {
       description: t.toolBox.tools.hashCalculator.description,
       icon: Hash,
       path: "/toolbox/hash-calculator",
+    },
+    {
+      id: "cron-parser",
+      title: t.toolBox.tools.cronParser.title,
+      description: t.toolBox.tools.cronParser.description,
+      icon: Timer,
+      path: "/toolbox/cron-parser",
     },
   ];
 

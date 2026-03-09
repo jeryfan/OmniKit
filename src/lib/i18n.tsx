@@ -386,6 +386,10 @@ export interface Translations {
         title: string;
         description: string;
       };
+      cronParser: {
+        title: string;
+        description: string;
+      };
     };
   };
   tools: {
@@ -603,6 +607,18 @@ export interface Translations {
       results: string;
       fileUpload: string;
       match: string;
+    };
+    cronParser: {
+      title: string;
+      subtitle: string;
+      back: string;
+      expression: string;
+      description: string;
+      invalidFormat: string;
+      parseError: string;
+      parts: string;
+      presets: string;
+      nextExecutions: string;
     };
   };
   rules: {
@@ -832,6 +848,10 @@ const en: Translations = {
         title: "Hash Calculator",
         description: "Calculate MD5, SHA1, SHA256, SHA384, SHA512 hashes for text or files.",
       },
+      cronParser: {
+        title: "Cron Parser",
+        description: "Parse and validate cron expressions, preview next execution times.",
+      },
     },
   },
   tools: {
@@ -1049,6 +1069,18 @@ const en: Translations = {
       results: "Hash Results",
       fileUpload: "Upload File",
       match: "Match",
+    },
+    cronParser: {
+      title: "Cron Parser",
+      subtitle: "Parse and validate cron expressions",
+      back: "Back",
+      expression: "Cron Expression",
+      description: "Description",
+      invalidFormat: "Invalid cron format. Expected 5 parts: minute hour day month weekday",
+      parseError: "Error parsing cron expression",
+      parts: "Edit Parts",
+      presets: "Common Presets",
+      nextExecutions: "Next 5 Executions",
     },
   },
   channels: {
@@ -1497,6 +1529,10 @@ const zh: Translations = {
         title: "Hash 计算器",
         description: "计算文本或文件的 MD5、SHA1、SHA256、SHA384、SHA512 哈希值。",
       },
+      cronParser: {
+        title: "Cron 解析器",
+        description: "解析和验证 Cron 表达式，预览下次执行时间。",
+      },
     },
   },
   tools: {
@@ -1714,6 +1750,18 @@ const zh: Translations = {
       results: "哈希结果",
       fileUpload: "上传文件",
       match: "匹配",
+    },
+    cronParser: {
+      title: "Cron 解析器",
+      subtitle: "解析和验证 Cron 表达式",
+      back: "返回",
+      expression: "Cron 表达式",
+      description: "描述",
+      invalidFormat: "无效的 Cron 格式。需要 5 个部分：分 时 日 月 周",
+      parseError: "解析 Cron 表达式出错",
+      parts: "编辑部分",
+      presets: "常用预设",
+      nextExecutions: "接下来 5 次执行",
     },
   },
   channels: {
