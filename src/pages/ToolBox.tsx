@@ -10,6 +10,7 @@ import {
   Shield,
   Network,
   GitCompare,
+  Lock,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -97,6 +98,13 @@ export default function ToolBox() {
       description: t.toolBox.tools.textDiff.description,
       icon: GitCompare,
       path: "/toolbox/text-diff",
+    },
+    {
+      id: "password-generator",
+      title: t.toolBox.tools.passwordGenerator.title,
+      description: t.toolBox.tools.passwordGenerator.description,
+      icon: Lock,
+      path: "/toolbox/password-generator",
     },
   ];
 

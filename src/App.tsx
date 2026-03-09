@@ -16,6 +16,7 @@ import HttpDebugger from "@/pages/tools/HttpDebugger";
 import JwtDecoder from "@/pages/tools/JwtDecoder";
 import PortScanner from "@/pages/tools/PortScanner";
 import TextDiff from "@/pages/tools/TextDiff";
+import PasswordGenerator from "@/pages/tools/PasswordGenerator";
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
           <Route path="toolbox/jwt-decoder" element={<JwtDecoder />} />
           <Route path="toolbox/port-scanner" element={<PortScanner />} />
           <Route path="toolbox/text-diff" element={<TextDiff />} />
+          <Route path="toolbox/password-generator" element={<PasswordGenerator />} />
         </Route>
       </Routes>
     </BrowserRouter>

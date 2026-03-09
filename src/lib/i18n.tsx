@@ -378,6 +378,10 @@ export interface Translations {
         title: string;
         description: string;
       };
+      passwordGenerator: {
+        title: string;
+        description: string;
+      };
     };
   };
   tools: {
@@ -560,6 +564,30 @@ export interface Translations {
       noChanges: string;
       noDiff: string;
       exportSuccess: string;
+    };
+    passwordGenerator: {
+      title: string;
+      subtitle: string;
+      back: string;
+      generatedPassword: string;
+      regenerate: string;
+      strength: string;
+      weak: string;
+      fair: string;
+      good: string;
+      strong: string;
+      options: string;
+      length: string;
+      uppercase: string;
+      lowercase: string;
+      numbers: string;
+      symbols: string;
+      excludeSimilar: string;
+      excludeAmbiguous: string;
+      history: string;
+      recentPasswords: string;
+      historyCleared: string;
+      selectOneOption: string;
     };
   };
   rules: {
@@ -781,6 +809,10 @@ const en: Translations = {
         title: "Text Diff",
         description: "Compare two pieces of text and visualize the differences line by line.",
       },
+      passwordGenerator: {
+        title: "Password Generator",
+        description: "Generate strong, secure passwords with customizable options and strength indicator.",
+      },
     },
   },
   tools: {
@@ -963,6 +995,30 @@ const en: Translations = {
       noChanges: "No changes detected",
       noDiff: "No diff to export",
       exportSuccess: "Exported successfully",
+    },
+    passwordGenerator: {
+      title: "Password Generator",
+      subtitle: "Generate strong, secure passwords",
+      back: "Back",
+      generatedPassword: "Generated Password",
+      regenerate: "Generate New",
+      strength: "Password Strength",
+      weak: "Weak",
+      fair: "Fair",
+      good: "Good",
+      strong: "Strong",
+      options: "Options",
+      length: "Password Length",
+      uppercase: "Uppercase (A-Z)",
+      lowercase: "Lowercase (a-z)",
+      numbers: "Numbers (0-9)",
+      symbols: "Symbols (!@#$%)",
+      excludeSimilar: "Exclude Similar",
+      excludeAmbiguous: "Exclude Ambiguous",
+      history: "History",
+      recentPasswords: "Recent Passwords",
+      historyCleared: "History cleared",
+      selectOneOption: "Please select at least one character type",
     },
   },
   channels: {
@@ -1403,6 +1459,10 @@ const zh: Translations = {
         title: "文本对比",
         description: "比较两段文本，逐行显示差异，支持代码差异对比。",
       },
+      passwordGenerator: {
+        title: "密码生成器",
+        description: "生成安全强密码，支持自定义选项和密码强度指示器。",
+      },
     },
   },
   tools: {
@@ -1585,6 +1645,30 @@ const zh: Translations = {
       noChanges: "未检测到变更",
       noDiff: "没有可导出的对比结果",
       exportSuccess: "导出成功",
+    },
+    passwordGenerator: {
+      title: "密码生成器",
+      subtitle: "生成安全强密码",
+      back: "返回",
+      generatedPassword: "生成的密码",
+      regenerate: "重新生成",
+      strength: "密码强度",
+      weak: "弱",
+      fair: "一般",
+      good: "良好",
+      strong: "强",
+      options: "选项",
+      length: "密码长度",
+      uppercase: "大写字母 (A-Z)",
+      lowercase: "小写字母 (a-z)",
+      numbers: "数字 (0-9)",
+      symbols: "特殊符号 (!@#$%)",
+      excludeSimilar: "排除相似字符",
+      excludeAmbiguous: "排除歧义字符",
+      history: "历史记录",
+      recentPasswords: "最近生成的密码",
+      historyCleared: "历史记录已清空",
+      selectOneOption: "请至少选择一种字符类型",
     },
   },
   channels: {
