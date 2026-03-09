@@ -8,6 +8,7 @@ import {
   QrCode,
   Globe,
   Shield,
+  Network,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -81,6 +82,13 @@ export default function ToolBox() {
       description: t.toolBox.tools.jwtDecoder.description,
       icon: Shield,
       path: "/toolbox/jwt-decoder",
+    },
+    {
+      id: "port-scanner",
+      title: t.toolBox.tools.portScanner.title,
+      description: t.toolBox.tools.portScanner.description,
+      icon: Network,
+      path: "/toolbox/port-scanner",
     },
   ];
 

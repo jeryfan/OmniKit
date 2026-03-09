@@ -370,6 +370,10 @@ export interface Translations {
         title: string;
         description: string;
       };
+      portScanner: {
+        title: string;
+        description: string;
+      };
     };
   };
   tools: {
@@ -500,6 +504,36 @@ export interface Translations {
       issuedAt: string;
       notBefore: string;
       invalidToken: string;
+    };
+    portScanner: {
+      title: string;
+      subtitle: string;
+      back: string;
+      hostLabel: string;
+      portsLabel: string;
+      commonPorts: string;
+      customRange: string;
+      start: string;
+      stop: string;
+      rescan: string;
+      scanning: string;
+      scanStopped: string;
+      scanComplete: string;
+      scanError: string;
+      invalidHost: string;
+      invalidPortRange: string;
+      tooManyPorts: string;
+      results: string;
+      open: string;
+      closed: string;
+      openPorts: string;
+      closedPorts: string;
+      export: string;
+      exportSuccess: string;
+      noResults: string;
+      history: string;
+      scanHistory: string;
+      load: string;
     };
   };
   rules: {
@@ -713,6 +747,10 @@ const en: Translations = {
         title: "JWT Decoder",
         description: "Decode and inspect JSON Web Tokens, view payload, header, and verify signature.",
       },
+      portScanner: {
+        title: "Port Scanner",
+        description: "Scan ports on a host to check which ones are open, commonly used for network diagnostics.",
+      },
     },
   },
   tools: {
@@ -843,6 +881,36 @@ const en: Translations = {
       issuedAt: "Issued At",
       notBefore: "Not Before",
       invalidToken: "Invalid JWT token format",
+    },
+    portScanner: {
+      title: "Port Scanner",
+      subtitle: "Scan ports on a host to check which ones are open",
+      back: "Back",
+      hostLabel: "Host",
+      portsLabel: "Ports",
+      commonPorts: "Common Ports",
+      customRange: "Custom Range",
+      start: "Start Scan",
+      stop: "Stop",
+      rescan: "Rescan",
+      scanning: "Scanning...",
+      scanStopped: "Scan stopped",
+      scanComplete: "Scan complete! Found {count} open ports",
+      scanError: "Scan error occurred",
+      invalidHost: "Please enter a valid host",
+      invalidPortRange: "Invalid port range",
+      tooManyPorts: "Too many ports. Maximum is 1000",
+      results: "Results",
+      open: "Open",
+      closed: "Closed",
+      openPorts: "Open Ports",
+      closedPorts: "Closed Ports",
+      export: "Export",
+      exportSuccess: "Results exported successfully",
+      noResults: "No results to export",
+      history: "History",
+      scanHistory: "Scan History",
+      load: "Load",
     },
   },
   channels: {
@@ -1275,6 +1343,10 @@ const zh: Translations = {
         title: "JWT 解码器",
         description: "解码和检查 JSON Web Token，查看载荷、头部信息并验证签名。",
       },
+      portScanner: {
+        title: "端口扫描器",
+        description: "扫描主机上的端口，检查哪些端口处于开放状态，常用于网络诊断。",
+      },
     },
   },
   tools: {
@@ -1405,6 +1477,36 @@ const zh: Translations = {
       issuedAt: "签发时间",
       notBefore: "生效时间",
       invalidToken: "无效的 JWT token 格式",
+    },
+    portScanner: {
+      title: "端口扫描器",
+      subtitle: "扫描主机端口，检查哪些端口处于开放状态",
+      back: "返回",
+      hostLabel: "主机",
+      portsLabel: "端口",
+      commonPorts: "常用端口",
+      customRange: "自定义范围",
+      start: "开始扫描",
+      stop: "停止",
+      rescan: "重新扫描",
+      scanning: "扫描中...",
+      scanStopped: "扫描已停止",
+      scanComplete: "扫描完成！发现 {count} 个开放端口",
+      scanError: "扫描出错",
+      invalidHost: "请输入有效的主机地址",
+      invalidPortRange: "无效的端口范围",
+      tooManyPorts: "端口数量过多，最多支持 1000 个",
+      results: "扫描结果",
+      open: "开放",
+      closed: "关闭",
+      openPorts: "开放端口",
+      closedPorts: "关闭端口",
+      export: "导出",
+      exportSuccess: "导出成功",
+      noResults: "没有可导出的结果",
+      history: "历史记录",
+      scanHistory: "扫描历史",
+      load: "加载",
     },
   },
   channels: {
