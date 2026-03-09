@@ -9,6 +9,7 @@ import {
   Globe,
   Shield,
   Network,
+  GitCompare,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -89,6 +90,13 @@ export default function ToolBox() {
       description: t.toolBox.tools.portScanner.description,
       icon: Network,
       path: "/toolbox/port-scanner",
+    },
+    {
+      id: "text-diff",
+      title: t.toolBox.tools.textDiff.title,
+      description: t.toolBox.tools.textDiff.description,
+      icon: GitCompare,
+      path: "/toolbox/text-diff",
     },
   ];
 

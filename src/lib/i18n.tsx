@@ -374,6 +374,10 @@ export interface Translations {
         title: string;
         description: string;
       };
+      textDiff: {
+        title: string;
+        description: string;
+      };
     };
   };
   tools: {
@@ -534,6 +538,28 @@ export interface Translations {
       history: string;
       scanHistory: string;
       load: string;
+    };
+    textDiff: {
+      title: string;
+      subtitle: string;
+      back: string;
+      oldText: string;
+      newText: string;
+      oldPlaceholder: string;
+      newPlaceholder: string;
+      swap: string;
+      options: string;
+      ignoreWhitespace: string;
+      ignoreCase: string;
+      showLineNumbers: string;
+      showUnchanged: string;
+      diffResult: string;
+      additions: string;
+      deletions: string;
+      unchanged: string;
+      noChanges: string;
+      noDiff: string;
+      exportSuccess: string;
     };
   };
   rules: {
@@ -751,6 +777,10 @@ const en: Translations = {
         title: "Port Scanner",
         description: "Scan ports on a host to check which ones are open, commonly used for network diagnostics.",
       },
+      textDiff: {
+        title: "Text Diff",
+        description: "Compare two pieces of text and visualize the differences line by line.",
+      },
     },
   },
   tools: {
@@ -911,6 +941,28 @@ const en: Translations = {
       history: "History",
       scanHistory: "Scan History",
       load: "Load",
+    },
+    textDiff: {
+      title: "Text Diff",
+      subtitle: "Compare two pieces of text and visualize differences",
+      back: "Back",
+      oldText: "Original Text",
+      newText: "Modified Text",
+      oldPlaceholder: "Paste original text here...",
+      newPlaceholder: "Paste modified text here...",
+      swap: "Swap",
+      options: "Options",
+      ignoreWhitespace: "Ignore whitespace",
+      ignoreCase: "Ignore case",
+      showLineNumbers: "Show line numbers",
+      showUnchanged: "Show unchanged lines",
+      diffResult: "Diff Result",
+      additions: "additions",
+      deletions: "deletions",
+      unchanged: "unchanged",
+      noChanges: "No changes detected",
+      noDiff: "No diff to export",
+      exportSuccess: "Exported successfully",
     },
   },
   channels: {
@@ -1347,6 +1399,10 @@ const zh: Translations = {
         title: "端口扫描器",
         description: "扫描主机上的端口，检查哪些端口处于开放状态，常用于网络诊断。",
       },
+      textDiff: {
+        title: "文本对比",
+        description: "比较两段文本，逐行显示差异，支持代码差异对比。",
+      },
     },
   },
   tools: {
@@ -1507,6 +1563,28 @@ const zh: Translations = {
       history: "历史记录",
       scanHistory: "扫描历史",
       load: "加载",
+    },
+    textDiff: {
+      title: "文本对比",
+      subtitle: "比较两段文本并可视化差异",
+      back: "返回",
+      oldText: "原始文本",
+      newText: "修改后文本",
+      oldPlaceholder: "在此粘贴原始文本...",
+      newPlaceholder: "在此粘贴修改后的文本...",
+      swap: "交换",
+      options: "选项",
+      ignoreWhitespace: "忽略空白字符",
+      ignoreCase: "忽略大小写",
+      showLineNumbers: "显示行号",
+      showUnchanged: "显示未变更行",
+      diffResult: "对比结果",
+      additions: "新增",
+      deletions: "删除",
+      unchanged: "未变更",
+      noChanges: "未检测到变更",
+      noDiff: "没有可导出的对比结果",
+      exportSuccess: "导出成功",
     },
   },
   channels: {

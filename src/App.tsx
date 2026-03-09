@@ -15,6 +15,7 @@ import QrCodeGenerator from "@/pages/tools/QrCodeGenerator";
 import HttpDebugger from "@/pages/tools/HttpDebugger";
 import JwtDecoder from "@/pages/tools/JwtDecoder";
 import PortScanner from "@/pages/tools/PortScanner";
+import TextDiff from "@/pages/tools/TextDiff";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="toolbox/http-debugger" element={<HttpDebugger />} />
           <Route path="toolbox/jwt-decoder" element={<JwtDecoder />} />
           <Route path="toolbox/port-scanner" element={<PortScanner />} />
+          <Route path="toolbox/text-diff" element={<TextDiff />} />
         </Route>
       </Routes>
     </BrowserRouter>
