@@ -11,6 +11,7 @@ import {
   Network,
   GitCompare,
   Lock,
+  Hash,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
@@ -105,6 +106,13 @@ export default function ToolBox() {
       description: t.toolBox.tools.passwordGenerator.description,
       icon: Lock,
       path: "/toolbox/password-generator",
+    },
+    {
+      id: "hash-calculator",
+      title: t.toolBox.tools.hashCalculator.title,
+      description: t.toolBox.tools.hashCalculator.description,
+      icon: Hash,
+      path: "/toolbox/hash-calculator",
     },
   ];
 

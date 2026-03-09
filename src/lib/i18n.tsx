@@ -382,6 +382,10 @@ export interface Translations {
         title: string;
         description: string;
       };
+      hashCalculator: {
+        title: string;
+        description: string;
+      };
     };
   };
   tools: {
@@ -588,6 +592,17 @@ export interface Translations {
       recentPasswords: string;
       historyCleared: string;
       selectOneOption: string;
+    };
+    hashCalculator: {
+      title: string;
+      subtitle: string;
+      back: string;
+      input: string;
+      placeholder: string;
+      comparePlaceholder: string;
+      results: string;
+      fileUpload: string;
+      match: string;
     };
   };
   rules: {
@@ -813,6 +828,10 @@ const en: Translations = {
         title: "Password Generator",
         description: "Generate strong, secure passwords with customizable options and strength indicator.",
       },
+      hashCalculator: {
+        title: "Hash Calculator",
+        description: "Calculate MD5, SHA1, SHA256, SHA384, SHA512 hashes for text or files.",
+      },
     },
   },
   tools: {
@@ -1019,6 +1038,17 @@ const en: Translations = {
       recentPasswords: "Recent Passwords",
       historyCleared: "History cleared",
       selectOneOption: "Please select at least one character type",
+    },
+    hashCalculator: {
+      title: "Hash Calculator",
+      subtitle: "Calculate MD5, SHA1, SHA256, SHA384, SHA512 hashes",
+      back: "Back",
+      input: "Input",
+      placeholder: "Enter text to hash...",
+      comparePlaceholder: "Paste hash to compare (optional)",
+      results: "Hash Results",
+      fileUpload: "Upload File",
+      match: "Match",
     },
   },
   channels: {
@@ -1463,6 +1493,10 @@ const zh: Translations = {
         title: "密码生成器",
         description: "生成安全强密码，支持自定义选项和密码强度指示器。",
       },
+      hashCalculator: {
+        title: "Hash 计算器",
+        description: "计算文本或文件的 MD5、SHA1、SHA256、SHA384、SHA512 哈希值。",
+      },
     },
   },
   tools: {
@@ -1669,6 +1703,17 @@ const zh: Translations = {
       recentPasswords: "最近生成的密码",
       historyCleared: "历史记录已清空",
       selectOneOption: "请至少选择一种字符类型",
+    },
+    hashCalculator: {
+      title: "Hash 计算器",
+      subtitle: "计算 MD5、SHA1、SHA256、SHA384、SHA512 哈希值",
+      back: "返回",
+      input: "输入",
+      placeholder: "输入要计算哈希的文本...",
+      comparePlaceholder: "粘贴哈希值进行比对（可选）",
+      results: "哈希结果",
+      fileUpload: "上传文件",
+      match: "匹配",
     },
   },
   channels: {
